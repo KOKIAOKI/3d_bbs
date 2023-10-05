@@ -1,2 +1,2 @@
 # 3d_bbs
-This repository will be published soon. 
+Code will be available in Oct. 2023
