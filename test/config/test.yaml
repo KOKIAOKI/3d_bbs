@@ -1,0 +1,31 @@
+################[Necessary]################
+## Folder Paths
+target_clouds: "/home/koki/Downloads/test_data/target"
+source_clouds: "/home/koki/Downloads/test_data/source"
+output_folder: "/home/koki/Downloads/test_data/output"
+
+## 3D-BBS Parameters
+min_level_res: 1.0 # [m]
+max_level: 6
+
+## Angular Search Range
+# 6.28 input is converted to 2*M_PI
+min_rpy: [-0.02,-0.02,0.0]
+max_rpy: [0.02,0.02,6.28]
+
+################[Optional]################
+## Downsample Target Clouds Parameter
+valid_tar_vgf: true
+tar_leaf_size: 0.1
+
+## Downsample Source Clouds Parameter
+valid_src_vgf: true
+src_leaf_size: 2.0
+
+cut_src_points: true 
+scan_range:
+  - 0.0 # min [m]
+  - 100 # max [m]
+ 
+## Final align
+use_gicp: false
