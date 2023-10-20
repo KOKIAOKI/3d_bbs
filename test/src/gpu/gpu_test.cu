@@ -51,7 +51,7 @@ int BBS3DTest::run(std::string config) {
 
   auto init_t2 = std::chrono::high_resolution_clock::now();
   double init_time = std::chrono::duration_cast<std::chrono::nanoseconds>(init_t2 - initi_t1).count() / 1e6;
-  std::cout << "[MAP]Execution time: " << init_time << "[msec] " << std::endl;
+  std::cout << "[Hierarchical voxel map creation]Execution time: " << init_time << "[msec] " << std::endl;
 
   int sum_time = 0;
   // localization
@@ -68,7 +68,7 @@ int BBS3DTest::run(std::string config) {
     std::cout << "[Localize]Score: " << bbs3d_ptr->get_best_score() << std::endl;
 
     if (!bbs3d_ptr->has_localized()) {
-      std::cout << "[Localize] Failed: " << localize_time << "[msec] " << std::endl;
+      std::cout << "[Localize]Failed: " << localize_time << "[msec] " << std::endl;
       continue;
     }
 

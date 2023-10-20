@@ -9,7 +9,7 @@ VoxelMaps::VoxelMaps() : min_level_res_(1.0f), max_level_(6), max_bucket_scan_co
 VoxelMaps::~VoxelMaps() {}
 
 void VoxelMaps::create_voxelmaps(const std::vector<Eigen::Vector3f>& points, cudaStream_t stream) {
-  int multi_buckets_size = max_level_ + 1;
+  const int multi_buckets_size = max_level_ + 1;
   d_multi_buckets_.reserve(multi_buckets_size);
   voxelmaps_info_.resize(multi_buckets_size);
 
@@ -44,7 +44,7 @@ void VoxelMaps::create_voxelmaps(const std::vector<Eigen::Vector3f>& points, cud
     voxelmaps_info_[i] = info;
 
     // Copy host to device (voxel map)
-    int buckets_datasize = sizeof(Eigen::Vector4i) * buckets.size();
+    const int buckets_datasize = sizeof(Eigen::Vector4i) * buckets.size();
     DeviceBuckets d_buckets(buckets.size());
     check_error << cudaMemcpyAsync(thrust::raw_pointer_cast(d_buckets.data()), buckets.data(), buckets_datasize, cudaMemcpyHostToDevice, stream);
     d_multi_buckets_.emplace_back(d_buckets);
@@ -60,12 +60,12 @@ void VoxelMaps::create_voxelmaps(const std::vector<Eigen::Vector3f>& points, cud
 
   // Copy host to device (ptrs)
   d_multi_buckets_ptrs_.resize(multi_buckets_size);
-  int ptrs_datasize = sizeof(Eigen::Vector4i*) * multi_buckets_size;
+  const int ptrs_datasize = sizeof(Eigen::Vector4i*) * multi_buckets_size;
   check_error << cudaMemcpyAsync(thrust::raw_pointer_cast(d_multi_buckets_ptrs_.data()), ptrs.data(), ptrs_datasize, cudaMemcpyHostToDevice, stream);
 
   // Copy host to device (voxel map info)
   d_voxelmaps_info_.resize(multi_buckets_size);
-  int info_datasize = sizeof(VoxelMapInfo) * multi_buckets_size;
+  const int info_datasize = sizeof(VoxelMapInfo) * multi_buckets_size;
   check_error
     << cudaMemcpyAsync(thrust::raw_pointer_cast(d_voxelmaps_info_.data()), voxelmaps_info_.data(), info_datasize, cudaMemcpyHostToDevice, stream);
   check_error << cudaStreamSynchronize(stream);

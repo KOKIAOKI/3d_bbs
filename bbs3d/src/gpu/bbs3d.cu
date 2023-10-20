@@ -43,15 +43,16 @@ void BBS3D::set_tar_points(const std::vector<Eigen::Vector3f>& points, double mi
   tar_points_.clear();
   tar_points_.shrink_to_fit();
   tar_points_ = points;  // TODO: resize
-  voxelmaps_ptr_->min_level_res_ = min_level_res;
-  voxelmaps_ptr_->max_level_ = max_level;
+
+  voxelmaps_ptr_->set_min_res(min_level_res);
+  voxelmaps_ptr_->set_max_level(max_level);
   voxelmaps_ptr_->create_voxelmaps(points, stream);
 
   trans_search_range();
 }
 
 void BBS3D::set_src_points(const std::vector<Eigen::Vector3f>& points) {
-  int src_size = points.size();
+  const int src_size = points.size();
   src_points_.clear();
   src_points_.shrink_to_fit();
   src_points_ = points;  // TODO: resize
@@ -92,7 +93,8 @@ void BBS3D::trans_search_range() {
     max_xyz = max_xyz.cwiseMax(point);
   }
 
-  float top_res = voxelmaps_ptr_->voxelmaps_info_[voxelmaps_ptr_->max_level_].res;
+  const int max_level = voxelmaps_ptr_->get_max_level();
+  const float top_res = voxelmaps_ptr_->voxelmaps_info_[max_level].res;
   init_tx_range_ = std::make_pair<int, int>(std::floor(min_xyz.x() / top_res), std::ceil(max_xyz.x() / top_res));
   init_ty_range_ = std::make_pair<int, int>(std::floor(min_xyz.y() / top_res), std::ceil(max_xyz.y() / top_res));
   init_tz_range_ = std::make_pair<int, int>(std::floor(min_xyz.z() / top_res), std::ceil(max_xyz.z() / top_res));
@@ -107,8 +109,9 @@ void BBS3D::angluar_search_range(std::vector<AngularInfo>& ang_info_vec) {
     }
   }
 
-  for (int i = voxelmaps_ptr_->max_level_; i >= 0; i--) {
-    float cosine = 1 - (std::pow(voxelmaps_ptr_->voxelmaps_info_[i].res, 2) / std::pow(max_norm, 2)) * 0.5f;
+  const int max_level = voxelmaps_ptr_->get_max_level();
+  for (int i = max_level; i >= 0; i--) {
+    const float cosine = 1 - (std::pow(voxelmaps_ptr_->voxelmaps_info_[i].res, 2) / std::pow(max_norm, 2)) * 0.5f;
     float ori_res = std::acos(max(cosine, -1.0f));
     ori_res = std::floor(ori_res * 10000) / 10000;
     Eigen::Vector3f rpy_res_temp;
@@ -117,8 +120,8 @@ void BBS3D::angluar_search_range(std::vector<AngularInfo>& ang_info_vec) {
     rpy_res_temp.z() = ori_res <= (max_rpy_.z() - min_rpy_.z()) ? ori_res : 0.0f;
 
     Eigen::Vector3f max_rpy_piece;
-    if (i == voxelmaps_ptr_->max_level_) {
-      max_rpy_piece = max_rpy_ - min_rpy_;  // TODO floor 10000
+    if (i == max_level) {
+      max_rpy_piece = max_rpy_ - min_rpy_;
     } else {
       max_rpy_piece.x() = ang_info_vec[i + 1].rpy_res.x() != 0.0f ? ang_info_vec[i + 1].rpy_res.x() : max_rpy_.x() - min_rpy_.x();
       max_rpy_piece.y() = ang_info_vec[i + 1].rpy_res.y() != 0.0f ? ang_info_vec[i + 1].rpy_res.y() : max_rpy_.y() - min_rpy_.y();
@@ -148,7 +151,7 @@ std::vector<DiscreteTransformation> BBS3D::create_init_transset(const AngularInf
                                  (init_tz_range_.second - init_tz_range_.first + 1) * (init_ang_info.num_division.x()) *
                                  (init_ang_info.num_division.y()) * (init_ang_info.num_division.z());
 
-  const int max_level = voxelmaps_ptr_->max_level_;
+  const int max_level = voxelmaps_ptr_->get_max_level();
   const float init_trans_res = voxelmaps_ptr_->voxelmaps_info_[max_level].res;
 
   std::vector<DiscreteTransformation> transset;
@@ -179,12 +182,12 @@ std::vector<DiscreteTransformation> BBS3D::create_init_transset(const AngularInf
 }
 
 void BBS3D::localize() {
-  int score_threshold = static_cast<int>(src_size_in_graph_ * score_threshold_percentage_);
+  const int score_threshold = static_cast<int>(src_size_in_graph_ * score_threshold_percentage_);
   int best_score = score_threshold;
   DiscreteTransformation best_trans(best_score);
 
   // Preapre initial transset
-  const int max_level = voxelmaps_ptr_->max_level_;
+  const int max_level = voxelmaps_ptr_->get_max_level();
   std::vector<AngularInfo> ang_info_vec(max_level + 1);
   angluar_search_range(ang_info_vec);
   const auto init_transset = create_init_transset(ang_info_vec[max_level]);
@@ -215,7 +218,7 @@ void BBS3D::localize() {
       best_trans = trans;
       best_score = trans.score;
     } else {
-      int child_level = trans.level - 1;
+      const int child_level = trans.level - 1;
       trans.branch(branch_stock, child_level, ang_info_vec[child_level]);
     }
 

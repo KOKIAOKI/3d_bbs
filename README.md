@@ -6,7 +6,6 @@ Fast and accurate 3D global localization using branch-and-bound scan matching.
 - CMake version 3.15 or higher
 
 - GPU run (Lower versions are not tested)
-  - NVIDIA Driver 535
   - CUDA version 12.0 or higher
 
 ## 3d_bbs core source code
@@ -24,7 +23,7 @@ sudo make install
 ### 1. Build
 - GPU
 ```
-cd 3d-bbs/test/
+cd 3d_bbs/test/
 mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
 make -j8
@@ -45,7 +44,7 @@ Please edit the config file as below:
 ### 4. Run
 - GPU
 ```
-cd 3d-bbs/test/build/
+cd 3d_bbs/test/build/
 ./gpu_test [config_file_path]
 ```
 

@@ -40,11 +40,17 @@ public:
   using Buckets = std::vector<Eigen::Vector4i>;
   using DeviceBuckets = thrust::device_vector<Eigen::Vector4i>;
 
-  // void set_min_res(float min_level_res) { min_level_res_ = min_level_res; }
+  void set_min_res(float min_level_res) { min_level_res_ = min_level_res; }
 
-  // void set_max_level(int max_level) { max_level_ = max_level; }
+  void set_max_level(int max_level) { max_level_ = max_level; }
 
-  // void set_max_bucket_scan_count(int max_bucket_scan_count) { max_bucket_scan_count_ = max_bucket_scan_count; }
+  void set_max_bucket_scan_count(int max_bucket_scan_count) { max_bucket_scan_count_ = max_bucket_scan_count; }
+
+  float get_min_res() { return min_level_res_; }
+
+  int get_max_level() { return max_level_; }
+
+  int get_max_bucket_scan_count() { return max_bucket_scan_count_; }
 
   void create_voxelmaps(const std::vector<Eigen::Vector3f>& points, cudaStream_t stream);
 
@@ -53,13 +59,14 @@ private:
   Buckets create_hash_buckets(const UnorderedVoxelMap& unordered_voxelmap);
 
 public:
-  float min_level_res_;
-  int max_level_, max_bucket_scan_count_;
-
   std::vector<DeviceBuckets> d_multi_buckets_;
   thrust::device_vector<Eigen::Vector4i*> d_multi_buckets_ptrs_;
 
   std::vector<VoxelMapInfo> voxelmaps_info_;
   thrust::device_vector<VoxelMapInfo> d_voxelmaps_info_;
+
+private:
+  float min_level_res_;
+  int max_level_, max_bucket_scan_count_;
 };
 }  // namespace gpu

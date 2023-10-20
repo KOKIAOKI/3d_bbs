@@ -47,7 +47,7 @@ Eigen::Matrix4f DiscreteTransformation::create_matrix() {
 }
 
 void DiscreteTransformation::branch(std::vector<DiscreteTransformation>& b, const int child_level, const AngularInfo& ang_info) {
-  float child_res = resolution * 0.5f;
+  const float child_res = resolution * 0.5f;
   for (int i = 0; i < ang_info.num_division.x(); i++) {
     for (int j = 0; j < ang_info.num_division.y(); j++) {
       for (int k = 0; k < ang_info.num_division.z(); k++) {
