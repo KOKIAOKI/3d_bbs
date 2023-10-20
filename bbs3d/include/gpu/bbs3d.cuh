@@ -72,6 +72,8 @@ public:
 
   int get_best_score() { return best_score_; }
 
+  bool has_localized() { return has_localized_; }
+
   void localize();
 
 private:
@@ -88,6 +90,7 @@ private:
 
 private:
   Eigen::Matrix4f global_pose_;
+  bool has_localized_;
 
   cudaStream_t stream;
   std::unique_ptr<StreamTempBufferRoundRobin> stream_buffer_ptr_;
@@ -96,14 +99,13 @@ private:
   std::vector<Eigen::Vector3f> src_points_;
   thrust::device_vector<Eigen::Vector3f> d_src_points_;
 
-  // graph
+  // for graph
   std::vector<thrust::device_vector<DiscreteTransformation>> d_transset_stock_;
   int* d_counts_;
   std::vector<cudaGraphExec_t> instances;
 
   std::unique_ptr<VoxelMaps> voxelmaps_ptr_;
 
-private:
   int src_size_in_graph_, branch_copy_size_, graph_size_, num_streams_, best_score_;
   double score_threshold_percentage_;
   Eigen::Vector3f min_rpy_;

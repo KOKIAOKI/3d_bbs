@@ -14,7 +14,7 @@ int lcm(int a, int b) {
   return (a * b) / gcd_result;
 }
 
-BBS3D::BBS3D() : score_threshold_percentage_(0.9), src_size_in_graph_(-1) {
+BBS3D::BBS3D() : score_threshold_percentage_(0.9), src_size_in_graph_(-1), has_localized_(false) {
   check_error << cudaStreamCreate(&stream);
 
   stream_buffer_ptr_.reset(new StreamTempBufferRoundRobin);
@@ -35,8 +35,6 @@ BBS3D::~BBS3D() {
 void BBS3D::set_branch_copy_size(const int branch_copy_size) {
   branch_copy_size_ = branch_copy_size - branch_copy_size % lcm(num_streams_, 8);
   graph_size_ = branch_copy_size_ / num_streams_;  // Remainder of　this division is 0
-  std::cout << "Fixed branch copy size: " << branch_copy_size_ << std::endl;
-  std::cout << "Graph size: " << graph_size_ << std::endl;
 }
 
 void BBS3D::set_tar_points(const std::vector<Eigen::Vector3f>& points, double min_level_res, int max_level) {
@@ -152,7 +150,6 @@ std::vector<DiscreteTransformation> BBS3D::create_init_transset(const AngularInf
 
   const int max_level = voxelmaps_ptr_->max_level_;
   const float init_trans_res = voxelmaps_ptr_->voxelmaps_info_[max_level].res;
-  // std::cout << "Init_transset_size: " << init_transset_size << std::endl;
 
   std::vector<DiscreteTransformation> transset;
   transset.reserve(init_transset_size);
@@ -203,9 +200,6 @@ void BBS3D::localize() {
     auto trans = trans_queue.top();
     trans_queue.pop();
 
-    // std::cout << "(pick up)layer: " << trans.level << " score" << trans.score << " / " << best_score << "    pose/"
-    //           << "x: " << trans.x << " y: " << trans.y << " z: " << trans.z << " roll: " << trans.roll << " pitch: " << trans.pitch
-    //           << " yaw: " << trans.yaw << std::endl;
     if (trans.score < best_score) {
       if (!branch_stock.empty()) {
         const auto transset_output = calc_scores(branch_stock);
@@ -220,7 +214,6 @@ void BBS3D::localize() {
     if (trans.is_leaf()) {
       best_trans = trans;
       best_score = trans.score;
-      std::cout << "[Find best pose] score: " << best_score << std::endl;
     } else {
       int child_level = trans.level - 1;
       trans.branch(branch_stock, child_level, ang_info_vec[child_level]);
@@ -238,11 +231,12 @@ void BBS3D::localize() {
   }
 
   if (best_score == score_threshold) {
-    std::cout << "[Localize incomplete]: The scores for all poses were below the threshold" << std::endl;
+    has_localized_ = false;
     return;
   }
 
   global_pose_ = best_trans.create_matrix();
   best_score_ = best_score;
+  has_localized_ = true;
 }
 }  // namespace gpu

@@ -65,6 +65,13 @@ int BBS3DTest::run(std::string config) {
     auto localize_t2 = std::chrono::high_resolution_clock::now();
     double localize_time = std::chrono::duration_cast<std::chrono::nanoseconds>(localize_t2 - localize_t1).count() / 1e6;
     std::cout << "[Localize]Execution time: " << localize_time << "[msec] " << std::endl;
+    std::cout << "[Localize]Score: " << bbs3d_ptr->get_best_score() << std::endl;
+
+    if (!bbs3d_ptr->has_localized()) {
+      std::cout << "[Localize] Failed: " << localize_time << "[msec] " << std::endl;
+      continue;
+    }
+
     sum_time += localize_time;
 
     pcl::PointCloud<pcl::PointXYZ>::Ptr src_cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>());
@@ -79,7 +86,7 @@ int BBS3DTest::run(std::string config) {
     }
     pcl::io::savePCDFileBinary(pcd_save_folder_path + "/" + src_points.first + ".pcd", *output_cloud_ptr);
   }
-  std::cout << "[Localize]Average time: " << sum_time / src_points_set.size() << "[msec] " << std::endl;
+  std::cout << "[Localize]Average time: " << sum_time / src_points_set.size() << "[msec] per frame" << std::endl;
   return 0;
 }
 
