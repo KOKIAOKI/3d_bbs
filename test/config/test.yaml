@@ -1,8 +1,8 @@
 ################[Necessary]################
 ## Folder Paths
-target_clouds: "/home/koki/Downloads/test_data/target"
-source_clouds: "/home/koki/Downloads/test_data/source"
-output_folder: "/home/koki/Downloads/test_data/output"
+target_clouds: "your_path/target"
+source_clouds: "your_path/source"
+output_folder: "your_path/output"
 
 ## 3D-BBS Parameters
 min_level_res: 1.0 # [m]
@@ -12,6 +12,10 @@ max_level: 6
 # 6.28 input is converted to 2*M_PI
 min_rpy: [-0.02,-0.02,0.0]
 max_rpy: [0.02,0.02,6.28]
+
+## Score threshold
+# score_threshold = floor(src_points.size() * score_threshold_percentage)
+score_threshold_percentage: 0.9
 
 ################[Optional]################
 ## Downsample Target Clouds Parameter
