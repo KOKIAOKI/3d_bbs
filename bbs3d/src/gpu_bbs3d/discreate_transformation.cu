@@ -1,4 +1,4 @@
-#include <gpu/bbs3d.cuh>
+#include <gpu_bbs3d/bbs3d.cuh>
 
 namespace gpu {
 DiscreteTransformation::DiscreteTransformation() {}

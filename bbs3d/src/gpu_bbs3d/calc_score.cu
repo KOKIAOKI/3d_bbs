@@ -1,9 +1,9 @@
-#include <gpu/bbs3d.cuh>
+#include <gpu_bbs3d/bbs3d.cuh>
 
 #include <cub/device/device_reduce.cuh>
 #include <cub/iterator/transform_input_iterator.cuh>
 
-#include <gpu/stream_manager/check_error.cuh>
+#include <gpu_bbs3d/stream_manager/check_error.cuh>
 
 namespace gpu {
 struct lookup_voxel_map {

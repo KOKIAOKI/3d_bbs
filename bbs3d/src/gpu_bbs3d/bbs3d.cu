@@ -1,5 +1,5 @@
-#include <gpu/bbs3d.cuh>
-#include <gpu/stream_manager/check_error.cuh>
+#include <gpu_bbs3d/bbs3d.cuh>
+#include <gpu_bbs3d/stream_manager/check_error.cuh>
 
 namespace gpu {
 int gcd(int a, int b) {

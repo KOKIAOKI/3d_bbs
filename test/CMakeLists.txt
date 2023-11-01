@@ -17,7 +17,7 @@ endif()
 # CUDA
 if(BUILD_CUDA)
   CUDA_ADD_EXECUTABLE(gpu_test
-    src/gpu/gpu_test.cu
+    src/gpu_bbs3d/gpu_test.cu
   )
 
   target_include_directories(gpu_test 
