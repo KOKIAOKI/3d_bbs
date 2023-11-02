@@ -13,6 +13,7 @@ Fast and accurate 3D global localization using branch-and-bound scan matching.
 
 ## 3d_bbs core source code
 ### Build and Install
+- GPU (Please ignore the large number of warnings)
 ```
 git clone https://github.com/KOKIAOKI/3d_bbs.git
 cd 3d_bbs
@@ -24,7 +25,7 @@ sudo make install
 
 ## Test code
 ### 1. Build
-- GPU
+- GPU (Please ignore the large number of warnings)
 ```
 cd 3d_bbs/test/
 mkdir build && cd build
