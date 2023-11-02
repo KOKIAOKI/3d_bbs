@@ -206,14 +206,15 @@ void BBS3D::localize() {
     auto trans = trans_queue.top();
     trans_queue.pop();
 
-    if (trans.score < best_score) {
-      if (!branch_stock.empty()) {
-        const auto transset_output = calc_scores(branch_stock);
-        for (const auto& output : transset_output) {
-          trans_queue.push(output);
-        }
-        branch_stock.clear();
+    if (trans_queue.empty() && !branch_stock.empty()) {
+      const auto transset_output = calc_scores(branch_stock);
+      for (const auto& output : transset_output) {
+        trans_queue.push(output);
       }
+      branch_stock.clear();
+    }
+
+    if (trans.score < best_score) {
       continue;
     }
 

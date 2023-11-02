@@ -22,12 +22,15 @@ if(BUILD_CUDA)
 
   target_include_directories(gpu_bbs3d
     PUBLIC
+    ${PROJECT_SOURCE_DIR}/include
     ${EIGEN3_INCLUDE_DIR}
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/bbs3d/include>
-    $<INSTALL_INTERFACE:include>
+    # $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/bbs3d/include>
+    # $<INSTALL_INTERFACE:include>
   )
 
+  install(TARGETS gpu_bbs3d DESTINATION lib)
+
   install(DIRECTORY bbs3d/include/
-    DESTINATION include/
+    DESTINATION include
   )
 endif()
