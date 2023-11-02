@@ -1,4 +1,4 @@
-#include <gpu/bbs3d.cuh>
+#include <gpu_bbs3d/bbs3d.cuh>
 #include <test.hpp>
 #include <util.hpp>
 #include <load.hpp>
@@ -60,7 +60,7 @@ int BBS3DTest::run(std::string config) {
     bbs3d_ptr->set_src_points(src_points.second);
 
     auto localize_t1 = std::chrono::high_resolution_clock::now();
-    bbs3d_ptr->set_score_threshold_percentage(0.9);
+    bbs3d_ptr->set_score_threshold_percentage(static_cast<float>(score_threshold_percentage));
     bbs3d_ptr->localize();
     auto localize_t2 = std::chrono::high_resolution_clock::now();
     double localize_time = std::chrono::duration_cast<std::chrono::nanoseconds>(localize_t2 - localize_t1).count() / 1e6;
@@ -68,7 +68,7 @@ int BBS3DTest::run(std::string config) {
     std::cout << "[Localize]Score: " << bbs3d_ptr->get_best_score() << std::endl;
 
     if (!bbs3d_ptr->has_localized()) {
-      std::cout << "[Localize]Failed: " << localize_time << "[msec] " << std::endl;
+      std::cout << "[Localize]Failed: score is below the threshold." << std::endl;
       continue;
     }
 

@@ -7,10 +7,10 @@
 #include <Eigen/Dense>
 
 // voxel map
-#include <gpu/voxelmaps.cuh>
+#include <gpu_bbs3d/voxelmaps.cuh>
 
 // stream manager
-#include <gpu/stream_manager/stream_manager.hpp>
+#include <gpu_bbs3d/stream_manager/stream_manager.hpp>
 
 // thrust
 #include <cuda_runtime.h>
@@ -56,7 +56,7 @@ public:
   BBS3D();
   ~BBS3D();
 
-  void set_tar_points(const std::vector<Eigen::Vector3f>& points, double min_level_res, int max_level);
+  void set_tar_points(const std::vector<Eigen::Vector3f>& points, float min_level_res, int max_level);
   void set_src_points(const std::vector<Eigen::Vector3f>& points);
 
   void set_angular_search_range(const Eigen::Vector3f& min_rpy, const Eigen::Vector3f& max_rpy) {
@@ -68,9 +68,9 @@ public:
 
   void set_score_threshold_percentage(float percentage) { score_threshold_percentage_ = percentage; }
 
-  Eigen::Matrix4f get_global_pose() { return global_pose_; }
+  Eigen::Matrix4f get_global_pose() const { return global_pose_; }
 
-  int get_best_score() { return best_score_; }
+  int get_best_score() const { return best_score_; }
 
   bool has_localized() { return has_localized_; }
 

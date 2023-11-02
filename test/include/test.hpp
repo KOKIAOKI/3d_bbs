@@ -38,6 +38,9 @@ private:
   Eigen::Vector3d min_rpy;
   Eigen::Vector3d max_rpy;
 
+  // score threshold percentage
+  double score_threshold_percentage;
+
   // downsample
   bool valid_tar_vgf, valid_src_vgf;
   float tar_leaf_size, src_leaf_size;

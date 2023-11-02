@@ -1,5 +1,5 @@
-#include <gpu/bbs3d.cuh>
-#include <gpu/stream_manager/check_error.cuh>
+#include <gpu_bbs3d/bbs3d.cuh>
+#include <gpu_bbs3d/stream_manager/check_error.cuh>
 
 namespace gpu {
 int gcd(int a, int b) {
@@ -14,7 +14,7 @@ int lcm(int a, int b) {
   return (a * b) / gcd_result;
 }
 
-BBS3D::BBS3D() : score_threshold_percentage_(0.9), src_size_in_graph_(-1), has_localized_(false) {
+BBS3D::BBS3D() : score_threshold_percentage_(0.0), src_size_in_graph_(-1), has_localized_(false) {
   check_error << cudaStreamCreate(&stream);
 
   stream_buffer_ptr_.reset(new StreamTempBufferRoundRobin);
@@ -37,12 +37,13 @@ void BBS3D::set_branch_copy_size(const int branch_copy_size) {
   graph_size_ = branch_copy_size_ / num_streams_;  // Remainder of　this division is 0
 }
 
-void BBS3D::set_tar_points(const std::vector<Eigen::Vector3f>& points, double min_level_res, int max_level) {
+void BBS3D::set_tar_points(const std::vector<Eigen::Vector3f>& points, float min_level_res, int max_level) {
   voxelmaps_ptr_.reset(new VoxelMaps);
 
   tar_points_.clear();
   tar_points_.shrink_to_fit();
-  tar_points_ = points;  // TODO: resize
+  tar_points_.resize(points.size());
+  std::copy(points.begin(), points.end(), tar_points_.begin());
 
   voxelmaps_ptr_->set_min_res(min_level_res);
   voxelmaps_ptr_->set_max_level(max_level);
@@ -55,7 +56,8 @@ void BBS3D::set_src_points(const std::vector<Eigen::Vector3f>& points) {
   const int src_size = points.size();
   src_points_.clear();
   src_points_.shrink_to_fit();
-  src_points_ = points;  // TODO: resize
+  src_points_.resize(src_size);
+  std::copy(points.begin(), points.end(), src_points_.begin());
 
   d_src_points_.clear();
   d_src_points_.shrink_to_fit();
@@ -182,7 +184,8 @@ std::vector<DiscreteTransformation> BBS3D::create_init_transset(const AngularInf
 }
 
 void BBS3D::localize() {
-  const int score_threshold = static_cast<int>(src_size_in_graph_ * score_threshold_percentage_);
+  best_score_ = 0;
+  const int score_threshold = std::floor(src_size_in_graph_ * score_threshold_percentage_);
   int best_score = score_threshold;
   DiscreteTransformation best_trans(best_score);
 
@@ -203,14 +206,15 @@ void BBS3D::localize() {
     auto trans = trans_queue.top();
     trans_queue.pop();
 
-    if (trans.score < best_score) {
-      if (!branch_stock.empty()) {
-        const auto transset_output = calc_scores(branch_stock);
-        for (const auto& output : transset_output) {
-          trans_queue.push(output);
-        }
-        branch_stock.clear();
+    if (trans_queue.empty() && !branch_stock.empty()) {
+      const auto transset_output = calc_scores(branch_stock);
+      for (const auto& output : transset_output) {
+        trans_queue.push(output);
       }
+      branch_stock.clear();
+    }
+
+    if (trans.score < best_score) {
       continue;
     }
 

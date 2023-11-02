@@ -1,4 +1,4 @@
-#include <gpu/stream_manager/stream_manager.hpp>
+#include <gpu_bbs3d/stream_manager/stream_manager.hpp>
 #include <cuda_runtime_api.h>
 
 // StreamRoundRobin

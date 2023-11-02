@@ -1,9 +1,9 @@
-#include <gpu/bbs3d.cuh>
+#include <gpu_bbs3d/bbs3d.cuh>
 
 #include <cub/device/device_reduce.cuh>
 #include <cub/iterator/transform_input_iterator.cuh>
 
-#include <gpu/stream_manager/check_error.cuh>
+#include <gpu_bbs3d/stream_manager/check_error.cuh>
 
 namespace gpu {
 struct lookup_voxel_map {
@@ -44,13 +44,13 @@ struct lookup_voxel_map {
       const std::uint32_t bucket_index = (hash + i) % voxelmap_info.num_buckets;
       const Eigen::Vector4i bucket = buckets[bucket_index];
 
-      if (bucket.x() != coord.x() || bucket.y() != coord.y() || bucket.z() != coord.z()){
+      if (bucket.x() != coord.x() || bucket.y() != coord.y() || bucket.z() != coord.z()) {
         continue;
       }
 
       if (bucket.w() == 1) {
         return 1;
-      }else{
+      } else {
         return 0;
       }
     }

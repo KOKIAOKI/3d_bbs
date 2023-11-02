@@ -1,15 +1,19 @@
 # 3d_bbs
-Fast and accurate 3D global localization using branch-and-bound scan matching.
+Fast and accurate 3D global localization using branch-and-bound scan matching.  
+<img alt="overview" src="figs/overview.jpg" width="50%">
 
 ## Dependencies
-- Eigen3
-- CMake version 3.15 or higher
-
-- GPU run (Lower versions are not tested)
-  - CUDA version 12.0 or higher
+- bbs3d (Lower versions are not tested)
+  - Eigen3
+  - CMake version 3.15 or higher
+  - CUDA version 12.0 or higher (for GPU run)
+- test
+  - (All bbs3d dependencies)
+  - PCL
 
 ## 3d_bbs core source code
 ### Build and Install
+- GPU (Please ignore the large number of warnings)
 ```
 git clone https://github.com/KOKIAOKI/3d_bbs.git
 cd 3d_bbs
@@ -21,7 +25,7 @@ sudo make install
 
 ## Test code
 ### 1. Build
-- GPU
+- GPU (Please ignore the large number of warnings)
 ```
 cd 3d_bbs/test/
 mkdir build && cd build

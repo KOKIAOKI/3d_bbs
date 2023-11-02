@@ -46,11 +46,11 @@ public:
 
   void set_max_bucket_scan_count(int max_bucket_scan_count) { max_bucket_scan_count_ = max_bucket_scan_count; }
 
-  float get_min_res() { return min_level_res_; }
+  float get_min_res() const { return min_level_res_; }
 
-  int get_max_level() { return max_level_; }
+  int get_max_level() const { return max_level_; }
 
-  int get_max_bucket_scan_count() { return max_bucket_scan_count_; }
+  int get_max_bucket_scan_count() const { return max_bucket_scan_count_; }
 
   void create_voxelmaps(const std::vector<Eigen::Vector3f>& points, cudaStream_t stream);
 
