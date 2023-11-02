@@ -44,13 +44,13 @@ struct lookup_voxel_map {
       const std::uint32_t bucket_index = (hash + i) % voxelmap_info.num_buckets;
       const Eigen::Vector4i bucket = buckets[bucket_index];
 
-      if (bucket.x() != coord.x() || bucket.y() != coord.y() || bucket.z() != coord.z()){
+      if (bucket.x() != coord.x() || bucket.y() != coord.y() || bucket.z() != coord.z()) {
         continue;
       }
 
       if (bucket.w() == 1) {
         return 1;
-      }else{
+      } else {
         return 0;
       }
     }
