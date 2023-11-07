@@ -62,7 +62,7 @@ void BBS3D::create_cuda_graphs() {
   // Dummy transset
   std::vector<DiscreteTransformation> h_transset(graph_size_);
   for (int i = 0; i < graph_size_; i++) {
-    h_transset[i] = DiscreteTransformation(0, 0, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+    h_transset[i] = DiscreteTransformation(0);
   }
 
   d_transset_stock_.clear();
@@ -81,7 +81,7 @@ void BBS3D::create_cuda_graphs() {
 
   // save storage
   void* d_storage = nullptr;
-  size_t storage_bytes = 1024;
+  size_t storage_bytes = 1024 * 512;
   check_error << cudaMallocAsync(&d_storage, storage_bytes, stream);
 
   // capture graph
