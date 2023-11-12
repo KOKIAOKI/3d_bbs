@@ -227,13 +227,12 @@ void BBS3D::localize() {
     }
 
     if (branch_stock.size() >= branch_copy_size_) {
-      const auto transset_output = calc_scores_by_graph(branch_stock);
-
+      // TODO: fix cuda_graph calculation (Temporarily not using cuda_graph)
+      const auto transset_output = calc_scores(branch_stock);
       for (const auto& output : transset_output) {
         trans_queue.push(output);
       }
-
-      branch_stock.erase(branch_stock.begin(), branch_stock.begin() + branch_copy_size_);
+      branch_stock.clear();
     }
   }
 
