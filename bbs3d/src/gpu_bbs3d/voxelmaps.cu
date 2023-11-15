@@ -1,5 +1,4 @@
 #include <gpu_bbs3d/voxelmaps.cuh>
-
 #include <gpu_bbs3d/stream_manager/check_error.cuh>
 
 namespace gpu {

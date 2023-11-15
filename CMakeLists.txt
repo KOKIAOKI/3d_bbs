@@ -16,7 +16,6 @@ if(BUILD_CUDA)
     bbs3d/src/gpu_bbs3d/calc_score.cu
     bbs3d/src/gpu_bbs3d/discreate_transformation.cu
     bbs3d/src/gpu_bbs3d/voxelmaps.cu
-    bbs3d/src/gpu_bbs3d/stream_manager/stream_manager.cu
     bbs3d/src/gpu_bbs3d/stream_manager/check_error.cu
   )
 

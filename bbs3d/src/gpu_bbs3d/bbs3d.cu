@@ -1,3 +1,4 @@
+#include <gpu_bbs3d/voxelmaps.cuh>
 #include <gpu_bbs3d/bbs3d.cuh>
 #include <gpu_bbs3d/stream_manager/check_error.cuh>
 
@@ -14,27 +15,15 @@ int lcm(int a, int b) {
   return (a * b) / gcd_result;
 }
 
-BBS3D::BBS3D() : score_threshold_percentage_(0.0), src_size_in_graph_(-1), has_localized_(false) {
+BBS3D::BBS3D() : branch_copy_size_(10000), score_threshold_percentage_(0.0), src_size_(-1), has_localized_(false) {
   check_error << cudaStreamCreate(&stream);
-
-  stream_buffer_ptr_.reset(new StreamTempBufferRoundRobin);
-  num_streams_ = stream_buffer_ptr_->init_num_streams;
-
-  set_branch_copy_size(10000);
-  d_counts_ = nullptr;
 
   min_rpy_ << -0.02f, -0.02f, 0.0f;
   max_rpy_ << 0.02f, 0.02f, 2 * M_PI;
 }
 
 BBS3D::~BBS3D() {
-  check_error << cudaFreeAsync(d_counts_, stream);
   check_error << cudaStreamDestroy(stream);
-}
-
-void BBS3D::set_branch_copy_size(const int branch_copy_size) {
-  branch_copy_size_ = branch_copy_size - branch_copy_size % lcm(num_streams_, 8);
-  graph_size_ = branch_copy_size_ / num_streams_;  // Remainder of　this division is 0
 }
 
 void BBS3D::set_tar_points(const std::vector<Eigen::Vector3f>& points, float min_level_res, int max_level) {
@@ -53,36 +42,21 @@ void BBS3D::set_tar_points(const std::vector<Eigen::Vector3f>& points, float min
 }
 
 void BBS3D::set_src_points(const std::vector<Eigen::Vector3f>& points) {
-  const int src_size = points.size();
+  src_size_ = points.size();
   src_points_.clear();
   src_points_.shrink_to_fit();
-  src_points_.resize(src_size);
+  src_points_.resize(src_size_);
   std::copy(points.begin(), points.end(), src_points_.begin());
 
   d_src_points_.clear();
   d_src_points_.shrink_to_fit();
-  d_src_points_.resize(src_size);
+  d_src_points_.resize(src_size_);
   check_error << cudaMemcpyAsync(
     thrust::raw_pointer_cast(d_src_points_.data()),
     points.data(),
-    sizeof(Eigen::Vector3f) * src_size,
+    sizeof(Eigen::Vector3f) * src_size_,
     cudaMemcpyHostToDevice,
     stream);
-
-  if (src_size_in_graph_ != src_size) {
-    src_size_in_graph_ = src_size;
-    // Create source points index
-    std::vector<int> h_counts;
-    h_counts.resize(src_size);
-    for (int i = 0; i < src_size; i++) {
-      h_counts[i] = i;
-    }
-    if (d_counts_ != nullptr) check_error << cudaFreeAsync(d_counts_, stream);
-    check_error << cudaMallocAsync((void**)&d_counts_, sizeof(int) * src_size, stream);
-    check_error << cudaMemcpyAsync(d_counts_, h_counts.data(), sizeof(int) * src_size, cudaMemcpyHostToDevice, stream);
-    check_error << cudaStreamSynchronize(stream);
-    create_cuda_graphs();
-  }
 }
 
 void BBS3D::trans_search_range() {
@@ -185,7 +159,7 @@ std::vector<DiscreteTransformation> BBS3D::create_init_transset(const AngularInf
 
 void BBS3D::localize() {
   best_score_ = 0;
-  const int score_threshold = std::floor(src_size_in_graph_ * score_threshold_percentage_);
+  const int score_threshold = std::floor(src_size_ * score_threshold_percentage_);
   int best_score = score_threshold;
   DiscreteTransformation best_trans(best_score);
 
@@ -196,7 +170,7 @@ void BBS3D::localize() {
   const auto init_transset = create_init_transset(ang_info_vec[max_level]);
 
   // Calc initial transset scores
-  const auto init_transset_output = calc_scores(init_transset);  // TODO: calc scores by graph
+  const auto init_transset_output = calc_scores(init_transset);
 
   std::priority_queue<DiscreteTransformation> trans_queue(init_transset_output.begin(), init_transset_output.end());
 
@@ -227,7 +201,6 @@ void BBS3D::localize() {
     }
 
     if (branch_stock.size() >= branch_copy_size_) {
-      // TODO: fix cuda_graph calculation (Temporarily not using cuda_graph)
       const auto transset_output = calc_scores(branch_stock);
       for (const auto& output : transset_output) {
         trans_queue.push(output);
