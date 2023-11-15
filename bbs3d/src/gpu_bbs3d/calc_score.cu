@@ -3,7 +3,6 @@
 #include <gpu_bbs3d/stream_manager/check_error.cuh>
 
 namespace gpu {
-
 __global__ void calc_scores_kernel(
   const thrust::device_ptr<Eigen::Vector4i*> multi_buckets_ptrs,
   const thrust::device_ptr<VoxelMapInfo> voxelmap_info_ptr,

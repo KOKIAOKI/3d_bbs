@@ -94,7 +94,7 @@ public:
 
     std::unique_ptr<VoxelMaps> voxelmaps_ptr_;
 
-    int src_size_, branch_copy_size_, num_streams_, best_score_;
+    int src_size_, branch_copy_size_, best_score_;
     double score_threshold_percentage_;
     Eigen::Vector3f min_rpy_;
     Eigen::Vector3f max_rpy_;

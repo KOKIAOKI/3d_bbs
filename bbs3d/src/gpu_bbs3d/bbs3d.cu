@@ -3,18 +3,6 @@
 #include <gpu_bbs3d/stream_manager/check_error.cuh>
 
 namespace gpu {
-int gcd(int a, int b) {
-  if (b == 0) {
-    return a;
-  }
-  return gcd(b, a % b);
-}
-
-int lcm(int a, int b) {
-  int gcd_result = gcd(a, b);
-  return (a * b) / gcd_result;
-}
-
 BBS3D::BBS3D() : branch_copy_size_(10000), score_threshold_percentage_(0.0), src_size_(-1), has_localized_(false) {
   check_error << cudaStreamCreate(&stream);
 
