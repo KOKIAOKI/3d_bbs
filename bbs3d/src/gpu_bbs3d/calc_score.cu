@@ -19,7 +19,7 @@ __global__ void calc_scores_kernel(
   const VoxelMapInfo& voxelmap_info = *thrust::raw_pointer_cast(voxelmap_info_ptr + trans.level);
   const Eigen::Vector4i* buckets = thrust::raw_pointer_cast(multi_buckets_ptrs)[trans.level];
 
-  size_t score = 0;
+  int score = 0;
   for (size_t i = 0; i < num_points; i++) {
     const Eigen::Vector3f& point = thrust::raw_pointer_cast(points_ptr)[i];
 
@@ -51,7 +51,6 @@ __global__ void calc_scores_kernel(
 
 std::vector<DiscreteTransformation> BBS3D::calc_scores(const std::vector<DiscreteTransformation>& h_transset) {
   size_t transset_size = h_transset.size();
-
   thrust::device_vector<DiscreteTransformation> d_transset(transset_size);
   check_error << cudaMemcpyAsync(
     thrust::raw_pointer_cast(d_transset.data()),
@@ -60,7 +59,11 @@ std::vector<DiscreteTransformation> BBS3D::calc_scores(const std::vector<Discret
     cudaMemcpyHostToDevice,
     stream);
 
-  const size_t block_size = 1024;
+  size_t block_size;
+  if (transset_size > 1024)
+    block_size = 1024;
+  else
+    block_size = transset_size;
   const size_t num_blocks = (transset_size + (block_size - 1)) / block_size;
 
   calc_scores_kernel<<<num_blocks, block_size, 0, stream>>>(
