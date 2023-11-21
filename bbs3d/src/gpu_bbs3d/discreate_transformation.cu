@@ -5,6 +5,14 @@ DiscreteTransformation::DiscreteTransformation() {}
 
 DiscreteTransformation::DiscreteTransformation(int score) {
   this->score = score;
+  this->level = 0;
+  this->resolution = 0.0f;
+  this->x = 0.0f;
+  this->y = 0.0f;
+  this->z = 0.0f;
+  this->roll = 0.0f;
+  this->pitch = 0.0f;
+  this->yaw = 0.0f;
 }
 
 DiscreteTransformation::DiscreteTransformation(
