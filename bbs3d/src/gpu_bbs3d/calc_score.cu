@@ -7,11 +7,11 @@ __global__ void calc_scores_kernel(
   const thrust::device_ptr<Eigen::Vector4i*> multi_buckets_ptrs,
   const thrust::device_ptr<VoxelMapInfo> voxelmap_info_ptr,
   thrust::device_ptr<DiscreteTransformation> trans_ptr,
-  size_t transset_size,
+  size_t index_size,
   const thrust::device_ptr<Eigen::Vector3f> points_ptr,
   size_t num_points) {
   const size_t pose_index = threadIdx.x + blockIdx.x * blockDim.x;
-  if (pose_index > transset_size) {
+  if (pose_index > index_size) {
     return;
   }
 
@@ -59,18 +59,14 @@ std::vector<DiscreteTransformation> BBS3D::calc_scores(const std::vector<Discret
     cudaMemcpyHostToDevice,
     stream);
 
-  size_t block_size;
-  if (transset_size > 1024)
-    block_size = 1024;
-  else
-    block_size = transset_size;
+  const size_t block_size = 32;
   const size_t num_blocks = (transset_size + (block_size - 1)) / block_size;
 
   calc_scores_kernel<<<num_blocks, block_size, 0, stream>>>(
     voxelmaps_ptr_->d_multi_buckets_ptrs_.data(),
     voxelmaps_ptr_->d_voxelmaps_info_.data(),
     d_transset.data(),
-    transset_size,
+    transset_size - 1,
     d_src_points_.data(),
     src_size_);
 
