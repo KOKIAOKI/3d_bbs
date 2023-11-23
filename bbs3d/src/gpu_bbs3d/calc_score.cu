@@ -7,11 +7,11 @@ __global__ void calc_scores_kernel(
   const thrust::device_ptr<Eigen::Vector4i*> multi_buckets_ptrs,
   const thrust::device_ptr<VoxelMapInfo> voxelmap_info_ptr,
   thrust::device_ptr<DiscreteTransformation> trans_ptr,
-  size_t transset_size,
+  size_t index_size,
   const thrust::device_ptr<Eigen::Vector3f> points_ptr,
   size_t num_points) {
   const size_t pose_index = threadIdx.x + blockIdx.x * blockDim.x;
-  if (pose_index > transset_size) {
+  if (pose_index > index_size) {
     return;
   }
 
