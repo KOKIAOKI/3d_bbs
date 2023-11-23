@@ -18,12 +18,12 @@ Eigen::Vector3d to_eigen(const std::vector<double>& vec) {
 bool BBS3DTest::load_config(const std::string& config) {
   YAML::Node conf = YAML::LoadFile(config);
 
-  std::cout << "[YAML] Loading paths" << std::endl;
+  std::cout << "[YAML] Loading paths..." << std::endl;
   tar_path = conf["target_clouds"].as<std::string>();
   src_path = conf["source_clouds"].as<std::string>();
   output_path = conf["output_folder"].as<std::string>();
 
-  std::cout << "[YAML] Loading 3D-BBS parameters" << std::endl;
+  std::cout << "[YAML] Loading 3D-BBS parameters..." << std::endl;
   min_level_res = conf["min_level_res"].as<double>();
   max_level = conf["max_level"].as<int>();
 
@@ -32,7 +32,7 @@ bool BBS3DTest::load_config(const std::string& config) {
     return false;
   }
 
-  std::cout << "[YAML] Loading angular search range" << std::endl;
+  std::cout << "[YAML] Loading angular search range..." << std::endl;
   std::vector<double> min_rpy_temp = conf["min_rpy"].as<std::vector<double>>();
   std::vector<double> max_rpy_temp = conf["max_rpy"].as<std::vector<double>>();
   if (min_rpy_temp.size() == 3 && max_rpy_temp.size() == 3) {
@@ -43,10 +43,10 @@ bool BBS3DTest::load_config(const std::string& config) {
     return false;
   }
 
-  std::cout << "[YAML] Loading score threshold percentage" << std::endl;
+  std::cout << "[YAML] Loading score threshold percentage..." << std::endl;
   score_threshold_percentage = conf["score_threshold_percentage"].as<double>();
 
-  std::cout << "[YAML] Loading downsample souce clouds parameters" << std::endl;
+  std::cout << "[YAML] Loading downsample souce clouds parameters..." << std::endl;
   valid_tar_vgf = conf["valid_tar_vgf"].as<bool>();
   if (valid_tar_vgf) tar_leaf_size = conf["tar_leaf_size"].as<float>();
 

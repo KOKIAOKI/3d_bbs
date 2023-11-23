@@ -73,8 +73,8 @@ public:
     void localize();
 
   private:
-    void trans_search_range();
-    void angluar_search_range(std::vector<AngularInfo>& ang_info_vec);
+    void calc_trans_search_range();
+    void calc_angluar_search_range(std::vector<AngularInfo>& ang_info_vec);
 
     std::vector<DiscreteTransformation> create_init_transset(const AngularInfo& init_ang_info);
 
