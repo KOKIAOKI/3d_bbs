@@ -67,6 +67,10 @@ public:
 
     void set_score_threshold_percentage(float percentage) { score_threshold_percentage_ = percentage; }
 
+    std::vector<Eigen::Vector3f> get_src_points() const { return src_points_; }
+
+    std::vector<Eigen::Vector3f> get_tar_points() const { return tar_points_; }
+
     Eigen::Matrix4f get_global_pose() const { return global_pose_; }
 
     int get_best_score() const { return best_score_; }
