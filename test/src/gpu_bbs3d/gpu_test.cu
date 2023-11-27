@@ -45,7 +45,7 @@ int BBS3DTest::run(std::string config) {
   // ====3D-BBS====
   // Set target points
   auto initi_t1 = std::chrono::high_resolution_clock::now();
-  std::cout << "[Voxel map] creating hierarchical voxel map..." << std::endl;
+  std::cout << "[Voxel map] Creating hierarchical voxel map..." << std::endl;
   std::unique_ptr<gpu::BBS3D> bbs3d_ptr(new gpu::BBS3D);
   bbs3d_ptr->set_tar_points(tar_points, min_level_res, max_level);
   bbs3d_ptr->set_angular_search_range(min_rpy.cast<float>(), max_rpy.cast<float>());

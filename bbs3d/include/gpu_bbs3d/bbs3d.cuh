@@ -53,7 +53,10 @@ public:
     ~BBS3D();
 
     void set_tar_points(const std::vector<Eigen::Vector3f>& points, float min_level_res, int max_level);
+
     void set_src_points(const std::vector<Eigen::Vector3f>& points);
+
+    void set_trans_search_range(const std::vector<Eigen::Vector3f>& points);
 
     void set_angular_search_range(const Eigen::Vector3f& min_rpy, const Eigen::Vector3f& max_rpy) {
       min_rpy_ = min_rpy;
@@ -73,8 +76,7 @@ public:
     void localize();
 
   private:
-    void calc_trans_search_range();
-    void calc_angluar_search_range(std::vector<AngularInfo>& ang_info_vec);
+    void calc_angluar_info(std::vector<AngularInfo>& ang_info_vec);
 
     std::vector<DiscreteTransformation> create_init_transset(const AngularInfo& init_ang_info);
 
