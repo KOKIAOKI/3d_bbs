@@ -53,7 +53,7 @@ void BBS3D::set_trans_search_range(const std::vector<Eigen::Vector3f>& points) {
   Eigen::Vector3f min_xyz = Eigen::Vector3f::Constant(std::numeric_limits<float>::max());
   Eigen::Vector3f max_xyz = Eigen::Vector3f::Constant(std::numeric_limits<float>::lowest());
 
-  for (const auto& point : tar_points_) {
+  for (const auto& point : points) {
     min_xyz = min_xyz.cwiseMin(point);
     max_xyz = max_xyz.cwiseMax(point);
   }
