@@ -53,7 +53,10 @@ public:
     ~BBS3D();
 
     void set_tar_points(const std::vector<Eigen::Vector3f>& points, float min_level_res, int max_level);
+
     void set_src_points(const std::vector<Eigen::Vector3f>& points);
+
+    void set_trans_search_range(const std::vector<Eigen::Vector3f>& points);
 
     void set_angular_search_range(const Eigen::Vector3f& min_rpy, const Eigen::Vector3f& max_rpy) {
       min_rpy_ = min_rpy;
@@ -64,6 +67,10 @@ public:
 
     void set_score_threshold_percentage(float percentage) { score_threshold_percentage_ = percentage; }
 
+    std::vector<Eigen::Vector3f> get_src_points() const { return src_points_; }
+
+    std::vector<Eigen::Vector3f> get_tar_points() const { return tar_points_; }
+
     Eigen::Matrix4f get_global_pose() const { return global_pose_; }
 
     int get_best_score() const { return best_score_; }
@@ -73,8 +80,7 @@ public:
     void localize();
 
   private:
-    void calc_trans_search_range();
-    void calc_angluar_search_range(std::vector<AngularInfo>& ang_info_vec);
+    void calc_angluar_info(std::vector<AngularInfo>& ang_info_vec);
 
     std::vector<DiscreteTransformation> create_init_transset(const AngularInfo& init_ang_info);
 
