@@ -71,6 +71,12 @@ public:
 
     std::vector<Eigen::Vector3f> get_tar_points() const { return tar_points_; }
 
+    std::vector<std::pair<int, int>> get_trans_search_range() const {
+      return std::vector<std::pair<int, int>>{init_tx_range_, init_ty_range_, init_tz_range_};
+    }
+
+    std::vector<Eigen::Vector3f> get_angular_search_range() const { return std::vector<Eigen::Vector3f>{min_rpy_, max_rpy_}; }
+
     Eigen::Matrix4f get_global_pose() const { return global_pose_; }
 
     int get_best_score() const { return best_score_; }
