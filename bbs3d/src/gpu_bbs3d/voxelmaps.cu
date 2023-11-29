@@ -3,7 +3,7 @@
 
 namespace gpu {
 
-VoxelMaps::VoxelMaps() : min_level_res_(1.0f), max_level_(6), max_bucket_scan_count_(10) {}
+VoxelMaps::VoxelMaps() : min_level_res_(1.0f), max_level_(6), v_rate_(2.0f), max_bucket_scan_count_(10) {}
 
 VoxelMaps::~VoxelMaps() {}
 
@@ -47,7 +47,7 @@ void VoxelMaps::create_voxelmaps(const std::vector<Eigen::Vector3f>& points, cud
     DeviceBuckets d_buckets(buckets.size());
     check_error << cudaMemcpyAsync(thrust::raw_pointer_cast(d_buckets.data()), buckets.data(), buckets_datasize, cudaMemcpyHostToDevice, stream);
     d_multi_buckets_.emplace_back(d_buckets);
-    resolution = resolution * 2.0;
+    resolution = resolution * v_rate_;
   }
 
   // Extract d_multi_buckets_ pointers

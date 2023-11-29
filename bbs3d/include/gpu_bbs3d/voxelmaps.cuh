@@ -44,6 +44,8 @@ public:
 
   void set_max_level(int max_level) { max_level_ = max_level; }
 
+  void set_voxel_expantion_rate(float v_rate) { v_rate_ = v_rate; }
+
   void set_max_bucket_scan_count(int max_bucket_scan_count) { max_bucket_scan_count_ = max_bucket_scan_count; }
 
   float get_min_res() const { return min_level_res_; }
@@ -68,5 +70,6 @@ public:
 private:
   float min_level_res_;
   int max_level_, max_bucket_scan_count_;
+  float v_rate_;
 };
 }  // namespace gpu

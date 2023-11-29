@@ -3,9 +3,10 @@
 #include <gpu_bbs3d/stream_manager/check_error.cuh>
 
 namespace gpu {
-BBS3D::BBS3D() : branch_copy_size_(10000), score_threshold_percentage_(0.0), src_size_(-1), has_localized_(false) {
+BBS3D::BBS3D() : v_rate_(2.0f), branch_copy_size_(10000), score_threshold_percentage_(0.0), src_size_(-1), has_localized_(false) {
   check_error << cudaStreamCreate(&stream);
 
+  inv_v_rate_ = 1.0f / v_rate_;
   min_rpy_ << -0.02f, -0.02f, 0.0f;
   max_rpy_ << 0.02f, 0.02f, 2 * M_PI;
 }
@@ -24,6 +25,7 @@ void BBS3D::set_tar_points(const std::vector<Eigen::Vector3f>& points, float min
 
   voxelmaps_ptr_->set_min_res(min_level_res);
   voxelmaps_ptr_->set_max_level(max_level);
+  voxelmaps_ptr_->set_voxel_expantion_rate(v_rate_);
   voxelmaps_ptr_->create_voxelmaps(points, stream);
 
   // Detect translation range from target points
@@ -169,6 +171,7 @@ void BBS3D::localize() {
     auto trans = trans_queue.top();
     trans_queue.pop();
 
+    // Calculate remaining branch_stock when queue is empty
     if (trans_queue.empty() && !branch_stock.empty()) {
       const auto transset_output = calc_scores(branch_stock);
       for (const auto& output : transset_output) {
@@ -177,6 +180,7 @@ void BBS3D::localize() {
       branch_stock.clear();
     }
 
+    // pruning
     if (trans.score < best_score) {
       continue;
     }
@@ -186,7 +190,8 @@ void BBS3D::localize() {
       best_score = trans.score;
     } else {
       const int child_level = trans.level - 1;
-      trans.branch(branch_stock, child_level, ang_info_vec[child_level]);
+      const float child_res = trans.resolution * inv_v_rate_;
+      trans.branch(branch_stock, child_level, child_res, static_cast<int>(v_rate_), ang_info_vec[child_level]);
     }
 
     if (branch_stock.size() >= branch_copy_size_) {

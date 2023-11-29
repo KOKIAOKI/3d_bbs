@@ -33,7 +33,7 @@ public:
 
   Eigen::Matrix4f create_matrix();
 
-  void branch(std::vector<DiscreteTransformation>& b, const int child_level, const AngularInfo& ang_info);
+  void branch(std::vector<DiscreteTransformation>& b, const int child_level, const float child_res, const int v_rate, const AngularInfo& ang_info);
 
 public:
   int score;
@@ -61,6 +61,11 @@ public:
     void set_angular_search_range(const Eigen::Vector3f& min_rpy, const Eigen::Vector3f& max_rpy) {
       min_rpy_ = min_rpy;
       max_rpy_ = max_rpy;
+    }
+
+    void set_voxel_expantion_rate(const float rate) {
+      v_rate_ = rate;
+      inv_v_rate_ = 1.0f / rate;
     }
 
     void set_branch_copy_size(int size) { branch_copy_size_ = size; }
@@ -105,6 +110,9 @@ public:
     std::vector<thrust::device_vector<DiscreteTransformation>> d_transset_stock_;
 
     std::unique_ptr<VoxelMaps> voxelmaps_ptr_;
+
+    float v_rate_;  // voxel expansion rate
+    float inv_v_rate_;
 
     int src_size_, branch_copy_size_, best_score_;
     double score_threshold_percentage_;
