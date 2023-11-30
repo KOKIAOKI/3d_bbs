@@ -16,8 +16,8 @@ endif()
 
 # CUDA
 if(BUILD_CUDA)
-  CUDA_ADD_EXECUTABLE(gpu_test
-    src/gpu_bbs3d/gpu_test.cu
+  add_executable(gpu_test
+    src/gpu_bbs3d/gpu_test.cpp
   )
 
   target_include_directories(gpu_test 
@@ -27,7 +27,7 @@ if(BUILD_CUDA)
   )
 
   target_link_libraries(gpu_test
-  ${PCL_LIBRARIES}
+    ${PCL_LIBRARIES}
     yaml-cpp
     ${gpu_bbs3d_LIBRARY}
   )
