@@ -85,4 +85,19 @@ source_clouds: "/root/workspace/test_data/source"
 output_folder: "/root/workspace/test_data/output"
 ```
 
-### Setting up the environment is done! Follow the readme to build 3d_bbs.
+### Setting up the environment is done! Follow the readme to build 3d_bbs.  
+
+Exit from docker container
+``` 
+root@multirobot1-CILAB:~/workspace# exit
+``` 
+Start docker 
+``` 
+docker start <container_name>
+docker attach <container_name>
+``` 
+For example, 
+``` 
+docker start 3d_bbs_container
+docker attach 3d_bbs_container
+```
