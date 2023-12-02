@@ -1,7 +1,7 @@
 # How to start 3D_BBS with Docker
 
 Docker makes it easy to configure the configuration required to run 3D_BBS.  
-Before you start 3D_BBS with docker, you should install [docker](https://www.docker.com/) and [nvidia-docker](https://github.com/NVIDIA/nvidia-docker) in your PC.  
+Before you start 3D_BBS with docker, you should install [Docker](https://www.docker.com/) and [NVIDIA Container Toolkit](https://github.com/NVIDIA/nvidia-container-toolkit) in your PC.  
 Also, to install CUDA 12.0 from inside docker, the **NVIDIA driver version must be 525.60.11 or higher.**
 
 ## 1. Make 3D_BBS Docker image  
