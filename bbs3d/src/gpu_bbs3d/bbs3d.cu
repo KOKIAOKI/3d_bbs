@@ -175,6 +175,7 @@ void BBS3D::localize() {
     if (trans_queue.empty() && !branch_stock.empty()) {
       const auto transset_output = calc_scores(branch_stock);
       for (const auto& output : transset_output) {
+        if (output.score < best_score) continue;  // pruning
         trans_queue.push(output);
       }
       branch_stock.clear();
@@ -197,6 +198,7 @@ void BBS3D::localize() {
     if (branch_stock.size() >= branch_copy_size_) {
       const auto transset_output = calc_scores(branch_stock);
       for (const auto& output : transset_output) {
+        if (output.score < best_score) continue;  // pruning
         trans_queue.push(output);
       }
       branch_stock.clear();
