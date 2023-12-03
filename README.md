@@ -11,6 +11,11 @@ Fast and accurate 3D global localization using branch-and-bound scan matching.
   - (All bbs3d dependencies)
   - PCL
 
+### Support Docker 🐳 
+
+If nvidia driver is 525.60.11 or higher, try docker!  
+For more information, you can check [docker_start.md](./docker/docker_start.md)  
+
 ## 3d_bbs core source code
 ### Build and Install
 - GPU (Please ignore the large number of warnings)
