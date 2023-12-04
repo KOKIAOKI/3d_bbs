@@ -57,3 +57,45 @@ cd 3d_bbs/test/build/
 ./gpu_test <config_file_path>
 ```
 
+If you have your own ros2 bag data, you can convert LiDAR msgs to pcd file with package below so that point cloud aligns in the direction of gravitational acceleration using IMU msgs.  
+https://github.com/KOKIAOKI/ros2bag_to_pcd
+
+## ROS2 test code
+### 1. Build
+- Viewer
+```
+# Install dependencies
+sudo apt-get install -y libglm-dev libglfw3-dev libpng-dev libjpeg-dev libeigen3-dev libboost-filesystem-dev libboost-program-options-dev
+
+# Build and install Iridescence
+git clone https://github.com/koide3/iridescence --recursive
+mkdir iridescence/build && cd iridescence/build
+cmake ..
+make -j
+sudo make install
+```
+
+- gpu ros2 test
+```
+cd 3d_bbs/ros2_test
+colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
+```
+
+### 2. Download
+Please download [ros2 test data]()
+
+### 3. Config file setting
+
+### 4. Run
+First terminal
+```
+source install/
+ros2 launch ros2_test
+```
+
+Second terminal
+```
+ros2 bag play <ros2 bag file path>
+```
+
+
