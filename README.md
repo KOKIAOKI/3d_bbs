@@ -1,12 +1,21 @@
 # 3d_bbs
 Fast and accurate 3D global localization using branch-and-bound scan matching.  
+Please refer to our [paper](https://arxiv.org/abs/2310.10023).  
+
 <img alt="overview" src="figs/overview.jpg" width="50%">
+
+
+The latest implementation demonstrates faster processing times than those published in the paper.  
+Specifically, when tested in a real environment with the following hardware configuration (Intel Core i7-10700K 3.8GHz, 32GB RAM, and NVIDIA GeForce RTX2060), the processing times are as follows: 
+- Paper: 878 ms on average
+- **Latest**: **159 ms** on average  
+
 
 ## Dependencies
 - bbs3d (Lower versions are not tested)
   - Eigen3
   - CMake version 3.15 or higher
-  - CUDA version 12.0 or higher (for GPU run)
+  - GPU version: CUDA version 12.0 or higher
 - test
   - (All bbs3d dependencies)
   - PCL
@@ -30,7 +39,7 @@ sudo make install
 
 ## Test code
 ### 1. Build
-- GPU (Please ignore the large number of warnings)
+- GPU
 ```
 cd 3d_bbs/test/
 mkdir build && cd build
@@ -42,11 +51,11 @@ make -j8
 Please download [test data](https://drive.google.com/file/d/1JfdQjQ3-4qOmHtvYq8UafBCmbz45-F4Z/view?usp=drive_link).
 
 ### 3. Config file setting
+Config file format is **3d-bbs/test/config/test.yaml**  
 Please edit the config file as below:
-- 3.1 Config file format is **3d-bbs/test/config/test.yaml**
-- 3.2 Copy the **target** and **source** paths of the downloaded test data to **target_clouds** and **source_clouds** in test.yaml.
-- 3.3 Create the output folder where you want to save the output pcd and copy the path to **output_folder** in test.yaml.
-- 3.4 Test data work with default parameter values.
+1. Copy the **target** and **source** paths in the downloaded test_data to **target_clouds** and **source_clouds** items.
+1. Create the output folder where you want to save the output pcd and copy the path to **output_folder** in test.yaml.
+1. Test data work with default parameter values.  
 
 ![Alt text](figs/config_setting.gif)
 
@@ -54,6 +63,6 @@ Please edit the config file as below:
 - GPU
 ```
 cd 3d_bbs/test/build/
-./gpu_test [config_file_path]
+./gpu_test <config_file_path>
 ```
 

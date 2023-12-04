@@ -54,91 +54,31 @@ Eigen::Matrix4f DiscreteTransformation::create_matrix() {
   return (translation * yawAngle * pitchAngle * rollAngle).matrix();
 }
 
-void DiscreteTransformation::branch(std::vector<DiscreteTransformation>& b, const int child_level, const AngularInfo& ang_info) {
-  const float child_res = resolution * 0.5f;
-  for (int i = 0; i < ang_info.num_division.x(); i++) {
-    for (int j = 0; j < ang_info.num_division.y(); j++) {
-      for (int k = 0; k < ang_info.num_division.z(); k++) {
-        b.emplace_back(DiscreteTransformation(
-          0,
-          child_level,
-          child_res,
-          x,
-          y,
-          z,
-          roll + i * ang_info.rpy_res.x() + ang_info.min_rpy.x(),
-          pitch + j * ang_info.rpy_res.y() + ang_info.min_rpy.y(),
-          yaw + k * ang_info.rpy_res.z() + ang_info.min_rpy.z()));
-        b.emplace_back(DiscreteTransformation(
-          0,
-          child_level,
-          child_res,
-          x + child_res,
-          y,
-          z,
-          roll + i * ang_info.rpy_res.x() + ang_info.min_rpy.x(),
-          pitch + j * ang_info.rpy_res.y() + ang_info.min_rpy.y(),
-          yaw + k * ang_info.rpy_res.z() + ang_info.min_rpy.z()));
-        b.emplace_back(DiscreteTransformation(
-          0,
-          child_level,
-          child_res,
-          x,
-          y + child_res,
-          z,
-          roll + i * ang_info.rpy_res.x() + ang_info.min_rpy.x(),
-          pitch + j * ang_info.rpy_res.y() + ang_info.min_rpy.y(),
-          yaw + k * ang_info.rpy_res.z() + ang_info.min_rpy.z()));
-        b.emplace_back(DiscreteTransformation(
-          0,
-          child_level,
-          child_res,
-          x + child_res,
-          y + child_res,
-          z,
-          roll + i * ang_info.rpy_res.x() + ang_info.min_rpy.x(),
-          pitch + j * ang_info.rpy_res.y() + ang_info.min_rpy.y(),
-          yaw + k * ang_info.rpy_res.z() + ang_info.min_rpy.z()));
-        b.emplace_back(DiscreteTransformation(
-          0,
-          child_level,
-          child_res,
-          x,
-          y,
-          z + child_res,
-          roll + i * ang_info.rpy_res.x() + ang_info.min_rpy.x(),
-          pitch + j * ang_info.rpy_res.y() + ang_info.min_rpy.y(),
-          yaw + k * ang_info.rpy_res.z() + ang_info.min_rpy.z()));
-        b.emplace_back(DiscreteTransformation(
-          0,
-          child_level,
-          child_res,
-          x + child_res,
-          y,
-          z + child_res,
-          roll + i * ang_info.rpy_res.x() + ang_info.min_rpy.x(),
-          pitch + j * ang_info.rpy_res.y() + ang_info.min_rpy.y(),
-          yaw + k * ang_info.rpy_res.z() + ang_info.min_rpy.z()));
-        b.emplace_back(DiscreteTransformation(
-          0,
-          child_level,
-          child_res,
-          x,
-          y + child_res,
-          z + child_res,
-          roll + i * ang_info.rpy_res.x() + ang_info.min_rpy.x(),
-          pitch + j * ang_info.rpy_res.y() + ang_info.min_rpy.y(),
-          yaw + k * ang_info.rpy_res.z() + ang_info.min_rpy.z()));
-        b.emplace_back(DiscreteTransformation(
-          0,
-          child_level,
-          child_res,
-          x + child_res,
-          y + child_res,
-          z + child_res,
-          roll + i * ang_info.rpy_res.x() + ang_info.min_rpy.x(),
-          pitch + j * ang_info.rpy_res.y() + ang_info.min_rpy.y(),
-          yaw + k * ang_info.rpy_res.z() + ang_info.min_rpy.z()));
+void DiscreteTransformation::branch(
+  std::vector<DiscreteTransformation>& b,
+  const int child_level,
+  const float child_res,
+  const int v_rate,
+  const AngularInfo& ang_info) {
+  for (int i = 0; i < v_rate; i++) {
+    for (int j = 0; j < v_rate; j++) {
+      for (int k = 0; k < v_rate; k++) {
+        for (int l = 0; l < ang_info.num_division.x(); l++) {
+          for (int m = 0; m < ang_info.num_division.y(); m++) {
+            for (int n = 0; n < ang_info.num_division.z(); n++) {
+              b.emplace_back(DiscreteTransformation(
+                0,
+                child_level,
+                child_res,
+                x + child_res * i,
+                y + child_res * j,
+                z + child_res * k,
+                roll + l * ang_info.rpy_res.x() + ang_info.min_rpy.x(),
+                pitch + m * ang_info.rpy_res.y() + ang_info.min_rpy.y(),
+                yaw + n * ang_info.rpy_res.z() + ang_info.min_rpy.z()));
+            }
+          }
+        }
       }
     }
   }
