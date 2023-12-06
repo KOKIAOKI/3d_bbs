@@ -1,7 +1,5 @@
 import launch
 import launch_ros.actions
-from launch_ros.substitutions import FindPackageShare
-from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
 
 def generate_launch_description():

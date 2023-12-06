@@ -3,18 +3,18 @@
 #include <pcl/io/pcd_io.h>
 #include <pcl/common/transforms.h>
 
-// std::string createDate() {
-//   time_t t = time(nullptr);
-//   const tm* local_time = localtime(&t);
-//   std::stringstream s;
-//   s << "20" << local_time->tm_year - 100 << "_";
-//   s << local_time->tm_mon + 1 << "_";
-//   s << local_time->tm_mday << "_";
-//   s << local_time->tm_hour << "_";
-//   s << local_time->tm_min << "_";
-//   s << local_time->tm_sec;
-//   return (s.str());
-// }
+std::string createDate() {
+  time_t t = time(nullptr);
+  const tm* local_time = localtime(&t);
+  std::stringstream s;
+  s << "20" << local_time->tm_year - 100 << "_";
+  s << local_time->tm_mon + 1 << "_";
+  s << local_time->tm_mday << "_";
+  s << local_time->tm_hour << "_";
+  s << local_time->tm_min << "_";
+  s << local_time->tm_sec;
+  return (s.str());
+}
 
 template <typename T>
 void pcl_to_eigen(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud_ptr, std::vector<T>& points) {
@@ -55,4 +55,28 @@ void gravity_align(
   mat.block<3, 3>(0, 0) = rot;
 
   pcl::transformPointCloud(*cloud_ptr, *aligned_cloud_ptr, mat);
+}
+
+void transformPointCloudf(
+  const std::vector<Eigen::Vector3f>& source_points,
+  std::vector<Eigen::Vector3f>& output_points,
+  const Eigen::Matrix4f& trans_matrix) {  // Clear the output_points vector to ensure it's empty
+  output_points.clear();
+
+  // Reserve space for output_points for efficiency
+  output_points.reserve(source_points.size());
+
+  for (const auto& point : source_points) {
+    // Convert the 3D point to a homogeneous coordinate
+    Eigen::Vector4f homog_point(point[0], point[1], point[2], 1.0f);
+
+    // Transform the point using the matrix
+    Eigen::Vector4f transformed_homog = trans_matrix * homog_point;
+
+    // Convert the homogeneous coordinate back to 3D
+    Eigen::Vector3f transformed_point = transformed_homog.head<3>() / transformed_homog[3];
+
+    // Add the transformed point to the output_points vector
+    output_points.push_back(transformed_point);
+  }
 }

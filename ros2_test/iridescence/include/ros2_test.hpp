@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iostream>
+#include <thread>
 #include <Eigen/Core>
 #include <boost/filesystem.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -8,6 +9,13 @@
 #include <sensor_msgs/msg/imu.hpp>
 
 #include <gpu_bbs3d/bbs3d.cuh>
+
+// iridesence
+#include <glk/cuda_magic_headers.hpp>
+#include <glk/primitives/primitives.hpp>
+#include <guik/viewer/light_viewer.hpp>
+#include <glk/pointcloud_buffer.hpp>
+#include <guik/hovered_drawings.hpp>
 
 class ROS2Test : public rclcpp::Node {
 public:
@@ -50,6 +58,8 @@ private:
   std::pair<double, double> scan_range;
 
   // #ifdef BUILD_CUDA
-  std::unique_ptr<gpu::BBS3D> gpu_bbs3d_ptr;
+  gpu::BBS3D gpu_bbs3d;
   // #endif
+
+  std::shared_ptr<guik::LightViewer> viewer;
 };
