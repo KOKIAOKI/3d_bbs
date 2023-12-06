@@ -1,14 +1,13 @@
 import launch
 import launch_ros.actions
-from launch.substitutions import LaunchConfiguration
+import os
 
 def generate_launch_description():
-    config = LaunchConfiguration("config", default ='/home/koki/3d_bbs/ros2_test/config/developer.yaml')
-    gpu_ros2_test = launch_ros.actions.Node(
-        package='ros2_test',
-        executable='gpu_ros2_test',
+    config_file = os.path.join('config/ros2_test_iridescence.yaml')
+    gpu_ros2_test_iridescence = launch_ros.actions.Node(
+        package='ros2_test_iridescence',
+        executable='gpu_ros2_test_iridescence',
         output='screen',
-        parameters=[{"config":config}],
+        parameters=[{"config":config_file}],
     )
-
-    return launch.LaunchDescription([gpu_ros2_test])
+    return launch.LaunchDescription([gpu_ros2_test_iridescence,])

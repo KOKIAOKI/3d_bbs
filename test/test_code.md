@@ -1,5 +1,10 @@
 # Test code
 
+## Dependencies
+- (All bbs3d dependencies)
+- PCL
+
+## Test
 ### 1. Build
 - GPU
 ```
@@ -19,7 +24,7 @@ Please edit the config file as below:
 1. Create the output folder where you want to save the output pcd and copy the path to **output_folder** in test.yaml.
 1. Test data work with default parameter values.  
 
-![Alt text](figs/config_setting.gif)
+![Alt text](../figs/config_setting.gif)
 
 ### 4. Run
 - GPU

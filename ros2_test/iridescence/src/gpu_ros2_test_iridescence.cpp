@@ -10,7 +10,7 @@
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/common/transforms.h>
 
-ROS2Test::ROS2Test(const rclcpp::NodeOptions& node_options) : Node("gpu_ros2_test", node_options) {
+ROS2Test::ROS2Test(const rclcpp::NodeOptions& node_options) : Node("gpu_ros2_test_iridescence", node_options) {
   //  ==== Load config file ====
   std::cout << "[ROS2] Loading config file..." << std::endl;
   std::string config = this->declare_parameter<std::string>("config");

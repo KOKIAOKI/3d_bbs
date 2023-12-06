@@ -1,7 +1,7 @@
 <package>
-  <name>ros2_test_rviz2</name>
+  <name>ros2_test_iridescence</name>
   <version>1.0.0</version>
-  <description>ros2 test package with Rviz2</description>
+  <description>ros2 test package with Iridescence</description>
   <maintainer email="180447001@ccalumni.meijo-u.ac.jp">koki aoki</maintainer>
   <license>MIT</license>
 

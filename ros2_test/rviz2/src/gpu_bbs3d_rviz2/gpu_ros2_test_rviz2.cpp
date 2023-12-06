@@ -11,7 +11,7 @@
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/common/transforms.h>
 
-ROS2Test::ROS2Test(const rclcpp::NodeOptions& node_options) : Node("gpu_ros2_test", node_options) {
+ROS2Test::ROS2Test(const rclcpp::NodeOptions& node_options) : Node("gpu_ros2_test_rviz2", node_options) {
   //  ==== Load config file ====
   std::cout << "[ROS2] Loading config file..." << std::endl;
   std::string config = this->declare_parameter<std::string>("config");
@@ -146,7 +146,7 @@ void ROS2Test::click_callback(const std_msgs::msg::Bool::SharedPtr msg) {
     pcl::PointCloud<pcl::PointXYZ>::Ptr cut_cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
     for (size_t i = 0; i < src_cloud->points.size(); ++i) {
       pcl::PointXYZ point = src_cloud->points[i];
-      double norm = pcl::euclideanDistance(point, pcl::PointXYZ(0, 0, 0));
+      double norm = pcl::euclideanDistance(point, pcl::PointXYZ(0.0f, 0.0f, 0.0f));
 
       if (norm >= scan_range.first && norm <= scan_range.second) {
         cut_cloud_ptr->points.push_back(point);
