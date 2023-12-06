@@ -4,12 +4,6 @@
 - (All bbs3d dependencies)
 - ros2 humble
 
-## Support msg
-- Souce point cloud
-  - sensor_msgs::msg::PointCloud2
-- IMU
-  - sensor_msgs::msg::Imu
-
 ## Test
 You can choose either Rviz2 or iridescence viewer.
 ## A. Rviz2
@@ -26,9 +20,11 @@ Please download [ros2_test_data]().
 ### 3. Config file setting
 Config file format is 3d_bbs/ros2_test/config/ros2_test_rviz2.yaml
 
-Copy the target paths in the downloaded ros2_test_data to target_clouds items.
-
-Test data work with default parameter values.
+-  **target_clouds**: Copy the target folder path containing the pcd files.
+- Specify the ros2 bag topic:
+  - **lidar_topic_name**: Support msg type: sensor_msgs::msg::PointCloud2
+  - **imu_topic_name**: Support msg type: sensor_msgs::msg::Imu
+- ros2 test data work with default parameter values.
 
 ### 4. Run
 First terminal

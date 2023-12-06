@@ -5,6 +5,8 @@
 #include <Eigen/Core>
 #include <boost/filesystem.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <tf2_ros/transform_broadcaster.h>
+#include <geometry_msgs/msg/transform_stamped.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <sensor_msgs/msg/imu.hpp>
 #include <std_msgs/msg/bool.hpp>
@@ -25,6 +27,7 @@ private:
   bool load_config(const std::string& config);
   template <typename T>
   bool load_tar_clouds(std::vector<T>& points);
+  void broadcast_viewer_frame(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud);
   void click_callback(const std_msgs::msg::Bool::SharedPtr msg);
   void cloud_callback(const sensor_msgs::msg::PointCloud2::SharedPtr msg);
   void imu_callback(const sensor_msgs::msg::Imu::SharedPtr msg);
@@ -46,6 +49,9 @@ private:
   rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr global_pose_pub_;
   rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr score_pub_;
   rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr time_pub_;
+
+  // tf
+  tf2_ros::TransformBroadcaster tf2_broadcaster_;
 
   // msg
   sensor_msgs::msg::PointCloud2::SharedPtr source_cloud_msg_;

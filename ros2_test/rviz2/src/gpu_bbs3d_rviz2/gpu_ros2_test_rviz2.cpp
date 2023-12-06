@@ -11,7 +11,7 @@
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/common/transforms.h>
 
-ROS2Test::ROS2Test(const rclcpp::NodeOptions& node_options) : Node("gpu_ros2_test_rviz2", node_options) {
+ROS2Test::ROS2Test(const rclcpp::NodeOptions& node_options) : Node("gpu_ros2_test_rviz2", node_options), tf2_broadcaster_(*this) {
   //  ==== Load config file ====
   std::cout << "[ROS2] Loading config file..." << std::endl;
   std::string config = this->declare_parameter<std::string>("config");
@@ -105,9 +105,34 @@ bool ROS2Test::load_tar_clouds(std::vector<T>& points) {
   points_msg->header.stamp = this->now();
   tar_points_pub_->publish(*points_msg);
 
+  // broadcast viewer frame
+  broadcast_viewer_frame(tar_cloud_ptr);
+
   // pcl to eigen
   pcl_to_eigen(tar_cloud_ptr, points);
   return true;
+}
+
+void ROS2Test::broadcast_viewer_frame(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud) {
+  // Calculate the center of the point cloud
+  Eigen::Vector4f centroid;
+  pcl::compute3DCentroid(*cloud, centroid);
+
+  // Create a transform message
+  geometry_msgs::msg::TransformStamped transformStamped;
+  transformStamped.header.stamp = this->now();
+  transformStamped.header.frame_id = "map";
+  transformStamped.child_frame_id = "viewer";
+  transformStamped.transform.translation.x = centroid[0];
+  transformStamped.transform.translation.y = centroid[1];
+  transformStamped.transform.translation.z = centroid[2];
+  transformStamped.transform.rotation.x = 0.0;
+  transformStamped.transform.rotation.y = 0.0;
+  transformStamped.transform.rotation.z = 0.0;
+  transformStamped.transform.rotation.w = 1.0;
+
+  // Broadcast the transform
+  tf2_broadcaster_.sendTransform(transformStamped);
 }
 
 void ROS2Test::click_callback(const std_msgs::msg::Bool::SharedPtr msg) {

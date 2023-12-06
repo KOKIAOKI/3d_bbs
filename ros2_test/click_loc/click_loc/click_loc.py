@@ -12,10 +12,14 @@ class ClickLockPublisher(Node):
         # Create GUI window
         self.root = tk.Tk()
         self.root.title("ROS2 Publisher GUI")
+        self.root.geometry("300x200")  # Set the window size to 300x200
 
         # Create button
         self.publish_button = tk.Button(self.root, text="localize", command=self.publish_message)
         self.publish_button.pack()
+
+        # Expand the size of the button
+        self.publish_button.config(width=20, height=10)
 
     def publish_message(self):
         msg = Bool()
