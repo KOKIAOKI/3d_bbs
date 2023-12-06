@@ -4,6 +4,8 @@
 #include <thread>
 #include <Eigen/Core>
 #include <boost/filesystem.hpp>
+
+// ros2
 #include <rclcpp/rclcpp.hpp>
 #include <tf2_ros/transform_broadcaster.h>
 #include <geometry_msgs/msg/transform_stamped.hpp>
@@ -13,6 +15,8 @@
 #include <std_msgs/msg/int32.hpp>
 #include <std_msgs/msg/float32.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
+
+// pcl
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
@@ -27,16 +31,16 @@ private:
   bool load_config(const std::string& config);
   template <typename T>
   bool load_tar_clouds(std::vector<T>& points);
-  void broadcast_viewer_frame(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud);
+  void broadcast_viewer_frame(const std::vector<Eigen::Vector3f>& points);
   void click_callback(const std_msgs::msg::Bool::SharedPtr msg);
-  void cloud_callback(const sensor_msgs::msg::PointCloud2::SharedPtr msg);
-  void imu_callback(const sensor_msgs::msg::Imu::SharedPtr msg);
   void publish_results(
     const std_msgs::msg::Header& header,
     const pcl::PointCloud<pcl::PointXYZ>::Ptr& points_cloud_ptr,
     const Eigen::Matrix4f& best_pose,
     const int best_score,
     const float time);
+  void cloud_callback(const sensor_msgs::msg::PointCloud2::SharedPtr msg);
+  void imu_callback(const sensor_msgs::msg::Imu::SharedPtr msg);
 
   // sub
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr click_sub_;
@@ -57,6 +61,9 @@ private:
   sensor_msgs::msg::PointCloud2::SharedPtr source_cloud_msg_;
   std::vector<sensor_msgs::msg::Imu> imu_buffer;
 
+  gpu::BBS3D gpu_bbs3d;
+
+  // Config
   // path
   std::string tar_path;
 
@@ -79,8 +86,4 @@ private:
   float tar_leaf_size, src_leaf_size;
   bool cut_src_points;
   std::pair<double, double> scan_range;
-
-  // #ifdef BUILD_CUDA
-  gpu::BBS3D gpu_bbs3d;
-  // #endif
 };

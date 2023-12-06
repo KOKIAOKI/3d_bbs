@@ -27,6 +27,8 @@ Config file format is 3d_bbs/ros2_test/config/ros2_test_rviz2.yaml
 - ros2 test data work with default parameter values.
 
 ### 4. Run
+Refer to this [video]()
+
 First terminal
 ```
 cd 3d_bbs/ros2_test
@@ -65,6 +67,8 @@ colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release --package
 Follow the same steps as **2. Download** and **3. Congig file setting** in **A. Rviz2**.
  
  ### 4. Run
+Refer to this [video]()
+
 First terminal
 ```
 cd 3d_bbs/ros2_test

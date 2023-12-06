@@ -98,6 +98,8 @@ bool ROS2Test::load_tar_clouds(std::vector<T>& points) {
     *tar_cloud_ptr = *cloud_ptr;
   }
 
+  std::this_thread::sleep_for(std::chrono::seconds(1));
+
   // publish map
   sensor_msgs::msg::PointCloud2::SharedPtr points_msg(new sensor_msgs::msg::PointCloud2);
   pcl::toROSMsg(*tar_cloud_ptr, *points_msg);
@@ -105,27 +107,35 @@ bool ROS2Test::load_tar_clouds(std::vector<T>& points) {
   points_msg->header.stamp = this->now();
   tar_points_pub_->publish(*points_msg);
 
-  // broadcast viewer frame
-  broadcast_viewer_frame(tar_cloud_ptr);
-
   // pcl to eigen
   pcl_to_eigen(tar_cloud_ptr, points);
+
+  // broadcast viewer frame
+  broadcast_viewer_frame(points);
   return true;
 }
 
-void ROS2Test::broadcast_viewer_frame(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud) {
+void ROS2Test::broadcast_viewer_frame(const std::vector<Eigen::Vector3f>& points) {
   // Calculate the center of the point cloud
-  Eigen::Vector4f centroid;
-  pcl::compute3DCentroid(*cloud, centroid);
+  Eigen::Vector3d inv_vec = -points[0].cast<double>();
+  Eigen::Vector3d centroid = Eigen::Vector3d::Zero();
+  for (const auto& point : points) {
+    centroid += (point.cast<double>() + inv_vec);
+  }
+  centroid /= points.size();
+  centroid += points[0].cast<double>();
+
+  std::cout << "[Viewer]: "
+            << "x: " << centroid[0] << ", y: " << centroid[1] << ", z: " << centroid[2] << std::endl;
 
   // Create a transform message
   geometry_msgs::msg::TransformStamped transformStamped;
   transformStamped.header.stamp = this->now();
   transformStamped.header.frame_id = "map";
   transformStamped.child_frame_id = "viewer";
-  transformStamped.transform.translation.x = centroid[0];
-  transformStamped.transform.translation.y = centroid[1];
-  transformStamped.transform.translation.z = centroid[2];
+  transformStamped.transform.translation.x = static_cast<float>(centroid[0]);
+  transformStamped.transform.translation.y = static_cast<float>(centroid[1]);
+  transformStamped.transform.translation.z = static_cast<float>(centroid[2]);
   transformStamped.transform.rotation.x = 0.0;
   transformStamped.transform.rotation.y = 0.0;
   transformStamped.transform.rotation.z = 0.0;
@@ -136,7 +146,7 @@ void ROS2Test::broadcast_viewer_frame(const pcl::PointCloud<pcl::PointXYZ>::Ptr&
 }
 
 void ROS2Test::click_callback(const std_msgs::msg::Bool::SharedPtr msg) {
-  std::cout << "click_callback" << std::endl;
+  std::cout << "click callback" << std::endl;
   if (!imu_buffer.size()) return;
   auto start = std::chrono::system_clock::now();
 
@@ -186,6 +196,7 @@ void ROS2Test::click_callback(const std_msgs::msg::Bool::SharedPtr msg) {
   pcl_to_eigen(src_cloud, src_points);
   gpu_bbs3d.set_src_points(src_points);
 
+  std::cout << "[Localize] start" << std::endl;
   // auto start_loc = std::chrono::system_clock::now();
   gpu_bbs3d.localize();  // gloal localization
   // auto end_loc = std::chrono::system_clock::now();
@@ -202,19 +213,6 @@ void ROS2Test::click_callback(const std_msgs::msg::Bool::SharedPtr msg) {
   // publish results
   float time = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() / 1000.0f;
   publish_results(source_cloud_msg_->header, src_cloud, gpu_bbs3d.get_global_pose(), gpu_bbs3d.get_best_score(), time);
-}
-
-void ROS2Test::cloud_callback(const sensor_msgs::msg::PointCloud2::SharedPtr msg) {
-  if (!msg) return;
-  source_cloud_msg_ = msg;
-}
-
-void ROS2Test::imu_callback(const sensor_msgs::msg::Imu::SharedPtr msg) {
-  if (!msg) return;
-  imu_buffer.emplace_back(*msg);
-  if (imu_buffer.size() > 30) {
-    imu_buffer.erase(imu_buffer.begin());
-  }
 }
 
 void ROS2Test::publish_results(
@@ -254,4 +252,17 @@ void ROS2Test::publish_results(
   std_msgs::msg::Float32::SharedPtr time_msg(new std_msgs::msg::Float32);
   time_msg->data = time;
   time_pub_->publish(*time_msg);
+}
+
+void ROS2Test::cloud_callback(const sensor_msgs::msg::PointCloud2::SharedPtr msg) {
+  if (!msg) return;
+  source_cloud_msg_ = msg;
+}
+
+void ROS2Test::imu_callback(const sensor_msgs::msg::Imu::SharedPtr msg) {
+  if (!msg) return;
+  imu_buffer.emplace_back(*msg);
+  if (imu_buffer.size() > 30) {
+    imu_buffer.erase(imu_buffer.begin());
+  }
 }

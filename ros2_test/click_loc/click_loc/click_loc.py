@@ -11,7 +11,7 @@ class ClickLockPublisher(Node):
 
         # Create GUI window
         self.root = tk.Tk()
-        self.root.title("ROS2 Publisher GUI")
+        self.root.title("click loc")
         self.root.geometry("300x200")  # Set the window size to 300x200
 
         # Create button
@@ -25,7 +25,6 @@ class ClickLockPublisher(Node):
         msg = Bool()
         msg.data = True  # Change this value based on your requirements
         self.publisher_.publish(msg)
-        self.get_logger().info('Publishing /click_loc: {}'.format(msg.data))
 
     def run(self):
         self.root.mainloop()
