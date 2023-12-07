@@ -41,10 +41,7 @@ void eigen_to_pcl(const std::vector<Eigen::Vector3d>& points, pcl::PointCloud<pc
   });
 }
 
-void gravity_align(
-  const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud_ptr,
-  pcl::PointCloud<pcl::PointXYZ>::Ptr& aligned_cloud_ptr,
-  const sensor_msgs::msg::Imu& imu_msg) {
+Eigen::Matrix4f gravity_align(const sensor_msgs::msg::Imu& imu_msg) {
   Eigen::Vector3f acc(imu_msg.linear_acceleration.x, imu_msg.linear_acceleration.y, imu_msg.linear_acceleration.z);
   Eigen::Vector3f th;
   th.x() = std::atan2(acc.y(), acc.z());
@@ -57,5 +54,13 @@ void gravity_align(
   Eigen::Matrix4f mat = Eigen::Matrix4f::Identity();
   mat.block<3, 3>(0, 0) = rot;
 
+  return mat;
+}
+
+void gravity_align(
+  const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud_ptr,
+  pcl::PointCloud<pcl::PointXYZ>::Ptr& aligned_cloud_ptr,
+  const sensor_msgs::msg::Imu& imu_msg) {
+  Eigen::Matrix4f mat = gravity_align(imu_msg);
   pcl::transformPointCloud(*cloud_ptr, *aligned_cloud_ptr, mat);
 }

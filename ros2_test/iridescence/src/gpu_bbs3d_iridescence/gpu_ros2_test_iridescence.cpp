@@ -36,19 +36,6 @@ ROS2Test::ROS2Test(const rclcpp::NodeOptions& node_options) : Node("gpu_ros2_tes
   std::cout << "   [ROS2] 3D-BBS initialized" << std::endl;
   std::cout << "*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*" << std::endl;
 
-  // main viewer
-  auto viewer = guik::LightViewer::instance();
-  auto trg_buffer = std::make_shared<glk::PointCloudBuffer>(tar_points);
-  Eigen::Matrix4f transformation = Eigen::Matrix4f::Identity();
-  auto shader_setting_trg = guik::Rainbow(transformation).set_point_scale(1.0f);
-  viewer->update_drawable("trg", trg_buffer, shader_setting_trg);
-  glk::COLORMAP colormap = glk::COLORMAP::OCEAN;
-  viewer->set_colormap(colormap);
-  viewer->use_topdown_camera_control();
-  viewer->lookat(tar_points[0]);
-  viewer->spin_once();
-  std::cout << "[ROS2] Viewer" << std::endl;
-
   // ==== ROS2 sub====
   cloud_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     lidar_topic_name,
@@ -109,7 +96,7 @@ void ROS2Test::click_callback() {
   if (!imu_buffer.size()) return;
 
   pcl::PointCloud<pcl::PointXYZ>::Ptr src_cloud(new pcl::PointCloud<pcl::PointXYZ>);
-  pcl::fromROSMsg(*msg, *src_cloud);
+  pcl::fromROSMsg(*source_cloud_msg_, *src_cloud);
 
   // filter
   if (valid_src_vgf) {
@@ -135,7 +122,7 @@ void ROS2Test::click_callback() {
     *src_cloud = *cut_cloud_ptr;
   }
 
-  int imu_index = get_nearest_imu_index(imu_buffer, msg->header.stamp);
+  int imu_index = get_nearest_imu_index(imu_buffer, source_cloud_msg_->header.stamp);
   gravity_align(src_cloud, src_cloud, imu_buffer[imu_index]);
 
   std::vector<Eigen::Vector3f> src_points;

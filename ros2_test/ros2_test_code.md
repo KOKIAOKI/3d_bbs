@@ -4,6 +4,13 @@
 - (All bbs3d dependencies)
 - ros2 humble
 
+## Conditions for demonstrating 3D-BBS performance
+- When the robot is stationary.
+  - Reason: The error in the direction of gravitational acceleration increases while the robot is running.
+- When the source point is completely included in the map point cloud.
+  - Reason: Another pose that encompasses all source point cloud is estimated when source point cloud includes outside the map environment. 
+  - Please use the downsampling and point cloud cutting tools.
+
 ## Test
 You can choose either Rviz2 or iridescence viewer.
 ## A. Rviz2
@@ -20,26 +27,34 @@ Please download [ros2_test_data]().
 ### 3. Config file setting
 Config file format is 3d_bbs/ros2_test/config/ros2_test_rviz2.yaml
 
--  **target_clouds**: Copy the target folder path containing the pcd files.
-- Specify the ros2 bag topic:
-  - **lidar_topic_name**: Support msg type: sensor_msgs::msg::PointCloud2
-  - **imu_topic_name**: Support msg type: sensor_msgs::msg::Imu
-- ros2 test data work with default parameter values.
+- **target_clouds**: Copy the target folder path containing the pcd files.
+- **lidar_topic_name**: Support msg type: sensor_msgs::msg::PointCloud2
+- **imu_topic_name**: Support msg type: sensor_msgs::msg::Imu
+ros2 test data work with default parameter values.
 
 ### 4. Run
 Refer to this [video]()
 
-First terminal
+**1. First terminal**
 ```
 cd 3d_bbs/ros2_test
 source install/setup.bash
 ros2 launch ros2_test gpu_ros2_test_rviz2_launch.py
 ```
 
-Second terminal
+**2. Second terminal**
 ```
 ros2 bag play <ros2 bag file path>
 ```
+
+**3. Wait until this message is displayed.**
+```
+ *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+    [ROS2] 3D-BBS initialized
+ *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+```
+**4. Click the localize buttom**  
+<img alt="overview" src="../figs/click_loc.png" width="10%">
 
 ## B. Iridescence
 ### 1. Build and install
@@ -53,7 +68,7 @@ sudo apt-get install -y libglm-dev libglfw3-dev libpng-dev libjpeg-dev libeigen3
 git clone https://github.com/koide3/iridescence --recursive
 mkdir iridescence/build && cd iridescence/build
 cmake ..
-make -j
+make -j8
 sudo make install
 ```
 
@@ -69,14 +84,22 @@ Follow the same steps as **2. Download** and **3. Congig file setting** in **A. 
  ### 4. Run
 Refer to this [video]()
 
-First terminal
+**1. First terminal**
 ```
 cd 3d_bbs/ros2_test
 source install/setup.bash
 ros2 launch ros2_test_iridescence gpu_ros2_test_iridescence_launch.py
 ```
 
-Second terminal
+**2. Second terminal**
 ```
 ros2 bag play <ros2 bag file path>
 ```
+
+**3. Wait until this message is displayed.**
+```
+ *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+    [ROS2] 3D-BBS initialized
+ *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
+```
+**4. Click the localize buttom**  

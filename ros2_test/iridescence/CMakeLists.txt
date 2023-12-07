@@ -23,8 +23,8 @@ endif()
 # CUDA
 if(BUILD_CUDA)
   add_executable(gpu_ros2_test_iridescence
-    src/gpu_bbs3d/gpu_ros2_test_iridescence.cpp
-    src/gpu_bbs3d/gpu_ros2_test_iridescence_node.cpp
+    src/gpu_bbs3d_iridescence/gpu_ros2_test_iridescence.cpp
+    src/gpu_bbs3d_iridescence/gpu_ros2_test_iridescence_node.cpp
   )
 
   target_include_directories(gpu_ros2_test_iridescence 

@@ -98,6 +98,7 @@ bool ROS2Test::load_tar_clouds(std::vector<T>& points) {
     *tar_cloud_ptr = *cloud_ptr;
   }
 
+  // Wait for rviz2
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
   // publish map
@@ -146,9 +147,16 @@ void ROS2Test::broadcast_viewer_frame(const std::vector<Eigen::Vector3f>& points
 }
 
 void ROS2Test::click_callback(const std_msgs::msg::Bool::SharedPtr msg) {
-  std::cout << "click callback" << std::endl;
-  if (!imu_buffer.size()) return;
-  auto start = std::chrono::system_clock::now();
+  if (!msg->data) return;
+  if (!source_cloud_msg_) {
+    std::cout << "point cloud msg is not received" << std::endl;
+    return;
+  }
+
+  if (!imu_buffer.size()) {
+    std::cout << "imu msg is not received" << std::endl;
+    return;
+  }
 
   pcl::PointCloud<pcl::PointXYZ>::Ptr src_cloud(new pcl::PointCloud<pcl::PointXYZ>);
   pcl::fromROSMsg(*source_cloud_msg_, *src_cloud);
@@ -185,21 +193,19 @@ void ROS2Test::click_callback(const std_msgs::msg::Bool::SharedPtr msg) {
   gpu_bbs3d.set_src_points(src_points);
 
   std::cout << "[Localize] start" << std::endl;
-  // auto start_loc = std::chrono::system_clock::now();
+  auto start_loc = std::chrono::system_clock::now();
   gpu_bbs3d.localize();  // gloal localization
-  // auto end_loc = std::chrono::system_clock::now();
+  auto end_loc = std::chrono::system_clock::now();
 
   if (!gpu_bbs3d.has_localized()) {
     std::cout << "[Failed] Score is below the threshold." << std::endl;
     return;
   }
 
-  auto end = std::chrono::system_clock::now();
-  std::cout << "[Localize] time: " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() / 1000.0f << "ms" << std::endl;
+  float time = std::chrono::duration_cast<std::chrono::microseconds>(end_loc - start_loc).count() / 1000.0f;
+  std::cout << "[Localize] time: " << time << "ms" << std::endl;
   std::cout << "[Localize] score: " << gpu_bbs3d.get_best_score() << std::endl;
 
-  // publish results
-  float time = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() / 1000.0f;
   publish_results(source_cloud_msg_->header, src_cloud, gpu_bbs3d.get_global_pose(), gpu_bbs3d.get_best_score(), time);
 }
 
