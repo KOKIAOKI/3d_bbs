@@ -59,3 +59,27 @@ void gravity_align(
 
   pcl::transformPointCloud(*cloud_ptr, *aligned_cloud_ptr, mat);
 }
+
+void transform_pointcloud(
+  const std::vector<Eigen::Vector3f>& source_points,
+  std::vector<Eigen::Vector3f>& output_points,
+  const Eigen::Matrix4f& trans_matrix) {  // Clear the output_points vector to ensure it's empty
+  output_points.clear();
+
+  // Reserve space for output_points for efficiency
+  output_points.reserve(source_points.size());
+
+  for (const auto& point : source_points) {
+    // Convert the 3D point to a homogeneous coordinate
+    Eigen::Vector4f homog_point(point[0], point[1], point[2], 1.0f);
+
+    // Transform the point using the matrix
+    Eigen::Vector4f transformed_homog = trans_matrix * homog_point;
+
+    // Convert the homogeneous coordinate back to 3D
+    Eigen::Vector3f transformed_point = transformed_homog.head<3>() / transformed_homog[3];
+
+    // Add the transformed point to the output_points vector
+    output_points.push_back(transformed_point);
+  }
+}

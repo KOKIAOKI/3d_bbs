@@ -153,19 +153,6 @@ void ROS2Test::click_callback(const std_msgs::msg::Bool::SharedPtr msg) {
   pcl::PointCloud<pcl::PointXYZ>::Ptr src_cloud(new pcl::PointCloud<pcl::PointXYZ>);
   pcl::fromROSMsg(*source_cloud_msg_, *src_cloud);
 
-  // get index of imu buffer that is closest to the current timestamp
-  int imu_index = 0;
-  double min_diff = 1000;
-  for (int i = 0; i < imu_buffer.size(); ++i) {
-    double diff = std::abs(
-      imu_buffer[i].header.stamp.sec + imu_buffer[i].header.stamp.nanosec * 1e-9 - source_cloud_msg_->header.stamp.sec -
-      source_cloud_msg_->header.stamp.nanosec * 1e-9);
-    if (diff < min_diff) {
-      imu_index = i;
-      min_diff = diff;
-    }
-  }
-
   // filter
   if (valid_src_vgf) {
     pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>());
@@ -190,6 +177,7 @@ void ROS2Test::click_callback(const std_msgs::msg::Bool::SharedPtr msg) {
     *src_cloud = *cut_cloud_ptr;
   }
 
+  int imu_index = get_nearest_imu_index(imu_buffer, source_cloud_msg_->header.stamp);
   gravity_align(src_cloud, src_cloud, imu_buffer[imu_index]);
 
   std::vector<Eigen::Vector3f> src_points;
@@ -213,6 +201,21 @@ void ROS2Test::click_callback(const std_msgs::msg::Bool::SharedPtr msg) {
   // publish results
   float time = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() / 1000.0f;
   publish_results(source_cloud_msg_->header, src_cloud, gpu_bbs3d.get_global_pose(), gpu_bbs3d.get_best_score(), time);
+}
+
+int ROS2Test::get_nearest_imu_index(const std::vector<sensor_msgs::msg::Imu>& imu_buffer, const builtin_interfaces::msg::Time& stamp) {
+  int imu_index = 0;
+  double min_diff = 1000;
+  for (int i = 0; i < imu_buffer.size(); ++i) {
+    double diff = std::abs(
+      imu_buffer[i].header.stamp.sec + imu_buffer[i].header.stamp.nanosec * 1e-9 - source_cloud_msg_->header.stamp.sec -
+      source_cloud_msg_->header.stamp.nanosec * 1e-9);
+    if (diff < min_diff) {
+      imu_index = i;
+      min_diff = diff;
+    }
+  }
+  return imu_index;
 }
 
 void ROS2Test::publish_results(

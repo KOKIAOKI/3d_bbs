@@ -1,6 +1,7 @@
 #include <ros2_test.hpp>
 #include <load.hpp>
 #include <util.hpp>
+#include <chrono>
 
 // pcl
 #include <pcl_conversions/pcl_conversions.h>
@@ -49,15 +50,12 @@ ROS2Test::ROS2Test(const rclcpp::NodeOptions& node_options) : Node("gpu_ros2_tes
   std::cout << "[ROS2] Viewer" << std::endl;
 
   // ==== ROS2 sub====
-  cloud_sub = this->create_subscription<sensor_msgs::msg::PointCloud2>(
+  cloud_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     lidar_topic_name,
-    rclcpp::SensorDataQoS(),
+    100,
     std::bind(&ROS2Test::cloud_callback, this, std::placeholders::_1));
 
-  imu_sub = this->create_subscription<sensor_msgs::msg::Imu>(
-    imu_topic_name,
-    rclcpp::SensorDataQoS(),
-    std::bind(&ROS2Test::imu_callback, this, std::placeholders::_1));
+  imu_sub_ = this->create_subscription<sensor_msgs::msg::Imu>(imu_topic_name, 100, std::bind(&ROS2Test::imu_callback, this, std::placeholders::_1));
 }
 
 ROS2Test::~ROS2Test() {}
@@ -106,7 +104,8 @@ bool ROS2Test::load_tar_clouds(std::vector<T>& points) {
   return true;
 }
 
-void ROS2Test::cloud_callback(const sensor_msgs::msg::PointCloud2::SharedPtr msg) {
+void ROS2Test::click_callback() {
+  std::cout << "click callback" << std::endl;
   if (!imu_buffer.size()) return;
 
   pcl::PointCloud<pcl::PointXYZ>::Ptr src_cloud(new pcl::PointCloud<pcl::PointXYZ>);
@@ -136,17 +135,7 @@ void ROS2Test::cloud_callback(const sensor_msgs::msg::PointCloud2::SharedPtr msg
     *src_cloud = *cut_cloud_ptr;
   }
 
-  // get index of imu buffer that is closest to the current timestamp
-  int imu_index = 0;
-  double min_diff = 1000;
-  for (int i = 0; i < imu_buffer.size(); ++i) {
-    double diff = std::abs(imu_buffer[i].header.stamp.sec - msg->header.stamp.sec);
-    if (diff < min_diff) {
-      imu_index = i;
-      min_diff = diff;
-    }
-  }
-
+  int imu_index = get_nearest_imu_index(imu_buffer, msg->header.stamp);
   gravity_align(src_cloud, src_cloud, imu_buffer[imu_index]);
 
   std::vector<Eigen::Vector3f> src_points;
@@ -164,7 +153,7 @@ void ROS2Test::cloud_callback(const sensor_msgs::msg::PointCloud2::SharedPtr msg
   // // main viewer
   // auto viewer = guik::LightViewer::instance();
   // std::vector<Eigen::Vector3f> output_points;
-  // transformPointCloudf(src_points, output_points, gpu_bbs3d.get_global_pose());
+  // transform_pointcloud(src_points, output_points, gpu_bbs3d.get_global_pose());
   // auto output_buffer = std::make_shared<glk::PointCloudBuffer>(output_points);
   // Eigen::Matrix4f transformation_out = Eigen::Matrix4f::Identity();
   // auto shader_setting_output = guik::FlatRed(transformation_out).set_point_scale(4.0f);
@@ -178,7 +167,28 @@ void ROS2Test::cloud_callback(const sensor_msgs::msg::PointCloud2::SharedPtr msg
   // sub_viewer1->update_drawable("source", src_buffer, shader_setting_src);
 }
 
+int ROS2Test::get_nearest_imu_index(const std::vector<sensor_msgs::msg::Imu>& imu_buffer, const builtin_interfaces::msg::Time& stamp) {
+  int imu_index = 0;
+  double min_diff = 1000;
+  for (int i = 0; i < imu_buffer.size(); ++i) {
+    double diff = std::abs(
+      imu_buffer[i].header.stamp.sec + imu_buffer[i].header.stamp.nanosec * 1e-9 - source_cloud_msg_->header.stamp.sec -
+      source_cloud_msg_->header.stamp.nanosec * 1e-9);
+    if (diff < min_diff) {
+      imu_index = i;
+      min_diff = diff;
+    }
+  }
+  return imu_index;
+}
+
+void ROS2Test::cloud_callback(const sensor_msgs::msg::PointCloud2::SharedPtr msg) {
+  if (!msg) return;
+  source_cloud_msg_ = msg;
+}
+
 void ROS2Test::imu_callback(const sensor_msgs::msg::Imu::SharedPtr msg) {
+  if (!msg) return;
   imu_buffer.emplace_back(*msg);
   if (imu_buffer.size() > 30) {
     imu_buffer.erase(imu_buffer.begin());

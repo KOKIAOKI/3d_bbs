@@ -10,7 +10,7 @@
 
 #include <gpu_bbs3d/bbs3d.cuh>
 
-// iridesence
+// iridescence
 #include <glk/cuda_magic_headers.hpp>
 #include <glk/primitives/primitives.hpp>
 #include <guik/viewer/light_viewer.hpp>
@@ -26,14 +26,25 @@ private:
   bool load_config(const std::string& config);
   template <typename T>
   bool load_tar_clouds(std::vector<T>& points);
+  void click_callback();
+  int get_nearest_imu_index(const std::vector<sensor_msgs::msg::Imu>& imu_buffer, const builtin_interfaces::msg::Time& stamp);
   void cloud_callback(const sensor_msgs::msg::PointCloud2::SharedPtr msg);
   void imu_callback(const sensor_msgs::msg::Imu::SharedPtr msg);
 
-  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr cloud_sub;
-  rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub;
+  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr cloud_sub_;
+  rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub_;
 
+  // msg
+  sensor_msgs::msg::PointCloud2::SharedPtr source_cloud_msg_;
   std::vector<sensor_msgs::msg::Imu> imu_buffer;
 
+  // iridescence
+  std::shared_ptr<guik::LightViewer> viewer;
+
+  // 3D-BBS
+  gpu::BBS3D gpu_bbs3d;
+
+  // Config
   // path
   std::string tar_path;
 
@@ -56,10 +67,4 @@ private:
   float tar_leaf_size, src_leaf_size;
   bool cut_src_points;
   std::pair<double, double> scan_range;
-
-  // #ifdef BUILD_CUDA
-  gpu::BBS3D gpu_bbs3d;
-  // #endif
-
-  std::shared_ptr<guik::LightViewer> viewer;
 };

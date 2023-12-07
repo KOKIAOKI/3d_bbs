@@ -33,6 +33,7 @@ private:
   bool load_tar_clouds(std::vector<T>& points);
   void broadcast_viewer_frame(const std::vector<Eigen::Vector3f>& points);
   void click_callback(const std_msgs::msg::Bool::SharedPtr msg);
+  int get_nearest_imu_index(const std::vector<sensor_msgs::msg::Imu>& imu_buffer, const builtin_interfaces::msg::Time& stamp);
   void publish_results(
     const std_msgs::msg::Header& header,
     const pcl::PointCloud<pcl::PointXYZ>::Ptr& points_cloud_ptr,
@@ -57,7 +58,7 @@ private:
   // tf
   tf2_ros::TransformBroadcaster tf2_broadcaster_;
 
-  // msg
+  // msg buffer
   sensor_msgs::msg::PointCloud2::SharedPtr source_cloud_msg_;
   std::vector<sensor_msgs::msg::Imu> imu_buffer;
 
