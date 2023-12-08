@@ -3,7 +3,7 @@ import launch_ros.actions
 import os
 
 def generate_launch_description():
-    config_file = os.path.join('config/ros2_test_rviz2.yaml')
+    config_file = os.path.join('config/ros2_test.yaml')
     rviz_config_file = os.path.join('rviz2/rviz2_config/rviz2.rviz')
 
     rviz_node = launch_ros.actions.Node(

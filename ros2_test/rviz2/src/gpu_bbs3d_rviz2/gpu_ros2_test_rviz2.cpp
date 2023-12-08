@@ -28,7 +28,7 @@ ROS2Test::ROS2Test(const rclcpp::NodeOptions& node_options) : Node("gpu_ros2_tes
 
   cloud_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     lidar_topic_name,
-    100,
+    rclcpp::QoS(rclcpp::KeepLast(50)).best_effort(),
     std::bind(&ROS2Test::cloud_callback, this, std::placeholders::_1));
 
   imu_sub_ = this->create_subscription<sensor_msgs::msg::Imu>(imu_topic_name, 100, std::bind(&ROS2Test::imu_callback, this, std::placeholders::_1));

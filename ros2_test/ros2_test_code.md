@@ -13,35 +13,40 @@
 
 ## Test
 You can choose either Rviz2 or iridescence viewer.  
-Please download [ros2_test_data](https://drive.google.com/file/d/1AMnVRHrJ-cx_QdLE4AaGvBFMgEoLVWVR/view?usp=drive_link).
 
 ## A. Rviz2
 ### 1. Build
 - Build ros2_test_rviz2 and click_loc
 ```
 cd 3d_bbs/ros2_test
+rosdep install --from-paths . --ignore-src --rosdistro=${ROS_DISTRO}
 colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-select ros2_test_rviz2 click_loc
 ```
 
 ### 2. Config file setting
-Config file format is 3d_bbs/ros2_test/config/ros2_test_rviz2.yaml
+Config file format is 3d_bbs/ros2_test/config/ros2_test.yaml
 
-- **target_clouds**: Copy the target folder path containing the pcd files.
-- **lidar_topic_name**: Support msg type: sensor_msgs::msg::PointCloud2
-- **imu_topic_name**: Support msg type: sensor_msgs::msg::Imu  
-ros2 test data work with default parameter values.
+Please download [test data](https://drive.google.com/file/d/1JfdQjQ3-4qOmHtvYq8UafBCmbz45-F4Z/view?usp=drive_link) and copy **target** folder path to **target_clouds** in yaml file.
+```
+## Folder Paths
+target_clouds: "your_path/target"
+...
+```
+
+The ros2_test_data you download in the next step will work with default parameter values.
 
 ### 3. Run
-Refer to this [video]().
+Refer to this [video (in preparation)]().
 
 **1. First terminal**
 ```
 cd 3d_bbs/ros2_test
 source install/setup.bash
-ros2 launch ros2_test gpu_ros2_test_rviz2_launch.py
+ros2 launch ros2_test_rviz2 gpu_ros2_test_rviz2_launch.py
 ```
 
-**2. Second terminal**
+**2. Second terminal**  
+Please download [ros2_test_data](https://drive.google.com/drive/folders/1V7B22oEM2HTE5__MP6uVLjLUzDR3B3Kn?usp=drive_link).
 ```
 ros2 bag play <ros2 bag file path>
 ```
@@ -74,14 +79,24 @@ sudo make install
 - Build ros2_test_iridescence
 ```
 cd 3d_bbs/ros2_test
+rosdep install --from-paths . --ignore-src --rosdistro=${ROS_DISTRO}
 colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-select ros2_test_iridescence
 ```
 
-2. Congig file setting
-Follow the same steps as **2. Congig file setting** in **A. Rviz2**.
+### 2. Congig file setting
+Config file format is 3d_bbs/ros2_test/config/ros2_test.yaml  
+
+Please download [test data](https://drive.google.com/file/d/1JfdQjQ3-4qOmHtvYq8UafBCmbz45-F4Z/view?usp=drive_link) and copy **target** folder path to **target_clouds** in yaml file.
+```
+## Folder Paths
+target_clouds: "your_path/target"
+...
+```
+
+The ros2_test_data you download in the next step will work with default parameter values.
  
  ### 3. Run
-Refer to this [video]().
+Refer to this [video (in preparation)]().
 
 **1. First terminal**
 ```
@@ -90,7 +105,8 @@ source install/setup.bash
 ros2 launch ros2_test_iridescence gpu_ros2_test_iridescence_launch.py
 ```
 
-**2. Second terminal**
+**2. Second terminal**  
+Please download [ros2_test_data](https://drive.google.com/drive/folders/1V7B22oEM2HTE5__MP6uVLjLUzDR3B3Kn?usp=drive_link).
 ```
 ros2 bag play <ros2 bag file path>
 ```
