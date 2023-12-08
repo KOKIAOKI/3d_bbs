@@ -148,14 +148,20 @@ void ROS2Test::click_callback() {
   std::vector<Eigen::Vector3f> src_points;
   pcl_to_eigen(src_cloud, src_points);
   gpu_bbs3d.set_src_points(src_points);
+
+  std::cout << "[Localize] start" << std::endl;
+  auto start_loc = std::chrono::system_clock::now();
   gpu_bbs3d.localize();  // gloal localization
+  auto end_loc = std::chrono::system_clock::now();
 
   if (!gpu_bbs3d.has_localized()) {
     std::cout << "[Failed] Score is below the threshold." << std::endl;
     return;
   }
 
-  std::cout << "[Localize] Score: " << gpu_bbs3d.get_best_score() << std::endl;
+  float time = std::chrono::duration_cast<std::chrono::microseconds>(end_loc - start_loc).count() / 1000.0f;
+  std::cout << "[Localize] time: " << time << "ms" << std::endl;
+  std::cout << "[Localize] score: " << gpu_bbs3d.get_best_score() << std::endl;
 
   // viewer
   std::vector<Eigen::Vector3f> output_points;
