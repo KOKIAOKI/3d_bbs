@@ -81,7 +81,7 @@ cd 3d_bbs/ros2_test
 colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-select ros2_test_iridescence
 ```
 
-### 2. Congig file setting
+### 2. Config file setting
 Config file format is 3d_bbs/ros2_test/config/ros2_test.yaml  
 
 Please download [test data](https://drive.google.com/file/d/1JfdQjQ3-4qOmHtvYq8UafBCmbz45-F4Z/view?usp=drive_link) and copy **target** folder path to **target_clouds** in yaml file.
