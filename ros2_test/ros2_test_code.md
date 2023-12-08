@@ -19,7 +19,6 @@ You can choose either Rviz2 or iridescence viewer.
 - Build ros2_test_rviz2 and click_loc
 ```
 cd 3d_bbs/ros2_test
-rosdep install --from-paths . --ignore-src --rosdistro=${ROS_DISTRO}
 colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-select ros2_test_rviz2 click_loc
 ```
 
@@ -79,7 +78,6 @@ sudo make install
 - Build ros2_test_iridescence
 ```
 cd 3d_bbs/ros2_test
-rosdep install --from-paths . --ignore-src --rosdistro=${ROS_DISTRO}
 colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-select ros2_test_iridescence
 ```
 
