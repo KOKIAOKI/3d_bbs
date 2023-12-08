@@ -38,10 +38,7 @@ void eigen_to_pcl(const std::vector<Eigen::Vector3d>& points, pcl::PointCloud<pc
   });
 }
 
-void gravity_align(
-  const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud_ptr,
-  pcl::PointCloud<pcl::PointXYZ>::Ptr& aligned_cloud_ptr,
-  const sensor_msgs::msg::Imu& imu_msg) {
+Eigen::Matrix4f gravity_align(const sensor_msgs::msg::Imu& imu_msg) {
   Eigen::Vector3f acc(imu_msg.linear_acceleration.x, imu_msg.linear_acceleration.y, imu_msg.linear_acceleration.z);
   Eigen::Vector3f th;
   th.x() = std::atan2(acc.y(), acc.z());
@@ -54,29 +51,28 @@ void gravity_align(
   Eigen::Matrix4f mat = Eigen::Matrix4f::Identity();
   mat.block<3, 3>(0, 0) = rot;
 
+  return mat;
+}
+
+void gravity_align(
+  const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud_ptr,
+  pcl::PointCloud<pcl::PointXYZ>::Ptr& aligned_cloud_ptr,
+  const sensor_msgs::msg::Imu& imu_msg) {
+  Eigen::Matrix4f mat = gravity_align(imu_msg);
   pcl::transformPointCloud(*cloud_ptr, *aligned_cloud_ptr, mat);
 }
 
 void transform_pointcloud(
   const std::vector<Eigen::Vector3f>& source_points,
   std::vector<Eigen::Vector3f>& output_points,
-  const Eigen::Matrix4f& trans_matrix) {  // Clear the output_points vector to ensure it's empty
+  const Eigen::Matrix4f& trans_matrix) {
   output_points.clear();
-
-  // Reserve space for output_points for efficiency
   output_points.reserve(source_points.size());
 
   for (const auto& point : source_points) {
-    // Convert the 3D point to a homogeneous coordinate
     Eigen::Vector4f homog_point(point[0], point[1], point[2], 1.0f);
-
-    // Transform the point using the matrix
     Eigen::Vector4f transformed_homog = trans_matrix * homog_point;
-
-    // Convert the homogeneous coordinate back to 3D
     Eigen::Vector3f transformed_point = transformed_homog.head<3>() / transformed_homog[3];
-
-    // Add the transformed point to the output_points vector
     output_points.push_back(transformed_point);
   }
 }

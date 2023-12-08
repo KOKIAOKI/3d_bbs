@@ -12,7 +12,9 @@
   - Please use the downsampling and point cloud cutting tools.
 
 ## Test
-You can choose either Rviz2 or iridescence viewer.
+You can choose either Rviz2 or iridescence viewer.  
+Please download [ros2_test_data](https://drive.google.com/file/d/1AMnVRHrJ-cx_QdLE4AaGvBFMgEoLVWVR/view?usp=drive_link).
+
 ## A. Rviz2
 ### 1. Build
 - Build ros2_test_rviz2 and click_loc
@@ -21,19 +23,16 @@ cd 3d_bbs/ros2_test
 colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-select ros2_test_rviz2 click_loc
 ```
 
-### 2. Download
-Please download [ros2_test_data]().
-
-### 3. Config file setting
+### 2. Config file setting
 Config file format is 3d_bbs/ros2_test/config/ros2_test_rviz2.yaml
 
 - **target_clouds**: Copy the target folder path containing the pcd files.
 - **lidar_topic_name**: Support msg type: sensor_msgs::msg::PointCloud2
-- **imu_topic_name**: Support msg type: sensor_msgs::msg::Imu
+- **imu_topic_name**: Support msg type: sensor_msgs::msg::Imu  
 ros2 test data work with default parameter values.
 
-### 4. Run
-Refer to this [video]()
+### 3. Run
+Refer to this [video]().
 
 **1. First terminal**
 ```
@@ -78,11 +77,11 @@ cd 3d_bbs/ros2_test
 colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-select ros2_test_iridescence
 ```
 
-## 2. Download, 3. Congig file setting
-Follow the same steps as **2. Download** and **3. Congig file setting** in **A. Rviz2**.
+2. Congig file setting
+Follow the same steps as **2. Congig file setting** in **A. Rviz2**.
  
- ### 4. Run
-Refer to this [video]()
+ ### 3. Run
+Refer to this [video]().
 
 **1. First terminal**
 ```
@@ -103,3 +102,4 @@ ros2 bag play <ros2 bag file path>
  *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
 ```
 **4. Click the localize buttom**  
+<img alt="overview" src="../figs/iridescence_click.png" width="10%">

@@ -32,17 +32,37 @@ ROS2Test::ROS2Test(const rclcpp::NodeOptions& node_options) : Node("gpu_ros2_tes
   gpu_bbs3d.set_tar_points(tar_points, min_level_res, max_level);
   gpu_bbs3d.set_angular_search_range(min_rpy.cast<float>(), max_rpy.cast<float>());
   gpu_bbs3d.set_score_threshold_percentage(static_cast<float>(score_threshold_percentage));
-  std::cout << "*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*" << std::endl;
-  std::cout << "   [ROS2] 3D-BBS initialized" << std::endl;
-  std::cout << "*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*" << std::endl;
 
   // ==== ROS2 sub====
   cloud_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     lidar_topic_name,
     100,
     std::bind(&ROS2Test::cloud_callback, this, std::placeholders::_1));
-
   imu_sub_ = this->create_subscription<sensor_msgs::msg::Imu>(imu_topic_name, 100, std::bind(&ROS2Test::imu_callback, this, std::placeholders::_1));
+
+  // ==== GUI ====
+  viewer_ = guik::LightViewer::instance();
+
+  auto trg_buffer = std::make_shared<glk::PointCloudBuffer>(tar_points);
+  Eigen::Matrix4f transformation = Eigen::Matrix4f::Identity();
+  auto shader_setting_trg = guik::Rainbow(transformation).set_point_scale(1.0f);
+  viewer_->update_drawable("trg", trg_buffer, shader_setting_trg);
+  glk::COLORMAP colormap = glk::COLORMAP::OCEAN;
+  viewer_->set_colormap(colormap);
+  viewer_->use_topdown_camera_control();
+  viewer_->lookat(tar_points[0]);
+  viewer_->register_ui_callback("ui_callback", [&]() {
+    if (ImGui::Button("Localize")) {
+      click_callback();
+    }
+  });
+
+  auto timer_callback = [this]() { viewer_->spin_once(); };
+  timer_ = create_wall_timer(std::chrono::milliseconds(50), timer_callback);
+
+  std::cout << "*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*" << std::endl;
+  std::cout << "   [ROS2] 3D-BBS initialized" << std::endl;
+  std::cout << "*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*" << std::endl;
 }
 
 ROS2Test::~ROS2Test() {}
@@ -137,21 +157,13 @@ void ROS2Test::click_callback() {
 
   std::cout << "[Localize] Score: " << gpu_bbs3d.get_best_score() << std::endl;
 
-  // // main viewer
-  // auto viewer = guik::LightViewer::instance();
-  // std::vector<Eigen::Vector3f> output_points;
-  // transform_pointcloud(src_points, output_points, gpu_bbs3d.get_global_pose());
-  // auto output_buffer = std::make_shared<glk::PointCloudBuffer>(output_points);
-  // Eigen::Matrix4f transformation_out = Eigen::Matrix4f::Identity();
-  // auto shader_setting_output = guik::FlatRed(transformation_out).set_point_scale(4.0f);
-  // viewer->update_drawable("global", output_buffer, shader_setting_output);
-
-  // // sub viewer
-  // auto sub_viewer1 = viewer->sub_viewer("sub1");
-  // auto src_buffer = std::make_shared<glk::PointCloudBuffer>(src_points);
-  // Eigen::Matrix4f transformation_src = Eigen::Matrix4f::Identity();
-  // auto shader_setting_src = guik::FlatRed(transformation_src).set_point_scale(2.0f);
-  // sub_viewer1->update_drawable("source", src_buffer, shader_setting_src);
+  // viewer
+  std::vector<Eigen::Vector3f> output_points;
+  transform_pointcloud(src_points, output_points, gpu_bbs3d.get_global_pose());
+  auto output_buffer = std::make_shared<glk::PointCloudBuffer>(output_points);
+  Eigen::Matrix4f transformation_out = Eigen::Matrix4f::Identity();
+  auto shader_setting_output = guik::FlatRed(transformation_out).set_point_scale(4.0f);
+  viewer_->update_drawable("global", output_buffer, shader_setting_output);
 }
 
 int ROS2Test::get_nearest_imu_index(const std::vector<sensor_msgs::msg::Imu>& imu_buffer, const builtin_interfaces::msg::Time& stamp) {
@@ -172,6 +184,19 @@ int ROS2Test::get_nearest_imu_index(const std::vector<sensor_msgs::msg::Imu>& im
 void ROS2Test::cloud_callback(const sensor_msgs::msg::PointCloud2::SharedPtr msg) {
   if (!msg) return;
   source_cloud_msg_ = msg;
+
+  pcl::PointCloud<pcl::PointXYZ>::Ptr src_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::fromROSMsg(*msg, *src_cloud);
+
+  std::vector<Eigen::Vector3f> src_points;
+  pcl_to_eigen(src_cloud, src_points);
+
+  // sub viewer
+  auto sub_viewer1 = viewer_->sub_viewer("sub1");
+  auto src_buffer = std::make_shared<glk::PointCloudBuffer>(src_points);
+  Eigen::Matrix4f transformation_src = Eigen::Matrix4f::Identity();
+  auto shader_setting_src = guik::FlatRed(transformation_src).set_point_scale(2.0f);
+  sub_viewer1->update_drawable("source", src_buffer, shader_setting_src);
 }
 
 void ROS2Test::imu_callback(const sensor_msgs::msg::Imu::SharedPtr msg) {
