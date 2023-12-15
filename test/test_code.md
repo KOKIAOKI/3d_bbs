@@ -33,5 +33,14 @@ cd 3d_bbs/test/build/
 ./gpu_test <config_file_path>
 ```
 
+## Using your own LiDAR scan data
 If you have your own ros2 bag data, you can convert LiDAR msgs to pcd file with package below so that point cloud aligns in the direction of gravitational acceleration using IMU msgs.  
 https://github.com/KOKIAOKI/ros2bag_to_pcd
+
+### Conditions for demonstrating 3D-BBS performance on your own data
+- Keep the robot with the sensor stationary.
+  - Reason: The error in the direction of gravitational acceleration estimated by IMU increases while the robot is running.
+  - Although the roll and pitch searches can be expanded, processing time will increase.
+- Use only at locations where the source point cloud is completely included in the target point cloud.
+  - Reason: Another pose that encompasses all source point cloud is estimated when the source point cloud includes outside the map environment. 
+  - Please use the downsampling and point cloud cutting tools.

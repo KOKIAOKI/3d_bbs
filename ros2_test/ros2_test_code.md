@@ -1,23 +1,24 @@
 # ROS2 Test code
-
-## Dependencies
-- (All bbs3d dependencies)
-- ros2 humble
-
-## Conditions for demonstrating 3D-BBS performance
-- When the robot is stationary.
-  - Reason: The error in the direction of gravitational acceleration increases while the robot is running.
-- When the source point is completely included in the map point cloud.
-  - Reason: Another pose that encompasses all source point cloud is estimated when source point cloud includes outside the map environment. 
-  - Please use the downsampling and point cloud cutting tools.
+Experiance the real-time global localization visually!
 
 ## Test
-You can choose either Rviz2 or iridescence viewer.  
+You can try 3D-BBS with two different viewers, Rviz2 and Iridescence.
+Note: Docker is not yet supported.
 
 ## A. Rviz2
+
+<details><summary> Click here! </summary><div>
+
+## Dependencies
+- Installed 3D-BBS
+- ROS2 humble
+
+## Video Demo
+Please refer to this [silent video.](https://youtu.be/AmQ1u77ws-g)
+
 ### 1. Build
 - Build ros2_test_rviz2 and click_loc
-```
+```shell script
 cd 3d_bbs/ros2_test
 colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-select ros2_test_rviz2 click_loc
 ```
@@ -26,7 +27,7 @@ colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release --package
 Config file format is 3d_bbs/ros2_test/config/ros2_test.yaml
 
 Please download [test data](https://drive.google.com/file/d/1JfdQjQ3-4qOmHtvYq8UafBCmbz45-F4Z/view?usp=drive_link) and copy **target** folder path to **target_clouds** in yaml file.
-```
+```yaml
 ## Folder Paths
 target_clouds: "your_path/target"
 ...
@@ -35,10 +36,8 @@ target_clouds: "your_path/target"
 The ros2_test_data you download in the next step will work with default parameter values.
 
 ### 3. Run
-Refer to this [video (in preparation)]().
-
 **1. First terminal**
-```
+```shell script
 cd 3d_bbs/ros2_test
 source install/setup.bash
 ros2 launch ros2_test_rviz2 gpu_ros2_test_rviz2_launch.py
@@ -46,24 +45,37 @@ ros2 launch ros2_test_rviz2 gpu_ros2_test_rviz2_launch.py
 
 **2. Second terminal**  
 Please download [ros2_test_data](https://drive.google.com/drive/folders/1V7B22oEM2HTE5__MP6uVLjLUzDR3B3Kn?usp=drive_link).
-```
+```shell script
 ros2 bag play <ros2 bag file path>
 ```
 
 **3. Wait until this message is displayed.**
-```
+```shell script
  *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
     [ROS2] 3D-BBS initialized
  *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
 ```
-**4. Click the localize buttom**  
-<img alt="overview" src="../figs/click_loc.png" width="10%">
+**4. Click the localize button**  
+<img alt="click_loc" src="../figs/click_loc.png" width="10%">
+
+For localize, use the LiDAR scan taken just before the button click.  
+The red point cloud is the matched source point.  
+
+<img alt="rviz2_test" src="../figs/rviz2_test.png" width="50%">
+
+</div></details>
 
 ## B. Iridescence
+<details><summary> Click here! </summary><div>
+
+## Dependencies
+- [Iridescence](https://github.com/koide3/iridescence) dependencies
+- Installed 3D-BBS
+
 ### 1. Build and install
 - Build and Install Iridescence
 Clone repository at Home directory.
-```
+```shell script
 # Install dependencies
 sudo apt-get install -y libglm-dev libglfw3-dev libpng-dev libjpeg-dev libeigen3-dev libboost-filesystem-dev libboost-program-options-dev
 
@@ -76,7 +88,7 @@ sudo make install
 ```
 
 - Build ros2_test_iridescence
-```
+```shell script
 cd 3d_bbs/ros2_test
 colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-select ros2_test_iridescence
 ```
@@ -84,8 +96,8 @@ colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release --package
 ### 2. Config file setting
 Config file format is 3d_bbs/ros2_test/config/ros2_test.yaml  
 
-Please download [test data](https://drive.google.com/file/d/1JfdQjQ3-4qOmHtvYq8UafBCmbz45-F4Z/view?usp=drive_link) and copy **target** folder path to **target_clouds** in yaml file.
-```
+Please download [test data](https://drive.google.com/drive/folders/1V7B22oEM2HTE5__MP6uVLjLUzDR3B3Kn?usp=drive_link) and copy **target** folder path to **target_clouds** in yaml file.
+```yaml
 ## Folder Paths
 target_clouds: "your_path/target"
 ...
@@ -94,10 +106,8 @@ target_clouds: "your_path/target"
 The ros2_test_data you download in the next step will work with default parameter values.
  
  ### 3. Run
-Refer to this [video (in preparation)]().
-
 **1. First terminal**
-```
+```shell script
 cd 3d_bbs/ros2_test
 source install/setup.bash
 ros2 launch ros2_test_iridescence gpu_ros2_test_iridescence_launch.py
@@ -105,15 +115,30 @@ ros2 launch ros2_test_iridescence gpu_ros2_test_iridescence_launch.py
 
 **2. Second terminal**  
 Please download [ros2_test_data](https://drive.google.com/drive/folders/1V7B22oEM2HTE5__MP6uVLjLUzDR3B3Kn?usp=drive_link).
-```
+```shell script
 ros2 bag play <ros2 bag file path>
 ```
 
 **3. Wait until this message is displayed.**
-```
+```shell script
  *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
     [ROS2] 3D-BBS initialized
  *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
 ```
-**4. Click the localize buttom**  
-<img alt="overview" src="../figs/iridescence_click.png" width="10%">
+**4. Click the localize button**  
+<img alt="iridescence_click" src="../figs/iridescence_click.png" width="10%">
+
+For localize, use the LiDAR scan taken just before the button click.  
+The red point cloud is the matched source point.  
+
+<img alt="riridescence_test" src="../figs/iridescence_test.png" width="50%">
+
+</div></details>
+
+## Conditions for demonstrating 3D-BBS performance on your own data
+- Keep the robot with the sensor stationary.
+  - Reason: The error in the direction of gravitational acceleration estimated by IMU increases while the robot is running.
+  - Although the roll and pitch searches can be expanded, processing time will increase.
+- Use only at locations where the source point cloud is completely included in the target point cloud.
+  - Reason: Another pose that encompasses all source point cloud is estimated when the source point cloud includes outside the map environment. 
+  - Please use the downsampling and point cloud cutting tools.
