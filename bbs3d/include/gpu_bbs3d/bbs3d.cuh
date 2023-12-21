@@ -47,79 +47,91 @@ public:
   float yaw;
 };
 
-  class BBS3D {
-  public:
-    BBS3D();
-    ~BBS3D();
+class BBS3D {
+public:
+  BBS3D();
+  ~BBS3D();
 
-    void set_tar_points(const std::vector<Eigen::Vector3f>& points, float min_level_res, int max_level);
+  void set_tar_points(const std::vector<Eigen::Vector3f>& points, float min_level_res, int max_level);
 
-    void set_src_points(const std::vector<Eigen::Vector3f>& points);
+  void set_src_points(const std::vector<Eigen::Vector3f>& points);
 
-    void set_trans_search_range(const std::vector<Eigen::Vector3f>& points);
+  void set_trans_search_range(const std::vector<Eigen::Vector3f>& points);
 
-    void set_angular_search_range(const Eigen::Vector3f& min_rpy, const Eigen::Vector3f& max_rpy) {
-      min_rpy_ = min_rpy;
-      max_rpy_ = max_rpy;
-    }
+  void set_angular_search_range(const Eigen::Vector3f& min_rpy, const Eigen::Vector3f& max_rpy) {
+    min_rpy_ = min_rpy;
+    max_rpy_ = max_rpy;
+  }
 
-    void set_voxel_expantion_rate(const float rate) {
-      v_rate_ = rate;
-      inv_v_rate_ = 1.0f / rate;
-    }
+  void set_voxel_expantion_rate(const float rate) {
+    v_rate_ = rate;
+    inv_v_rate_ = 1.0f / rate;
+  }
 
-    void set_branch_copy_size(int size) { branch_copy_size_ = size; }
+  void set_branch_copy_size(int size) { branch_copy_size_ = size; }
 
-    void set_score_threshold_percentage(float percentage) { score_threshold_percentage_ = percentage; }
+  void set_score_threshold_percentage(float percentage) { score_threshold_percentage_ = percentage; }
 
-    std::vector<Eigen::Vector3f> get_src_points() const { return src_points_; }
+  std::vector<Eigen::Vector3f> get_src_points() const { return src_points_; }
 
-    std::vector<Eigen::Vector3f> get_tar_points() const { return tar_points_; }
+  void set_voxelmaps_coords(const std::string& folder_path);
 
-    std::vector<std::pair<int, int>> get_trans_search_range() const {
-      return std::vector<std::pair<int, int>>{init_tx_range_, init_ty_range_, init_tz_range_};
-    }
+  // std::vector<std::vector<Eigen::Vector4i>> get_voxelmaps_coordinates() const { return voxelmaps_ptr_->multi_buckets_; }
 
-    std::vector<Eigen::Vector3f> get_angular_search_range() const { return std::vector<Eigen::Vector3f>{min_rpy_, max_rpy_}; }
+  std::vector<std::pair<int, int>> get_trans_search_range() const {
+    return std::vector<std::pair<int, int>>{init_tx_range_, init_ty_range_, init_tz_range_};
+  }
 
-    Eigen::Matrix4f get_global_pose() const { return global_pose_; }
+  std::vector<Eigen::Vector3f> get_angular_search_range() const { return std::vector<Eigen::Vector3f>{min_rpy_, max_rpy_}; }
 
-    int get_best_score() const { return best_score_; }
+  Eigen::Matrix4f get_global_pose() const { return global_pose_; }
 
-    bool has_localized() { return has_localized_; }
+  int get_best_score() const { return best_score_; }
 
-    void localize();
+  bool has_localized() { return has_localized_; }
 
-  private:
-    void calc_angluar_info(std::vector<AngularInfo>& ang_info_vec);
+  void localize();
 
-    std::vector<DiscreteTransformation> create_init_transset(const AngularInfo& init_ang_info);
+  // pcd iof
+  void load_voxel_params(const std::string& folder_path);
 
-    std::vector<DiscreteTransformation> calc_scores(const std::vector<DiscreteTransformation>& h_transset);
+  std::vector<std::pair<std::string, std::string>> load_pcd_files(const std::string& folder_path);
 
-  private:
-    Eigen::Matrix4f global_pose_;
-    bool has_localized_;
+  std::vector<std::vector<Eigen::Vector4i>> load_buckets(std::string folder_path);
 
-    cudaStream_t stream;
+  void save_voxelmaps_pcd(const std::string& folder_path);
 
-    std::vector<Eigen::Vector3f> tar_points_;
-    std::vector<Eigen::Vector3f> src_points_;
+  void save_voxel_params(const std::string& folder_path);
 
-    thrust::device_vector<Eigen::Vector3f> d_src_points_;
-    std::vector<thrust::device_vector<DiscreteTransformation>> d_transset_stock_;
+private:
+  void calc_angluar_info(std::vector<AngularInfo>& ang_info_vec);
 
-    std::unique_ptr<VoxelMaps> voxelmaps_ptr_;
+  std::vector<DiscreteTransformation> create_init_transset(const AngularInfo& init_ang_info);
 
-    float v_rate_;  // voxel expansion rate
-    float inv_v_rate_;
+  std::vector<DiscreteTransformation> calc_scores(const std::vector<DiscreteTransformation>& h_transset);
 
-    int src_size_, branch_copy_size_, best_score_;
-    double score_threshold_percentage_;
-    Eigen::Vector3f min_rpy_;
-    Eigen::Vector3f max_rpy_;
-    std::pair<int, int> init_tx_range_;
-    std::pair<int, int> init_ty_range_;
-    std::pair<int, int> init_tz_range_;
-  };
-  }  // namespace gpu
+private:
+  Eigen::Matrix4f global_pose_;
+  bool has_localized_;
+
+  cudaStream_t stream;
+
+  std::vector<Eigen::Vector3f> src_points_;
+
+  thrust::device_vector<Eigen::Vector3f> d_src_points_;
+  std::vector<thrust::device_vector<DiscreteTransformation>> d_transset_stock_;
+
+  std::unique_ptr<VoxelMaps> voxelmaps_ptr_;
+
+  float v_rate_;  // voxel expansion rate
+  float inv_v_rate_;
+
+  int src_size_, branch_copy_size_, best_score_;
+  double score_threshold_percentage_;
+  Eigen::Vector3f min_rpy_;
+  Eigen::Vector3f max_rpy_;
+  std::pair<int, int> init_tx_range_;
+  std::pair<int, int> init_ty_range_;
+  std::pair<int, int> init_tz_range_;
+};
+}  // namespace gpu

@@ -17,12 +17,6 @@ BBS3D::~BBS3D() {
 
 void BBS3D::set_tar_points(const std::vector<Eigen::Vector3f>& points, float min_level_res, int max_level) {
   voxelmaps_ptr_.reset(new VoxelMaps);
-
-  tar_points_.clear();
-  tar_points_.shrink_to_fit();
-  tar_points_.resize(points.size());
-  std::copy(points.begin(), points.end(), tar_points_.begin());
-
   voxelmaps_ptr_->set_min_res(min_level_res);
   voxelmaps_ptr_->set_max_level(max_level);
   voxelmaps_ptr_->set_voxel_expantion_rate(v_rate_);
@@ -30,6 +24,12 @@ void BBS3D::set_tar_points(const std::vector<Eigen::Vector3f>& points, float min
 
   // Detect translation range from target points
   set_trans_search_range(points);
+}
+
+void BBS3D::set_voxelmaps_coords(const std::string& folder_path) {
+  load_voxel_params(folder_path);
+  const auto buckets = load_buckets(folder_path);
+  voxelmaps_ptr_->set_buckets_on_device(buckets, stream);
 }
 
 void BBS3D::set_src_points(const std::vector<Eigen::Vector3f>& points) {

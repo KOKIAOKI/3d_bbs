@@ -48,19 +48,32 @@ public:
 
   void set_max_bucket_scan_count(int max_bucket_scan_count) { max_bucket_scan_count_ = max_bucket_scan_count; }
 
+  void set_buckets(const std::vector<Buckets>& multi_buckets, cudaStream_t stream) {
+    multi_buckets_ = multi_buckets;
+    set_buckets_on_device(multi_buckets, stream);
+  };
+
   float get_min_res() const { return min_level_res_; }
 
   int get_max_level() const { return max_level_; }
 
   int get_max_bucket_scan_count() const { return max_bucket_scan_count_; }
 
+  float get_voxel_expantion_rate() const { return v_rate_; }
+
   void create_voxelmaps(const std::vector<Eigen::Vector3f>& points, cudaStream_t stream);
+
+  void set_buckets_on_device(const std::vector<Buckets>& multi_buckets, cudaStream_t stream);
 
 private:
   std::vector<Eigen::Vector3i> create_neighbor_coords(const Eigen::Vector3i& vec);
+
   Buckets create_hash_buckets(const UnorderedVoxelMap& unordered_voxelmap);
 
+  void set_voxelmaps_info_on_device(const std::vector<VoxelMapInfo>& voxelmaps_info, cudaStream_t stream);
+
 public:
+  std::vector<Buckets> multi_buckets_;
   std::vector<DeviceBuckets> d_multi_buckets_;
   thrust::device_vector<Eigen::Vector4i*> d_multi_buckets_ptrs_;
 
