@@ -51,7 +51,7 @@ Eigen::Matrix4f DiscreteTransformation::create_matrix() {
   Eigen::AngleAxisf rollAngle(roll, Eigen::Vector3f::UnitX());
   Eigen::AngleAxisf pitchAngle(pitch, Eigen::Vector3f::UnitY());
   Eigen::AngleAxisf yawAngle(yaw, Eigen::Vector3f::UnitZ());
-  return (translation * yawAngle * pitchAngle * rollAngle).matrix();
+  return (translation * rollAngle * pitchAngle * yawAngle).matrix();
 }
 
 void DiscreteTransformation::branch(
