@@ -17,7 +17,7 @@ if(BUILD_CUDA)
     bbs3d/src/gpu_bbs3d/discreate_transformation.cu
     bbs3d/src/gpu_bbs3d/voxelmaps.cu
     bbs3d/src/gpu_bbs3d/stream_manager/check_error.cu
-    bbs3d/src/gpu_bbs3d/pcd_iof/pcd_iof.cu
+    bbs3d/src/gpu_bbs3d/voxelmaps_io.cu
   )
 
   target_include_directories(gpu_bbs3d

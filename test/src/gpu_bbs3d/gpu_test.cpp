@@ -43,11 +43,16 @@ int BBS3DTest::run(std::string config) {
   boost::filesystem::create_directory(pcd_save_folder_path);
 
   // ====3D-BBS====
-  // Set target points
-  auto initi_t1 = std::chrono::high_resolution_clock::now();
-  std::cout << "[Voxel map] Creating hierarchical voxel map..." << std::endl;
   std::unique_ptr<gpu::BBS3D> bbs3d_ptr(new gpu::BBS3D);
-  bbs3d_ptr->set_tar_points(tar_points, min_level_res, max_level);
+
+  // Set target points
+  std::cout << "[Voxel map] Creating hierarchical voxel map..." << std::endl;
+  auto initi_t1 = std::chrono::high_resolution_clock::now();
+  if (bbs3d_ptr->set_voxelmaps_coords(tar_path)) {
+    std::cout << "[Voxel map] Loaded voxelmaps coords directly" << std::endl;
+  } else {
+    bbs3d_ptr->set_tar_points(tar_points, min_level_res, max_level);
+  }
   bbs3d_ptr->set_angular_search_range(min_rpy.cast<float>(), max_rpy.cast<float>());
 
   auto init_t2 = std::chrono::high_resolution_clock::now();

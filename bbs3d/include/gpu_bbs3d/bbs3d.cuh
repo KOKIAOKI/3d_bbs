@@ -74,9 +74,7 @@ public:
 
   std::vector<Eigen::Vector3f> get_src_points() const { return src_points_; }
 
-  void set_voxelmaps_coords(const std::string& folder_path);
-
-  // std::vector<std::vector<Eigen::Vector4i>> get_voxelmaps_coordinates() const { return voxelmaps_ptr_->multi_buckets_; }
+  bool set_voxelmaps_coords(const std::string& folder_path);
 
   std::vector<std::pair<int, int>> get_trans_search_range() const {
     return std::vector<std::pair<int, int>>{init_tx_range_, init_ty_range_, init_tz_range_};
@@ -93,15 +91,15 @@ public:
   void localize();
 
   // pcd iof
-  void load_voxel_params(const std::string& folder_path);
+  bool load_voxel_params(const std::string& voxelmaps_folder_path);
 
-  std::vector<std::pair<std::string, std::string>> load_pcd_files(const std::string& folder_path);
+  std::vector<std::pair<std::string, std::string>> load_pcd_files(const std::string& voxelmaps_folder_path);
 
   std::vector<std::vector<Eigen::Vector4i>> load_buckets(std::string folder_path);
 
-  void save_voxelmaps_pcd(const std::string& folder_path);
+  bool save_voxelmaps_pcd(const std::string& folder_path);
 
-  void save_voxel_params(const std::string& folder_path);
+  bool save_voxel_params(const std::string& folder_path);
 
 private:
   void calc_angluar_info(std::vector<AngularInfo>& ang_info_vec);
@@ -122,6 +120,7 @@ private:
   std::vector<thrust::device_vector<DiscreteTransformation>> d_transset_stock_;
 
   std::unique_ptr<VoxelMaps> voxelmaps_ptr_;
+  std::string voxelmaps_folder_name_;
 
   float v_rate_;  // voxel expansion rate
   float inv_v_rate_;

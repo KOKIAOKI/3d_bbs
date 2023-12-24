@@ -3,7 +3,13 @@
 #include <gpu_bbs3d/stream_manager/check_error.cuh>
 
 namespace gpu {
-BBS3D::BBS3D() : v_rate_(2.0f), branch_copy_size_(10000), score_threshold_percentage_(0.0), src_size_(-1), has_localized_(false) {
+BBS3D::BBS3D()
+: v_rate_(2.0f),
+  branch_copy_size_(10000),
+  score_threshold_percentage_(0.0),
+  src_size_(-1),
+  has_localized_(false),
+  voxelmaps_folder_name_("voxelmaps_coords") {
   check_error << cudaStreamCreate(&stream);
 
   inv_v_rate_ = 1.0f / v_rate_;
@@ -24,12 +30,6 @@ void BBS3D::set_tar_points(const std::vector<Eigen::Vector3f>& points, float min
 
   // Detect translation range from target points
   set_trans_search_range(points);
-}
-
-void BBS3D::set_voxelmaps_coords(const std::string& folder_path) {
-  load_voxel_params(folder_path);
-  const auto buckets = load_buckets(folder_path);
-  voxelmaps_ptr_->set_buckets_on_device(buckets, stream);
 }
 
 void BBS3D::set_src_points(const std::vector<Eigen::Vector3f>& points) {

@@ -1,5 +1,4 @@
-#ifndef POINTCLOUD_IOF_IO_HPP
-#define POINTCLOUD_IOF_IO_HPP
+#pragma once
 
 #include <iostream>
 #include <fstream>
@@ -170,5 +169,3 @@ bool save_pcd(const std::string& path, const std::vector<Vector3<T>>& point_clou
 }
 
 }  // namespace pciof
-
-#endif  // POINTCLOUD_IOF_IO_HPP

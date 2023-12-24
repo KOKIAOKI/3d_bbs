@@ -19,15 +19,24 @@ void VoxelMaps::create_voxelmaps(const std::vector<Eigen::Vector3f>& points, cud
       return (point.array() / resolution).floor().cast<int>();
     });
 
+    // 0: empty, 1: voxel, -1: neighbor
     for (const auto& coord : coords) {
       if (unordered_voxelmap.count(coord) == 0) {
+        // if the coord is not in the map
         unordered_voxelmap[coord] = 1;
+      } else if (unordered_voxelmap[coord] == -1) {
+        // if the coord is exist as a neighbor
+        unordered_voxelmap[coord] = 1;
+      } else if (unordered_voxelmap[coord] == 1) {
+        // if the coord is exist as a voxel
+        continue;
       }
 
       const auto neighbor_coords = create_neighbor_coords(coord);
       for (const auto& neighbor_coord : neighbor_coords) {
         if (unordered_voxelmap.count(neighbor_coord) == 0) {
-          unordered_voxelmap[neighbor_coord] = 1;
+          // add neighbor coords
+          unordered_voxelmap[neighbor_coord] = -1;
         }
       }
     }
@@ -65,7 +74,7 @@ VoxelMaps::Buckets VoxelMaps::create_hash_buckets(const UnorderedVoxelMap& unord
     int success_count = 0;
     for (const auto& voxel : unordered_voxelmap) {
       Eigen::Vector4i coord;
-      coord << voxel.first.x(), voxel.first.y(), voxel.first.z(), voxel.second;
+      coord << voxel.first.x(), voxel.first.y(), voxel.first.z(), 1;
       const std::uint32_t hash = (coord[0] * 73856093) ^ (coord[1] * 19349669) ^ (coord[2] * 83492791);
 
       // Find empty bucket
@@ -90,24 +99,25 @@ VoxelMaps::Buckets VoxelMaps::create_hash_buckets(const UnorderedVoxelMap& unord
 }
 
 void VoxelMaps::set_buckets_on_device(const std::vector<Buckets>& multi_buckets, cudaStream_t stream) {
-  d_multi_buckets_.reserve(multi_buckets.size());
+  d_multi_buckets_.resize(multi_buckets.size());
   voxelmaps_info_.resize(multi_buckets.size());
 
   float resolution = min_level_res_;
-  for (const auto& buckets : multi_buckets) {
-    // Copy host to device (voxel map)
-    const int buckets_datasize = sizeof(Eigen::Vector4i) * buckets.size();
-    DeviceBuckets d_buckets(buckets.size());
-    check_error << cudaMemcpyAsync(thrust::raw_pointer_cast(d_buckets.data()), buckets.data(), buckets_datasize, cudaMemcpyHostToDevice, stream);
-    d_multi_buckets_.emplace_back(d_buckets);
+  for (int i = 0; i < multi_buckets.size(); i++) {
+    const int buckets_size = multi_buckets[i].size();
+    const int buckets_datasize = sizeof(Eigen::Vector4i) * buckets_size;
+    DeviceBuckets d_buckets(buckets_size);
+    check_error
+      << cudaMemcpyAsync(thrust::raw_pointer_cast(d_buckets.data()), multi_buckets[i].data(), buckets_datasize, cudaMemcpyHostToDevice, stream);
+    d_multi_buckets_[i] = d_buckets;
 
     // create voxel map info
     VoxelMapInfo info;
     info.res = resolution;
     info.inv_res = 1.0f / resolution;
     info.max_bucket_scan_count = max_bucket_scan_count_;
-    info.num_buckets = buckets.size();
-    voxelmaps_info_.emplace_back(info);
+    info.num_buckets = buckets_size;
+    voxelmaps_info_[i] = info;
 
     resolution = resolution * v_rate_;
   }

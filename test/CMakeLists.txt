@@ -23,12 +23,25 @@ if(BUILD_CUDA)
   target_include_directories(gpu_test 
     PUBLIC ${PROJECT_SOURCE_DIR}/include
     ${EIGEN3_INCLUDE_DIR}
-    ${gpu_bbs3d_INCLUDE_DIRS}
   )
 
   target_link_libraries(gpu_test
     ${PCL_LIBRARIES}
     yaml-cpp
     ${gpu_bbs3d_LIBRARY}
+  )
+
+  add_executable(saver
+    src/voxelmaps_coords_saver.cpp
+  )
+
+  target_include_directories(saver 
+    PUBLIC
+    ${EIGEN3_INCLUDE_DIR}
+  )
+
+  target_link_libraries(saver
+    ${gpu_bbs3d_LIBRARY}
+    ${Boost_LIBRARIES} 
   )
 endif()

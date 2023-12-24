@@ -43,6 +43,7 @@ __global__ void calc_scores_kernel(
 
       if (bucket.w() == 1) {
         score++;
+        break;
       }
     }
   }
