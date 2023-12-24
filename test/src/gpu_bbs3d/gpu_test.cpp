@@ -1,4 +1,4 @@
-#include <gpu_bbs3d/bbs3d.cuh>
+#include <bbs3d/gpu_bbs3d/bbs3d.cuh>
 #include <test.hpp>
 #include <util.hpp>
 #include <load.hpp>

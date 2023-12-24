@@ -49,7 +49,11 @@ ROS2Test::ROS2Test(const rclcpp::NodeOptions& node_options) : Node("gpu_ros2_tes
   std::cout << "[ROS2] Target clouds loaded" << std::endl;
 
   std::cout << "[Voxel map] Creating hierarchical voxel map..." << std::endl;
-  gpu_bbs3d.set_tar_points(tar_points, min_level_res, max_level);
+  if (gpu_bbs3d.set_voxelmaps_coords(tar_path)) {
+    std::cout << "[Voxel map] Loaded voxelmaps coords directly" << std::endl;
+  } else {
+    gpu_bbs3d.set_tar_points(tar_points, min_level_res, max_level);
+  }
   gpu_bbs3d.set_angular_search_range(min_rpy.cast<float>(), max_rpy.cast<float>());
   gpu_bbs3d.set_score_threshold_percentage(static_cast<float>(score_threshold_percentage));
   std::cout << "*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*" << std::endl;

@@ -31,4 +31,4 @@ if(BUILD_CUDA)
 endif()
 
 
-install(DIRECTORY bbs3d/include/ DESTINATION include)
+install(DIRECTORY bbs3d/include/ DESTINATION include/bbs3d)

@@ -1,5 +1,5 @@
-#include <gpu_bbs3d/bbs3d.cuh>
-#include <pointcloud_iof/load.hpp>
+#include <bbs3d/gpu_bbs3d/bbs3d.cuh>
+#include <bbs3d/pointcloud_iof/load.hpp>
 
 // TODO Do this process with cpu version
 int main(int argc, char** argv) {
