@@ -36,33 +36,10 @@ bool BBS3D::load_voxel_params(const std::string& voxelmaps_folder_path) {
   std::getline(ifs, str);
   const float v_rate = std::stof(str.substr(str.find(" ") + 1));
 
-  std::getline(ifs, str);
-  const int min_x = std::stoi(str.substr(str.find(" ") + 1));
-
-  std::getline(ifs, str);
-  const int max_x = std::stoi(str.substr(str.find(" ") + 1));
-
-  std::getline(ifs, str);
-  const int min_y = std::stoi(str.substr(str.find(" ") + 1));
-
-  std::getline(ifs, str);
-  const int max_y = std::stoi(str.substr(str.find(" ") + 1));
-
-  std::getline(ifs, str);
-  const int min_z = std::stoi(str.substr(str.find(" ") + 1));
-
-  std::getline(ifs, str);
-  const int max_z = std::stoi(str.substr(str.find(" ") + 1));
-
   voxelmaps_ptr_.reset(new VoxelMaps);
   voxelmaps_ptr_->set_min_res(min_level_res);
   voxelmaps_ptr_->set_max_level(max_level);
   voxelmaps_ptr_->set_voxel_expantion_rate(v_rate);
-
-  init_tx_range_ = std::make_pair(min_x, max_x);
-  init_ty_range_ = std::make_pair(min_y, max_y);
-  init_tz_range_ = std::make_pair(min_z, max_z);
-
   return true;
 }
 
@@ -82,6 +59,20 @@ std::vector<std::vector<Eigen::Vector4i>> BBS3D::load_buckets(std::string voxelm
 
     buckets.emplace_back(coords4i);
   }
+
+  // The minimum and maximum x, y, z values are selected from the 3D coordinate vector.
+  Eigen::Vector4i min_xyz = Eigen::Vector4i::Constant(std::numeric_limits<int>::max());
+  Eigen::Vector4i max_xyz = Eigen::Vector4i::Constant(std::numeric_limits<int>::lowest());
+
+  int max_level = voxelmaps_ptr_->get_max_level();
+  for (const auto& point : buckets[max_level]) {
+    min_xyz = min_xyz.cwiseMin(point);
+    max_xyz = max_xyz.cwiseMax(point);
+  }
+
+  init_tx_range_ = std::make_pair(min_xyz.x(), max_xyz.x());
+  init_ty_range_ = std::make_pair(min_xyz.y(), max_xyz.y());
+  init_tz_range_ = std::make_pair(min_xyz.z(), max_xyz.z());
 
   return buckets;
 }
@@ -108,13 +99,6 @@ bool BBS3D::save_voxel_params(const std::string& folder_path) {
   ofs << "min_level_res " << min_level_res << std::endl;
   ofs << "max_level " << max_level << std::endl;
   ofs << "v_rate " << v_rate << std::endl;
-  ofs << "min_x " << init_tx_range_.first << std::endl;
-  ofs << "max_x " << init_tx_range_.second << std::endl;
-  ofs << "max_y " << init_ty_range_.first << std::endl;
-  ofs << "max_y " << init_ty_range_.second << std::endl;
-  ofs << "max_z " << init_tz_range_.first << std::endl;
-  ofs << "max_z " << init_tz_range_.second << std::endl;
-
   ofs.close();
 
   return true;
