@@ -31,8 +31,9 @@ if(BUILD_CUDA)
     ${gpu_bbs3d_LIBRARY}
   )
 
+  # voxelmaps saver
   add_executable(saver
-    src/voxelmaps_coords_saver.cpp
+    src/voxelmaps_saver.cpp
   )
 
   target_include_directories(saver 

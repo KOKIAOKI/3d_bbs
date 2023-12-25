@@ -63,13 +63,18 @@ The red point cloud is the matched source point.
 
 <img alt="rviz2_test" src="../figs/rviz2_test.png" width="50%">
 
+**5. (Optional) Load voxelmap coordinates directly**
+You can save the voxelmaps coordinates and skip 3D-BBS voxel construction if you reuse the same parameters of `min_level_res` and `max_level`.  
+Please refer to step 5 of [test_code.md](./test/test_code.md)  
+After saving the voxelmaps, please try 3. Run again.
+
 </div></details>
 
 ## B. Iridescence
 <details><summary> Click here! </summary><div>
 
 ## Dependencies
-- [Iridescence](https://github.com/koide3/iridescence) dependencies
+- [Iridescence](https://github.com/koide3/iridescence)
 - Installed 3D-BBS
 
 ### 1. Build and install
@@ -105,7 +110,7 @@ target_clouds: "your_path/target"
 
 The ros2_test_data you download in the next step will work with default parameter values.
  
- ### 3. Run
+### 3. Run
 **1. First terminal**
 ```shell script
 cd 3d_bbs/ros2_test
@@ -132,6 +137,11 @@ For localize, use the LiDAR scan taken just before the button click.
 The red point cloud is the matched source point.  
 
 <img alt="riridescence_test" src="../figs/iridescence_test.png" width="50%">
+
+**5. (Optional) Load voxelmap coordinates directly**
+You can save the voxelmaps coordinates and skip 3D-BBS voxel construction if you reuse the same parameters of `min_level_res` and `max_level`.  
+Please refer to step 5 of [test_code.md](./test/test_code.md)
+After saving the voxelmaps, please try 3. Run again.
 
 </div></details>
 

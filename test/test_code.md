@@ -33,7 +33,17 @@ cd 3d_bbs/test/build/
 ./gpu_test <config_file_path>
 ```
 
-## Using your own LiDAR scan data
+## 5. (Optional) Load voxelmap coordinates directly
+You can save the voxelmaps coordinates and skip 3D-BBS voxel construction if you reuse the same parameters of `min_level_res` and `max_level`.
+```
+cd 3d_bbs/test/build/
+./saver <target folder path> min_level_res max_level 
+```
+Then, try again 4.Run.  
+Note: Give priority to parameters in the generated text file.
+
+## Using your own 3D point cloud map and LiDAR scan data
+### Convert ros2 bag to pcd file
 If you have your own ros2 bag data, you can convert LiDAR msgs to pcd file with package below so that point cloud aligns in the direction of gravitational acceleration using IMU msgs.  
 https://github.com/KOKIAOKI/ros2bag_to_pcd
 
@@ -44,3 +54,6 @@ https://github.com/KOKIAOKI/ros2bag_to_pcd
 - Use only at locations where the source point cloud is completely included in the target point cloud.
   - Reason: Another pose that encompasses all source point cloud is estimated when the source point cloud includes outside the map environment. 
   - Please use the downsampling and point cloud cutting tools.
+
+  ### Create voxelmaps coord in advance
+  
