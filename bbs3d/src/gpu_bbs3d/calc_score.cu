@@ -25,8 +25,8 @@ __global__ void calc_scores_kernel(
 
     const Eigen::Vector3f translation(trans.x, trans.y, trans.z);
     Eigen::Matrix3f rotation;
-    rotation = Eigen::AngleAxisf(trans.roll, Eigen::Vector3f::UnitX()) * Eigen::AngleAxisf(trans.pitch, Eigen::Vector3f::UnitY()) *
-               Eigen::AngleAxisf(trans.yaw, Eigen::Vector3f::UnitZ());
+    rotation = Eigen::AngleAxisf(trans.yaw, Eigen::Vector3f::UnitZ()) * Eigen::AngleAxisf(trans.pitch, Eigen::Vector3f::UnitY()) *
+               Eigen::AngleAxisf(trans.roll, Eigen::Vector3f::UnitX());
     const Eigen::Vector3f transed_point = rotation * point + translation;
 
     // coord to hash
