@@ -10,7 +10,7 @@ int main(int argc, char** argv) {
   std::cout << "[Setting] Loading target pcds..." << std::endl;
   std::vector<Eigen::Vector3f> tar_points;
   float voxel_filter_width = 0.0f;
-  if (!pciof::load_tar_clouds<float>(target_pcd_folder, voxel_filter_width, tar_points)) {
+  if (!pciof::load_tar_points<float>(target_pcd_folder, voxel_filter_width, tar_points)) {
     std::cout << "[ERROR] Loading target pcd failed" << std::endl;
     return 1;
   }

@@ -18,18 +18,16 @@ max_rpy: [0.02,0.02,6.28]
 score_threshold_percentage: 0.9
 
 ################[Optional]################
-## Downsample Target Clouds Parameter
-valid_tar_vgf: true
-tar_leaf_size: 0.1
+## Downsample target clouds parameter [m]
+tar_leaf_size: 0.1 # off: 0.0
 
-## Downsample Source Clouds Parameter
-valid_src_vgf: true
-src_leaf_size: 2.0
+## Downsample source clouds parameter [m]
+src_leaf_size: 2.0 # off: 0.0
 
-cut_src_points: true 
-scan_range:
-  - 0.0 # min [m]
-  - 100 # max [m]
+## Crop source clouds parameter [m]
+min_scan_range: 0.0 # [m]
+max_scan_range: 100.0 # [m]
+# off: set 0.0 to both min_scan_range and max_scan_range
  
 ## Final align
 use_gicp: false

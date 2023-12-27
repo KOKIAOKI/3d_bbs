@@ -8,7 +8,7 @@ template <typename T>
 using Vector3 = Eigen::Matrix<T, 3, 1>;
 
 template <typename T>
-bool load_tar_clouds(const std::string& tar_folder_path, const T& filter_voxel_width, std::vector<Vector3<T>>& points) {
+bool load_tar_points(const std::string& tar_folder_path, const T& filter_voxel_width, std::vector<Vector3<T>>& points) {
   boost::filesystem::path dir(tar_folder_path);
   if (!boost::filesystem::exists(dir)) {
     std::cout << "[ERROR] Can not open floder" << std::endl;
@@ -37,6 +37,19 @@ bool load_tar_clouds(const std::string& tar_folder_path, const T& filter_voxel_w
   return true;
 }
 
+bool can_convert_to_int(const std::vector<std::pair<std::string, std::string>>& name_vec) {
+  for (const auto& str : name_vec) {
+    try {
+      std::stoi(str.second);
+    } catch (const std::invalid_argument& e) {
+      return false;
+    } catch (const std::out_of_range& e) {
+      return false;
+    }
+  }
+  return true;
+}
+
 std::vector<std::pair<std::string, std::string>> load_pcd_file_paths(const std::string& folder_path) {
   boost::filesystem::path dir(folder_path);
   if (!boost::filesystem::exists(dir)) {
@@ -52,22 +65,24 @@ std::vector<std::pair<std::string, std::string>> load_pcd_file_paths(const std::
     pcd_files.emplace_back(file.path().string(), file.path().stem().string());
   }
 
-  std::sort(pcd_files.begin(), pcd_files.end(), [](const std::pair<std::string, std::string>& a, const std::pair<std::string, std::string>& b) {
-    return a.second < b.second;
-  });
+  if (can_convert_to_int(pcd_files)) {
+    std::sort(pcd_files.begin(), pcd_files.end(), [](const std::pair<std::string, std::string>& a, const std::pair<std::string, std::string>& b) {
+      return std::stoi(a.second) < std::stoi(b.second);
+    });
+  }
 
   return pcd_files;
 }
 
 template <typename T>
-bool load_src_clouds(std::string src_folder_path, T min_range, T max_range, T voxel_width, std::vector<std::vector<Vector3<T>>>& src_points) {
+bool load_src_points(std::string src_folder_path, T min_range, T max_range, T voxel_width, std::vector<std::vector<Vector3<T>>>& src_points_set) {
   const auto pcd_files = load_pcd_file_paths(src_folder_path);
   if (pcd_files.empty()) {
     std::cout << "[ERROR] No pcd files in the folder" << std::endl;
     return false;
   }
 
-  src_points.resize(pcd_files.size());
+  src_points_set.resize(pcd_files.size());
 
   for (int i = 0; i < pcd_files.size(); i++) {
     const auto& pcd_file = pcd_files[i];
@@ -80,25 +95,25 @@ bool load_src_clouds(std::string src_folder_path, T min_range, T max_range, T vo
     const auto narrow_scan_range_points = narrow_scan_range<T>(loaded_points, min_range, max_range);
     const auto filtered_points = filter<T>(narrow_scan_range_points, voxel_width);
 
-    src_points[i].reserve(filtered_points.size());
-    src_points[i].insert(src_points[i].end(), filtered_points.begin(), filtered_points.end());
+    src_points_set[i].reserve(filtered_points.size());
+    src_points_set[i].insert(src_points_set[i].end(), filtered_points.begin(), filtered_points.end());
   }
 }
 
 template <typename T>
-bool load_src_clouds_with_filename(
+bool load_src_points_with_filename(
   std::string src_folder_path,
   T min_range,
   T max_range,
   T voxel_width,
-  std::pair<std::string, std::vector<Vector3<T>>>& src_points) {
+  std::pair<std::string, std::vector<Vector3<T>>>& src_points_set) {
   const auto pcd_files = load_pcd_file_paths(src_folder_path);
   if (pcd_files.empty()) {
     std::cout << "[ERROR] No pcd files in the folder" << std::endl;
     return false;
   }
 
-  src_points.resize(pcd_files.size());
+  src_points_set.resize(pcd_files.size());
 
   for (int i = 0; i < pcd_files.size(); i++) {
     const auto& pcd_file = pcd_files[i];
@@ -111,9 +126,9 @@ bool load_src_clouds_with_filename(
     const auto narrow_scan_range_points = narrow_scan_range<T>(loaded_points, min_range, max_range);
     const auto filtered_points = filter<T>(narrow_scan_range_points, voxel_width);
 
-    src_points[i].first = pcd_file.second;
-    src_points[i].second.reserve(filtered_points.size());
-    src_points[i].second.insert(src_points[i].second.end(), filtered_points.begin(), filtered_points.end());
+    src_points_set[i].first = pcd_file.second;
+    src_points_set[i].second.reserve(filtered_points.size());
+    src_points_set[i].second.insert(src_points_set[i].second.end(), filtered_points.begin(), filtered_points.end());
   }
 }
 }  // namespace pciof

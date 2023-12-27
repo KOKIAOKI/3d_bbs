@@ -18,12 +18,6 @@ public:
 private:
   bool load_config(const std::string& config);
 
-  template <typename T>
-  bool load_tar_clouds(std::vector<T>& points);
-
-  template <typename T>
-  bool load_src_clouds(std::map<std::string, std::vector<T>>& points_set);
-
 private:
   std::unique_ptr<GICP> gicp_ptr;
 
@@ -42,10 +36,8 @@ private:
   double score_threshold_percentage;
 
   // downsample
-  bool valid_tar_vgf, valid_src_vgf;
   float tar_leaf_size, src_leaf_size;
-  bool cut_src_points;
-  std::pair<double, double> scan_range;
+  double min_scan_range, max_scan_range;
 
   // align
   bool use_gicp;

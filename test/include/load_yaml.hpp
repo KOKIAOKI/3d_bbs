@@ -46,21 +46,11 @@ bool BBS3DTest::load_config(const std::string& config) {
   std::cout << "[YAML] Loading score threshold percentage..." << std::endl;
   score_threshold_percentage = conf["score_threshold_percentage"].as<double>();
 
-  std::cout << "[YAML] Loading downsample souce clouds parameters..." << std::endl;
-  valid_tar_vgf = conf["valid_tar_vgf"].as<bool>();
-  if (valid_tar_vgf) tar_leaf_size = conf["tar_leaf_size"].as<float>();
-
-  valid_src_vgf = conf["valid_src_vgf"].as<bool>();
-  if (valid_src_vgf) src_leaf_size = conf["src_leaf_size"].as<float>();
-
-  cut_src_points = conf["cut_src_points"].as<bool>();
-  if (cut_src_points) {
-    scan_range = conf["scan_range"].as<std::pair<double, double>>();
-    if (scan_range.second == 0.0) {
-      std::cout << "[ERROR] Set max scan_range except for 0" << std::endl;
-      return false;
-    }
-  }
+  std::cout << "[YAML] Loading downsample parameters..." << std::endl;
+  tar_leaf_size = conf["tar_leaf_size"].as<float>();
+  src_leaf_size = conf["src_leaf_size"].as<float>();
+  min_scan_range = conf["min_scan_range"].as<double>();
+  max_scan_range = conf["max_scan_range"].as<double>();
 
   use_gicp = conf["use_gicp"].as<bool>();
   return true;
