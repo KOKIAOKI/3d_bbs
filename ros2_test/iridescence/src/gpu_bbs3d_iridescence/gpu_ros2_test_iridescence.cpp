@@ -20,13 +20,17 @@ ROS2Test::ROS2Test(const rclcpp::NodeOptions& node_options) : Node("gpu_ros2_tes
     return;
   };
 
+  // ==== Set target cloud ====
   std::cout << "[ROS2] Loading target clouds..." << std::endl;
-  std::vector<Eigen::Vector3f> tar_points;
-  if (!load_tar_clouds(tar_points)) {
+  pcl::PointCloud<pcl::PointXYZ>::Ptr tar_cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>());
+  if (!load_tar_clouds(tar_path, tar_leaf_size, tar_cloud_ptr)) {
     std::cout << "[ERROR] Couldn't load target clouds" << std::endl;
     return;
   }
-  std::cout << "[ROS2] Target clouds loaded" << std::endl;
+
+  // pcl to eigen
+  std::vector<Eigen::Vector3f> tar_points;
+  pcl_to_eigen(tar_cloud_ptr, tar_points);
 
   std::cout << "[Voxel map] Creating hierarchical voxel map..." << std::endl;
   if (gpu_bbs3d.set_voxelmaps_coords(tar_path)) {
@@ -34,6 +38,7 @@ ROS2Test::ROS2Test(const rclcpp::NodeOptions& node_options) : Node("gpu_ros2_tes
   } else {
     gpu_bbs3d.set_tar_points(tar_points, min_level_res, max_level);
   }
+
   gpu_bbs3d.set_angular_search_range(min_rpy.cast<float>(), max_rpy.cast<float>());
   gpu_bbs3d.set_score_threshold_percentage(static_cast<float>(score_threshold_percentage));
 
@@ -71,50 +76,6 @@ ROS2Test::ROS2Test(const rclcpp::NodeOptions& node_options) : Node("gpu_ros2_tes
 
 ROS2Test::~ROS2Test() {}
 
-template <typename T>
-bool ROS2Test::load_tar_clouds(std::vector<T>& points) {
-  // Load pcd file
-  boost::filesystem::path dir(tar_path);
-  if (!boost::filesystem::exists(dir)) {
-    std::cout << "[ERROR] Can not open floder" << std::endl;
-    return false;
-  }
-
-  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>());
-  for (const auto& file : boost::filesystem::directory_iterator(tar_path)) {
-    const std::string filename = file.path().c_str();
-    const std::string extension = file.path().extension().string();
-    if (extension != ".pcd" && extension != ".PCD") {
-      continue;
-    }
-
-    // Check load pcd
-    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_temp_ptr(new pcl::PointCloud<pcl::PointXYZ>());
-    if (pcl::io::loadPCDFile(filename, *cloud_temp_ptr) == -1) {
-      std::cout << "[WARN] Can not open pcd file: " << filename << std::endl;
-      continue;
-    }
-    *cloud_ptr += *cloud_temp_ptr;
-  }
-
-  // Downsample
-  pcl::PointCloud<pcl::PointXYZ>::Ptr tar_cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>());
-  if (valid_tar_vgf) {
-    pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>());
-    pcl::ApproximateVoxelGrid<pcl::PointXYZ> filter;
-    filter.setLeafSize(tar_leaf_size, tar_leaf_size, tar_leaf_size);
-    filter.setInputCloud(cloud_ptr);
-    filter.filter(*filtered_cloud_ptr);
-    *tar_cloud_ptr = *filtered_cloud_ptr;
-  } else {
-    *tar_cloud_ptr = *cloud_ptr;
-  }
-
-  // pcl to eigen
-  pcl_to_eigen(tar_cloud_ptr, points);
-  return true;
-}
-
 void ROS2Test::click_callback() {
   std::cout << "click callback" << std::endl;
   if (!imu_buffer.size()) return;
@@ -123,7 +84,7 @@ void ROS2Test::click_callback() {
   pcl::fromROSMsg(*source_cloud_msg_, *src_cloud);
 
   // filter
-  if (valid_src_vgf) {
+  if (src_leaf_size != 0.0f) {
     pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>());
     pcl::VoxelGrid<pcl::PointXYZ> filter;
     filter.setLeafSize(src_leaf_size, src_leaf_size, src_leaf_size);
@@ -133,13 +94,13 @@ void ROS2Test::click_callback() {
   }
 
   // Cut scan range
-  if (cut_src_points) {
+  if (!(min_scan_range == 0.0 && max_scan_range == 0.0)) {
     pcl::PointCloud<pcl::PointXYZ>::Ptr cut_cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
     for (size_t i = 0; i < src_cloud->points.size(); ++i) {
       pcl::PointXYZ point = src_cloud->points[i];
-      double norm = pcl::euclideanDistance(point, pcl::PointXYZ(0, 0, 0));
+      double norm = pcl::euclideanDistance(point, pcl::PointXYZ(0.0f, 0.0f, 0.0f));
 
-      if (norm >= scan_range.first && norm <= scan_range.second) {
+      if (norm >= min_scan_range && norm <= max_scan_range) {
         cut_cloud_ptr->points.push_back(point);
       }
     }

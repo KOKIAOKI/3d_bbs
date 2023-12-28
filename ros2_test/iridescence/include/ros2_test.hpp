@@ -24,8 +24,6 @@ public:
 
 private:
   bool load_config(const std::string& config);
-  template <typename T>
-  bool load_tar_clouds(std::vector<T>& points);
   void click_callback();
   int get_nearest_imu_index(const std::vector<sensor_msgs::msg::Imu>& imu_buffer, const builtin_interfaces::msg::Time& stamp);
   void cloud_callback(const sensor_msgs::msg::PointCloud2::SharedPtr msg);
@@ -64,8 +62,6 @@ private:
   double score_threshold_percentage;
 
   // downsample
-  bool valid_tar_vgf, valid_src_vgf;
   float tar_leaf_size, src_leaf_size;
-  bool cut_src_points;
-  std::pair<double, double> scan_range;
+  double min_scan_range, max_scan_range;
 };

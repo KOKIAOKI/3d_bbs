@@ -47,6 +47,7 @@ ROS2Test::ROS2Test(const rclcpp::NodeOptions& node_options) : Node("gpu_ros2_tes
     return;
   }
 
+  // ==== Set and publish target cloud ====
   // Wait for rviz2
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
