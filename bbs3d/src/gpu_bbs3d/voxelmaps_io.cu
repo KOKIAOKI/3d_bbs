@@ -1,6 +1,5 @@
 #include <gpu_bbs3d/bbs3d.cuh>
 #include <gpu_bbs3d/voxelmaps.cuh>
-#include <pointcloud_iof/io.hpp>
 #include <pointcloud_iof/load.hpp>
 
 #include <boost/filesystem.hpp>
@@ -15,10 +14,10 @@ bool BBS3D::set_voxelmaps_coords(const std::string& folder_path) {
 
   if (!load_voxel_params(voxelmaps_folder_path)) return false;
 
-  const auto buckets = load_buckets(voxelmaps_folder_path);
-  if (buckets.empty()) return false;
+  const auto multi_buckets = set_multi_buckets(voxelmaps_folder_path);
+  if (multi_buckets.empty()) return false;
 
-  voxelmaps_ptr_->set_buckets_on_device(buckets, stream);
+  voxelmaps_ptr_->set_buckets_on_device(multi_buckets, v_rate_, stream);
 
   return true;
 }
@@ -34,30 +33,29 @@ bool BBS3D::load_voxel_params(const std::string& voxelmaps_folder_path) {
   const int max_level = std::stoi(str.substr(str.find(" ") + 1));
 
   std::getline(ifs, str);
-  const float v_rate = std::stof(str.substr(str.find(" ") + 1));
+  set_voxel_expantion_rate(std::stof(str.substr(str.find(" ") + 1)));
 
   voxelmaps_ptr_.reset(new VoxelMaps);
   voxelmaps_ptr_->set_min_res(min_level_res);
   voxelmaps_ptr_->set_max_level(max_level);
-  voxelmaps_ptr_->set_voxel_expantion_rate(v_rate);
   return true;
 }
 
-std::vector<std::vector<Eigen::Vector4i>> BBS3D::load_buckets(std::string voxelmaps_folder_path) {
+std::vector<std::vector<Eigen::Vector4i>> BBS3D::set_multi_buckets(const std::string& voxelmaps_folder_path) {
   const auto pcd_files = pciof::load_pcd_file_paths(voxelmaps_folder_path);
 
-  std::vector<std::vector<Eigen::Vector4i>> buckets;
-  buckets.reserve(pcd_files.size());
+  std::vector<std::vector<Eigen::Vector4i>> multi_buckets;
+  multi_buckets.reserve(pcd_files.size());
 
   for (const auto& file : pcd_files) {
     const auto coords = pciof::read_pcd<int>(file.first);
     if (coords.empty()) return {};
     std::vector<Eigen::Vector4i> coords4i(coords.size());
-    for (int i = 0; i < coords.size(); ++i) {
+    for (int i = 0; i < coords.size(); i++) {
       coords4i[i] << coords[i], 1;
     }
 
-    buckets.emplace_back(coords4i);
+    multi_buckets.emplace_back(coords4i);
   }
 
   // The minimum and maximum x, y, z values are selected from the 3D coordinate vector.
@@ -65,7 +63,8 @@ std::vector<std::vector<Eigen::Vector4i>> BBS3D::load_buckets(std::string voxelm
   Eigen::Vector4i max_xyz = Eigen::Vector4i::Constant(std::numeric_limits<int>::lowest());
 
   int max_level = voxelmaps_ptr_->get_max_level();
-  for (const auto& point : buckets[max_level]) {
+  const auto& top_buckets = multi_buckets[max_level];
+  for (const auto& point : top_buckets) {
     min_xyz = min_xyz.cwiseMin(point);
     max_xyz = max_xyz.cwiseMax(point);
   }
@@ -74,69 +73,6 @@ std::vector<std::vector<Eigen::Vector4i>> BBS3D::load_buckets(std::string voxelm
   init_ty_range_ = std::make_pair(min_xyz.y(), max_xyz.y());
   init_tz_range_ = std::make_pair(min_xyz.z(), max_xyz.z());
 
-  return buckets;
-}
-
-bool BBS3D::save_voxel_params(const std::string& folder_path) {
-  boost::filesystem::path dir(folder_path);
-  if (!boost::filesystem::exists(dir)) {
-    std::cout << "[ERROR] Can not open folder" << std::endl;
-    return false;
-  }
-
-  float min_level_res = voxelmaps_ptr_->get_min_res();
-  int max_level = voxelmaps_ptr_->get_max_level();
-  float v_rate = voxelmaps_ptr_->get_voxel_expantion_rate();
-
-  // create voxelmaps coords folder
-  const std::string voxelmaps_folder_path = folder_path + "/" + voxelmaps_folder_name_;
-  boost::filesystem::path voxelmaps_coords_dir(voxelmaps_folder_path);
-  if (!boost::filesystem::exists(voxelmaps_coords_dir)) {
-    boost::filesystem::create_directory(voxelmaps_coords_dir);
-  }
-
-  std::ofstream ofs(voxelmaps_folder_path + "/voxel_params.txt");
-  ofs << "min_level_res " << min_level_res << std::endl;
-  ofs << "max_level " << max_level << std::endl;
-  ofs << "v_rate " << v_rate << std::endl;
-  ofs.close();
-
-  return true;
-}
-
-bool BBS3D::save_voxelmaps_pcd(const std::string& folder_path) {
-  boost::filesystem::path dir(folder_path);
-  if (!boost::filesystem::exists(dir)) {
-    std::cout << "[ERROR] Can not open folder" << std::endl;
-    return false;
-  }
-
-  // create voxelmaps coords folder
-  const std::string voxelmaps_folder_path = folder_path + "/" + voxelmaps_folder_name_;
-  boost::filesystem::path voxelmaps_coords_dir(voxelmaps_folder_path);
-  if (!boost::filesystem::exists(voxelmaps_coords_dir)) {
-    boost::filesystem::create_directory(voxelmaps_coords_dir);
-  }
-
-  for (int i = 0; i < voxelmaps_ptr_->get_max_level() + 1; ++i) {
-    const std::string file_path = voxelmaps_folder_path + "/" + std::to_string(i) + ".pcd";
-    const auto coords = voxelmaps_ptr_->multi_buckets_[i];
-    if (coords.empty()) {
-      std::cout << "[ERROR] Can not get coords" << std::endl;
-      return false;
-    }
-
-    std::vector<Eigen::Vector3i> coords3i;
-    coords3i.reserve(coords.size());
-    for (const auto& coord : coords) {
-      coords3i.emplace_back(coord.head<3>());
-    }
-
-    if (!pciof::save_pcd<int>(file_path, coords3i)) {
-      std::cout << "[ERROR] Can not save pcd file: " << file_path << std::endl;
-      return false;
-    }
-  }
-  return true;
+  return multi_buckets;
 }
 }  // namespace gpu

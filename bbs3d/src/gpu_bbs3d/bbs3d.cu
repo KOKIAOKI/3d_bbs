@@ -25,8 +25,7 @@ void BBS3D::set_tar_points(const std::vector<Eigen::Vector3f>& points, float min
   voxelmaps_ptr_.reset(new VoxelMaps);
   voxelmaps_ptr_->set_min_res(min_level_res);
   voxelmaps_ptr_->set_max_level(max_level);
-  voxelmaps_ptr_->set_voxel_expantion_rate(v_rate_);
-  voxelmaps_ptr_->create_voxelmaps(points, stream);
+  voxelmaps_ptr_->create_voxelmaps(points, v_rate_, stream);
 
   // Detect translation range from target points
   set_trans_search_range(points);

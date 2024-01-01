@@ -6,12 +6,17 @@
 
 ## Test
 ### 1. Build
-- GPU
+- CPU & GPU
 ```
 cd 3d_bbs/test/
 mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
 make -j8
+```
+
+- CPU only
+```
+cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_CUDA=OFF
 ```
 
 ### 2. Download
@@ -31,6 +36,12 @@ Please edit the config file as below:
 ```
 cd 3d_bbs/test/build/
 ./gpu_test <config_file_path>
+```
+
+- CPU
+```
+cd 3d_bbs/test/build/
+./cpu_test <config_file_path>
 ```
 
 ## 5. (Optional) Load voxelmap coordinates directly

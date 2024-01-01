@@ -90,23 +90,17 @@ public:
 
   void localize();
 
-  // pcd iof
-  bool load_voxel_params(const std::string& voxelmaps_folder_path);
-
-  std::vector<std::pair<std::string, std::string>> load_pcd_files(const std::string& voxelmaps_folder_path);
-
-  std::vector<std::vector<Eigen::Vector4i>> load_buckets(std::string folder_path);
-
-  bool save_voxelmaps_pcd(const std::string& folder_path);
-
-  bool save_voxel_params(const std::string& folder_path);
-
 private:
   void calc_angluar_info(std::vector<AngularInfo>& ang_info_vec);
 
   std::vector<DiscreteTransformation> create_init_transset(const AngularInfo& init_ang_info);
 
   std::vector<DiscreteTransformation> calc_scores(const std::vector<DiscreteTransformation>& h_transset);
+
+  // pcd iof
+  bool load_voxel_params(const std::string& voxelmaps_folder_path);
+
+  std::vector<std::vector<Eigen::Vector4i>> set_multi_buckets(const std::string& voxelmaps_folder_path);
 
 private:
   Eigen::Matrix4f global_pose_;

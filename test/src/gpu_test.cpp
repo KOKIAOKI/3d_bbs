@@ -90,9 +90,6 @@ int BBS3DTest::run(std::string config) {
 
     sum_time += localize_time;
 
-    pcl::PointCloud<pcl::PointXYZ>::Ptr src_cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>());
-    // eigen_to_pcl(src_points.second, src_cloud_ptr);
-
     pcl::PointCloud<pcl::PointXYZ>::Ptr output_cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>());
     if (use_gicp) {
       gicp_ptr->setInputSource(src_cloud.second);
