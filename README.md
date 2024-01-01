@@ -34,11 +34,21 @@ For more information, you can check [docker_start.md](./docker/docker_start.md)
 
 ## 3d_bbs core source code
 ### Build and Install
-- GPU (Please ignore the large number of warnings)
 ```shell script
 git clone https://github.com/KOKIAOKI/3d_bbs.git
 cd 3d_bbs
 mkdir build && cd build
+```
+
+- CPU ver. & GPU ver. (Please ignore the large number of warnings)
+```shell script
+cmake .. -DCMAKE_BUILD_TYPE=Release
+make -j8
+sudo make install
+```
+
+- CPU ver. only
+```shell script
 cmake .. -DCMAKE_BUILD_TYPE=Release
 make -j8
 sudo make install

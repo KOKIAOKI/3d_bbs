@@ -6,17 +6,21 @@
 
 ## Test
 ### 1. Build
-- CPU & GPU
-```
+```shell script
 cd 3d_bbs/test/
 mkdir build && cd build
+```
+
+- CPU ver. & GPU ver.
+```shell script
 cmake .. -DCMAKE_BUILD_TYPE=Release
 make -j8
 ```
 
-- CPU only
-```
+- CPU ver. only  
+```shell script
 cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_CUDA=OFF
+make -j8
 ```
 
 ### 2. Download
