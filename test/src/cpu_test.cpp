@@ -99,14 +99,14 @@ int BBS3DTest::run(std::string config) {
       gicp_ptr->setInputSource(src_cloud.second);
       gicp_ptr->align(*output_cloud_ptr, bbs3d_ptr->get_global_pose().cast<float>());
 
-      Eigen::Isometry3f estimated_pose;
+      Eigen::Isometry3d estimated_pose;
       estimated_pose.matrix() = bbs3d_ptr->get_global_pose();
-      Eigen::Isometry3f ground_truth_pose;
-      ground_truth_pose.matrix() = gicp_ptr->final_transformation_;
+      Eigen::Isometry3d ground_truth_pose;
+      ground_truth_pose.matrix() = gicp_ptr->final_transformation_.cast<double>();
 
-      Eigen::Isometry3f error = estimated_pose.inverse() * ground_truth_pose;
-      float error_t = error.translation().norm();
-      float error_r = Eigen::AngleAxisf(error.linear()).angle();
+      Eigen::Isometry3d error = estimated_pose.inverse() * ground_truth_pose;
+      double error_t = error.translation().norm();
+      double error_r = Eigen::AngleAxisd(error.linear()).angle();
       std::cout << "[Localize] Translation error: " << error_t << ", Rotation error: " << error_r << std::endl;
     } else {
       pcl::transformPointCloud(*src_cloud.second, *output_cloud_ptr, bbs3d_ptr->get_global_pose());

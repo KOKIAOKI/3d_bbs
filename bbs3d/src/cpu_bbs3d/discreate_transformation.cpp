@@ -89,12 +89,13 @@ void DiscreteTransformation::calc_score(
   const int max_bucket_scan_count,
   const std::vector<Eigen::Vector3d>& points) {
   const int num_buckets = buckets.size();
+  const double inv_res = 1.0 / resolution;
+  Eigen::Transform<double, 3, Eigen::Affine> transform;
+  transform = create_matrix();
 
   for (int i = 0; i < points.size(); i++) {
-    Eigen::Transform<double, 3, Eigen::Affine> transform;
-    transform = create_matrix();
     const Eigen::Vector3d transed_point = transform * points[i];
-    const Eigen::Vector3i coord = (transed_point.array() / resolution).floor().cast<int>();
+    const Eigen::Vector3i coord = (transed_point.array() * inv_res).floor().cast<int>();
     const std::uint32_t hash = (coord[0] * 73856093) ^ (coord[1] * 19349669) ^ (coord[2] * 83492791);
 
     for (int j = 0; j < max_bucket_scan_count; j++) {

@@ -172,6 +172,11 @@ void BBS3D::localize() {
       }
 
       for (const auto& child : children) {
+        // pruning
+        if (child.score < best_score) {
+          continue;
+        }
+
         trans_queue.push(child);
       }
     }
