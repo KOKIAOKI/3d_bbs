@@ -2,19 +2,18 @@
 Experiance the real-time global localization visually!
 
 ## Test
-You can try 3D-BBS with two different viewers, Rviz2 and Iridescence.
-Note: Docker is not yet supported.
+You can try 3D-BBS with two different viewers, Rviz2 and Iridescence.  
+Note: 
+- This is only supported on GPU
+- Docker is not yet supported.
 
 ## A. Rviz2
-
+### Procedure
 <details><summary> Click here! </summary><div>
 
 ## Dependencies
 - Installed 3D-BBS
 - ROS2 humble
-
-## Video Demo
-Please refer to this [silent video.](https://youtu.be/AmQ1u77ws-g)
 
 ### 1. Build
 - Build ros2_test_rviz2 and click_loc
@@ -70,12 +69,17 @@ After saving the voxelmaps, please try 3. Run again.
 
 </div></details>
 
+### Silent tutorial video
+[![video](../figs/rviz2_test_thumbnail.png)](https://youtu.be/AmQ1u77ws-g)
+
 ## B. Iridescence
+### Procedure
 <details><summary> Click here! </summary><div>
 
 ## Dependencies
 - [Iridescence](https://github.com/koide3/iridescence)
 - Installed 3D-BBS
+- ROS2 humble
 
 ### 1. Build and install
 - Build and Install Iridescence
@@ -135,6 +139,7 @@ ros2 bag play <ros2 bag file path>
 
 For localize, use the LiDAR scan taken just before the button click.  
 The red point cloud is the matched source point.  
+By pressing "Ctrl+M", a hidden menu bar appears.
 
 <img alt="riridescence_test" src="../figs/iridescence_test.png" width="50%">
 
@@ -144,6 +149,9 @@ Please refer to step 5 of [test_code.md](./test/test_code.md)
 After saving the voxelmaps, please try 3. Run again.
 
 </div></details>
+
+### Silent tutorial video
+[![video](../figs/iridescence_test_thmbnail.png)](https://youtu.be/k2DZ2q2ZhOs)
 
 ## Conditions for demonstrating 3D-BBS performance on your own data
 - Keep the robot with the sensor stationary.

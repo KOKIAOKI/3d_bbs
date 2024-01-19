@@ -29,5 +29,5 @@ min_scan_range: 0.0 # [m]
 max_scan_range: 100.0 # [m]
 # off: set 0.0 to both min_scan_range and max_scan_range
  
-## Final align
-use_gicp: false
+## Final align (evaluate the error)
+use_gicp: false 
