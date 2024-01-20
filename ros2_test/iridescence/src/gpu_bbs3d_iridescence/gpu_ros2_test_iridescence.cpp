@@ -17,7 +17,6 @@ ROS2Test::ROS2Test(const rclcpp::NodeOptions& node_options) : Node("gpu_ros2_tes
   std::string config = this->declare_parameter<std::string>("config");
   if (!load_config(config)) {
     std::cout << "[ERROR] Loading config file failed" << std::endl;
-    return;
   };
 
   // ==== Set target cloud ====
@@ -25,7 +24,6 @@ ROS2Test::ROS2Test(const rclcpp::NodeOptions& node_options) : Node("gpu_ros2_tes
   pcl::PointCloud<pcl::PointXYZ>::Ptr tar_cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>());
   if (!load_tar_clouds(tar_path, tar_leaf_size, tar_cloud_ptr)) {
     std::cout << "[ERROR] Couldn't load target clouds" << std::endl;
-    return;
   }
 
   // pcl to eigen
@@ -42,7 +40,7 @@ ROS2Test::ROS2Test(const rclcpp::NodeOptions& node_options) : Node("gpu_ros2_tes
   gpu_bbs3d.set_angular_search_range(min_rpy.cast<float>(), max_rpy.cast<float>());
   gpu_bbs3d.set_score_threshold_percentage(static_cast<float>(score_threshold_percentage));
 
-  // ==== ROS2 sub====
+  // ==== ROS 2 sub====
   cloud_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     lidar_topic_name,
     rclcpp::QoS(rclcpp::KeepLast(50)).best_effort(),

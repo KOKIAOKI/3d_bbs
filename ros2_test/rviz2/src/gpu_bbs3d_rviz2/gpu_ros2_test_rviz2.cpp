@@ -17,10 +17,9 @@ ROS2Test::ROS2Test(const rclcpp::NodeOptions& node_options) : Node("gpu_ros2_tes
   std::string config = this->declare_parameter<std::string>("config");
   if (!load_config(config)) {
     std::cout << "[ERROR] Loading config file failed" << std::endl;
-    return;
   };
 
-  // ==== ROS2 sub====
+  // ==== ROS 2 sub====
   click_sub_ = this->create_subscription<std_msgs::msg::Bool>(
     "/click_loc",
     rclcpp::SensorDataQoS(),
@@ -33,7 +32,7 @@ ROS2Test::ROS2Test(const rclcpp::NodeOptions& node_options) : Node("gpu_ros2_tes
 
   imu_sub_ = this->create_subscription<sensor_msgs::msg::Imu>(imu_topic_name, 100, std::bind(&ROS2Test::imu_callback, this, std::placeholders::_1));
 
-  //==== ROS2 pub ====
+  //==== ROS 2 pub ====
   tar_points_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("/tar_points", 10);
   src_points_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("/src_points_on_global_pose", 10);
   global_pose_pub_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("/global_pose", 10);
@@ -44,7 +43,6 @@ ROS2Test::ROS2Test(const rclcpp::NodeOptions& node_options) : Node("gpu_ros2_tes
   pcl::PointCloud<pcl::PointXYZ>::Ptr tar_cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>());
   if (!load_tar_clouds(tar_path, tar_leaf_size, tar_cloud_ptr)) {
     std::cout << "[ERROR] Couldn't load target clouds" << std::endl;
-    return;
   }
 
   // ==== Set and publish target cloud ====

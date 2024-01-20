@@ -1,4 +1,4 @@
-# ROS2 Test code
+# ROS 2 Test code
 Experiance the real-time global localization visually!
 
 ## Test
@@ -13,7 +13,7 @@ Note:
 
 ## Dependencies
 - Installed 3D-BBS
-- ROS2 humble
+- ROS 2 humble
 
 ### 1. Build
 - Build ros2_test_rviz2 and click_loc
@@ -79,7 +79,7 @@ After saving the voxelmaps, please try 3. Run again.
 ## Dependencies
 - [Iridescence](https://github.com/koide3/iridescence)
 - Installed 3D-BBS
-- ROS2 humble
+- ROS 2 humble
 
 ### 1. Build and install
 - Build and Install Iridescence

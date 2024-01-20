@@ -58,7 +58,7 @@ bool load_tar_clouds(const std::string& tar_path, const float tar_leaf_size, pcl
   // Load pcd file
   boost::filesystem::path dir(tar_path);
   if (!boost::filesystem::exists(dir)) {
-    std::cout << "[ERROR] Can not open floder" << std::endl;
+    std::cout << "[ERROR] Can not open folder" << std::endl;
     return false;
   }
 

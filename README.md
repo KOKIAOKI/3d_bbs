@@ -58,6 +58,6 @@ sudo make install
 See [test_code.md](./test/test_code.md)  
 <img alt="overview" src="figs/test_topreadme.png" width="40%">
 
-## ROS2 test code
+## ROS 2 test code
 See [ros2_test_code.md](./ros2_test/ros2_test_code.md)  
 <img alt="overview" src="figs/rviz2_test_topreadme.png" width="40%">

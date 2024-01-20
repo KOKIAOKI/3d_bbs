@@ -11,7 +11,7 @@ template <typename T>
 bool load_tar_points(const std::string& tar_folder_path, const T& filter_voxel_width, std::vector<Vector3<T>>& points) {
   boost::filesystem::path dir(tar_folder_path);
   if (!boost::filesystem::exists(dir)) {
-    std::cout << "[ERROR] Can not open floder" << std::endl;
+    std::cout << "[ERROR] Can not open folder" << std::endl;
     return false;
   }
 
