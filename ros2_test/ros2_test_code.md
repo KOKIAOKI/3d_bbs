@@ -151,7 +151,7 @@ After saving the voxelmaps, please try 3. Run again.
 </div></details>
 
 ### Silent tutorial video
-[![video](../figs/iridescence_test_thmbnail.png)](https://youtu.be/k2DZ2q2ZhOs)
+[![video](../figs/iridescence_test_thumbnail.png)](https://youtu.be/k2DZ2q2ZhOs)
 
 ## Conditions for demonstrating 3D-BBS performance on your own data
 - Keep the robot with the sensor stationary.
