@@ -43,7 +43,7 @@ ros2 launch ros2_test_rviz2 gpu_ros2_test_rviz2_launch.py
 ```
 
 **2. Second terminal**  
-Please download [ros2_test_data](https://drive.google.com/drive/folders/1V7B22oEM2HTE5__MP6uVLjLUzDR3B3Kn?usp=drive_link).
+Please download [ros2_test_data](https://drive.google.com/drive/folders/1afaYx4iFSxxhUE1QYCizXyoGJwnCh1o3?usp=drive_link).
 ```shell script
 ros2 bag play <ros2 bag file path>
 ```
@@ -123,7 +123,7 @@ ros2 launch ros2_test_iridescence gpu_ros2_test_iridescence_launch.py
 ```
 
 **2. Second terminal**  
-Please download [ros2_test_data](https://drive.google.com/drive/folders/1V7B22oEM2HTE5__MP6uVLjLUzDR3B3Kn?usp=drive_link).
+Please download [ros2_test_data](https://drive.google.com/drive/folders/1afaYx4iFSxxhUE1QYCizXyoGJwnCh1o3?usp=drive_link).
 ```shell script
 ros2 bag play <ros2 bag file path>
 ```

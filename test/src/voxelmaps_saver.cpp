@@ -1,5 +1,5 @@
-#include <bbs3d/cpu_bbs3d/bbs3d.hpp>
-#include <bbs3d/pointcloud_iof/load.hpp>
+#include <cpu_bbs3d/bbs3d.hpp>
+#include <pointcloud_iof/load.hpp>
 
 int main(int argc, char** argv) {
   std::string target_pcd_folder = argv[1];

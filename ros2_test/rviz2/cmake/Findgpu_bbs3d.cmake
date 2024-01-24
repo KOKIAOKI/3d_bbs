@@ -1,5 +1,5 @@
-find_path(gpu_bbs3d_INCLUDE_DIRS bbs3d
-  HINTS /usr/local/include/bbs3d)
+find_path(gpu_bbs3d_INCLUDE_DIRS gpu_bbs3d
+  HINTS /usr/local/include)
 
 find_library(gpu_bbs3d_LIBRARY NAMES gpu_bbs3d
   HINTS /usr/local/lib)

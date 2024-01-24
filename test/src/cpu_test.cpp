@@ -1,4 +1,4 @@
-#include <bbs3d/cpu_bbs3d/bbs3d.hpp>
+#include <cpu_bbs3d/bbs3d.hpp>
 #include <test.hpp>
 #include <util.hpp>
 #include <load_yaml.hpp>

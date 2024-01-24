@@ -53,4 +53,4 @@ if(BUILD_CUDA)
   install(TARGETS gpu_bbs3d DESTINATION lib)
 endif()
 
-install(DIRECTORY bbs3d/include/ DESTINATION include/bbs3d)
+install(DIRECTORY bbs3d/include/ DESTINATION include)

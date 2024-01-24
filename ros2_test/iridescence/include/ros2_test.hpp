@@ -8,7 +8,7 @@
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <sensor_msgs/msg/imu.hpp>
 
-#include <bbs3d/gpu_bbs3d/bbs3d.cuh>
+#include <gpu_bbs3d/bbs3d.cuh>
 
 // iridescence
 #include <glk/cuda_magic_headers.hpp>

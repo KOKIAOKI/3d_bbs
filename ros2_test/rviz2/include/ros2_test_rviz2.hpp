@@ -20,7 +20,7 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
-#include <bbs3d/gpu_bbs3d/bbs3d.cuh>
+#include <gpu_bbs3d/bbs3d.cuh>
 
 class ROS2Test : public rclcpp::Node {
 public:
