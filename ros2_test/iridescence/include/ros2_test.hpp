@@ -37,7 +37,6 @@ private:
   std::vector<sensor_msgs::msg::Imu> imu_buffer;
 
   // iridescence
-  std::shared_ptr<guik::LightViewer> viewer_;
   rclcpp::TimerBase::SharedPtr timer_;
 
   // 3D-BBS

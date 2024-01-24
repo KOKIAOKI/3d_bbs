@@ -19,7 +19,7 @@ ROS2Test::ROS2Test(const rclcpp::NodeOptions& node_options) : Node("gpu_ros2_tes
     std::cout << "[ERROR] Loading config file failed" << std::endl;
   };
 
-  // ==== ROS 2 sub====
+  // ==== ROS 2 sub ====
   click_sub_ = this->create_subscription<std_msgs::msg::Bool>(
     "/click_loc",
     rclcpp::SensorDataQoS(),

@@ -86,6 +86,13 @@ public:
 
   int get_best_score() const { return best_score_; }
 
+  float get_best_score_percentage() {
+    if (src_points_.size() == 0)
+      return 0.0f;
+    else
+      return static_cast<float>(best_score_ / src_points_.size());
+  };
+
   bool has_localized() { return has_localized_; }
 
   void localize();
