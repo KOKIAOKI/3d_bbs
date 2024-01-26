@@ -35,7 +35,7 @@ target_clouds: "your_path/target"
 The ros2_test_data you download in the next step will work with default parameter values.
 
 ### 3. Run
-**1. First terminal**
+**1. First terminal**  
 ```shell script
 cd 3d_bbs/ros2_test
 source install/setup.bash
@@ -48,7 +48,7 @@ Please download [ros2_test_data](https://drive.google.com/drive/folders/1afaYx4i
 ros2 bag play <ros2 bag file path>
 ```
 
-**3. Wait until this message is displayed.**
+**3. Wait until this message is displayed.**  
 ```shell script
  *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
     [ROS2] 3D-BBS initialized
@@ -57,12 +57,12 @@ ros2 bag play <ros2 bag file path>
 **4. Click the localize button**  
 <img alt="click_loc" src="../figs/click_loc.png" width="10%">
 
-For localize, use the LiDAR scan taken just before the button click.  
+Localizer uses the LiDAR scan taken just before the button click.  
 The red point cloud is the matched source point.  
 
 <img alt="rviz2_test" src="../figs/rviz2_test.png" width="50%">
 
-**5. (Optional) Load voxelmap coordinates directly**
+**5. (Optional) Load voxelmap coordinates directly**  
 You can save the voxelmaps coordinates and skip 3D-BBS voxel construction if you reuse the same parameters of `min_level_res` and `max_level`.  
 Please refer to step 5 of [test_code.md](./test/test_code.md)  
 After saving the voxelmaps, please try 3. Run again.
@@ -115,7 +115,7 @@ target_clouds: "your_path/target"
 The ros2_test_data you download in the next step will work with default parameter values.
  
 ### 3. Run
-**1. First terminal**
+**1. First terminal**  
 ```shell script
 cd 3d_bbs/ros2_test
 source install/setup.bash
@@ -128,7 +128,7 @@ Please download [ros2_test_data](https://drive.google.com/drive/folders/1afaYx4i
 ros2 bag play <ros2 bag file path>
 ```
 
-**3. Wait until this message is displayed.**
+**3. Wait until this message is displayed.**  
 ```shell script
  *=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
     [ROS2] 3D-BBS initialized
@@ -137,13 +137,13 @@ ros2 bag play <ros2 bag file path>
 **4. Click the localize button**  
 <img alt="iridescence_click" src="../figs/iridescence_click.png" width="10%">
 
-For localize, use the LiDAR scan taken just before the button click.  
+Localizer uses the LiDAR scan taken just before the button click.  
 The red point cloud is the matched source point.  
 By pressing "Ctrl+M", a hidden menu bar appears.
 
 <img alt="riridescence_test" src="../figs/iridescence_test.png" width="50%">
 
-**5. (Optional) Load voxelmap coordinates directly**
+**5. (Optional) Load voxelmap coordinates directly**  
 You can save the voxelmaps coordinates and skip 3D-BBS voxel construction if you reuse the same parameters of `min_level_res` and `max_level`.  
 Please refer to step 5 of [test_code.md](./test/test_code.md)
 After saving the voxelmaps, please try 3. Run again.
