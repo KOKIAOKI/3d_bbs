@@ -33,6 +33,7 @@ __global__ void calc_scores_kernel(
     const Eigen::Vector3i coord = (transed_point.array() * voxelmap_info.inv_res).floor().cast<int>();
     const std::uint32_t hash = (coord[0] * 73856093) ^ (coord[1] * 19349669) ^ (coord[2] * 83492791);
 
+    // open addressing
     for (int j = 0; j < voxelmap_info.max_bucket_scan_count; j++) {
       const std::uint32_t bucket_index = (hash + j) % voxelmap_info.num_buckets;
       const Eigen::Vector4i bucket = buckets[bucket_index];
@@ -43,6 +44,7 @@ __global__ void calc_scores_kernel(
 
       if (bucket.w() == 1) {
         score++;
+        break;
       }
     }
   }

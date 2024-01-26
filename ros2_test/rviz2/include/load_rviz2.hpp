@@ -1,5 +1,5 @@
 #pragma once
-#include <test.hpp>
+#include <ros2_test_rviz2.hpp>
 #include <math.h>
 #include <yaml-cpp/yaml.h>
 
@@ -15,13 +15,15 @@ Eigen::Vector3d to_eigen(const std::vector<double>& vec) {
   return e_vec;
 }
 
-bool BBS3DTest::load_config(const std::string& config) {
+bool ROS2Test::load_config(const std::string& config) {
   YAML::Node conf = YAML::LoadFile(config);
 
   std::cout << "[YAML] Loading paths..." << std::endl;
   tar_path = conf["target_clouds"].as<std::string>();
-  src_path = conf["source_clouds"].as<std::string>();
-  output_path = conf["output_folder"].as<std::string>();
+
+  std::cout << "[YAML] Loading topic name..." << std::endl;
+  lidar_topic_name = conf["lidar_topic_name"].as<std::string>();
+  imu_topic_name = conf["imu_topic_name"].as<std::string>();
 
   std::cout << "[YAML] Loading 3D-BBS parameters..." << std::endl;
   min_level_res = conf["min_level_res"].as<double>();
@@ -46,22 +48,11 @@ bool BBS3DTest::load_config(const std::string& config) {
   std::cout << "[YAML] Loading score threshold percentage..." << std::endl;
   score_threshold_percentage = conf["score_threshold_percentage"].as<double>();
 
-  std::cout << "[YAML] Loading downsample souce clouds parameters..." << std::endl;
-  valid_tar_vgf = conf["valid_tar_vgf"].as<bool>();
-  if (valid_tar_vgf) tar_leaf_size = conf["tar_leaf_size"].as<float>();
+  std::cout << "[YAML] Loading downsample parameters..." << std::endl;
+  tar_leaf_size = conf["tar_leaf_size"].as<float>();
+  src_leaf_size = conf["src_leaf_size"].as<float>();
+  min_scan_range = conf["min_scan_range"].as<double>();
+  max_scan_range = conf["max_scan_range"].as<double>();
 
-  valid_src_vgf = conf["valid_src_vgf"].as<bool>();
-  if (valid_src_vgf) src_leaf_size = conf["src_leaf_size"].as<float>();
-
-  cut_src_points = conf["cut_src_points"].as<bool>();
-  if (cut_src_points) {
-    scan_range = conf["scan_range"].as<std::pair<double, double>>();
-    if (scan_range.second == 0.0) {
-      std::cout << "[ERROR] Set max scan_range except for 0" << std::endl;
-      return false;
-    }
-  }
-
-  use_gicp = conf["use_gicp"].as<bool>();
   return true;
 }

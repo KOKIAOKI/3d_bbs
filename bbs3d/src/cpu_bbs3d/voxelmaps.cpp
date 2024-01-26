@@ -1,21 +1,21 @@
-#include <gpu_bbs3d/voxelmaps.cuh>
-#include <gpu_bbs3d/stream_manager/check_error.cuh>
+#include <cpu_bbs3d/voxelmaps.hpp>
 
-namespace gpu {
+namespace cpu {
 
-VoxelMaps::VoxelMaps() : min_level_res_(1.0f), max_level_(6), max_bucket_scan_count_(10) {}
+VoxelMaps::VoxelMaps() : min_level_res_(1.0), max_level_(6), max_bucket_scan_count_(10) {}
 
 VoxelMaps::~VoxelMaps() {}
 
-void VoxelMaps::create_voxelmaps(const std::vector<Eigen::Vector3f>& points, const int v_rate, cudaStream_t stream) {
+void VoxelMaps::create_voxelmaps(const std::vector<Eigen::Vector3d>& points, const int v_rate) {
   const int multi_buckets_size = max_level_ + 1;
-  std::vector<Buckets> multi_buckets(multi_buckets_size);
+  multi_buckets_.resize(multi_buckets_size);
+  voxelmaps_res_.resize(multi_buckets_size);
 
-  float resolution = min_level_res_;
+  double resolution = min_level_res_;
   for (int i = 0; i < multi_buckets_size; i++) {
     UnorderedVoxelMap unordered_voxelmap;
     std::vector<Eigen::Vector3i> coords(points.size());
-    std::transform(points.begin(), points.end(), coords.begin(), [&](const Eigen::Vector3f& point) {
+    std::transform(points.begin(), points.end(), coords.begin(), [&](const Eigen::Vector3d& point) {
       return (point.array() / resolution).floor().cast<int>();
     });
 
@@ -42,13 +42,11 @@ void VoxelMaps::create_voxelmaps(const std::vector<Eigen::Vector3f>& points, con
     }
 
     const Buckets& buckets = create_hash_buckets(unordered_voxelmap);
-    multi_buckets[i] = buckets;
+    multi_buckets_[i] = buckets;
+    voxelmaps_res_[i] = resolution;
 
     resolution = resolution * v_rate;
   }
-
-  // host to device
-  set_buckets_on_device(multi_buckets, v_rate, stream);
 }
 
 std::vector<Eigen::Vector3i> VoxelMaps::create_neighbor_coords(const Eigen::Vector3i& vec) {
@@ -97,49 +95,4 @@ VoxelMaps::Buckets VoxelMaps::create_hash_buckets(const UnorderedVoxelMap& unord
 
   return buckets;
 }
-
-void VoxelMaps::set_buckets_on_device(const std::vector<Buckets>& multi_buckets, const int v_rate, cudaStream_t stream) {
-  d_multi_buckets_.resize(multi_buckets.size());
-  voxelmaps_info_.resize(multi_buckets.size());
-
-  float resolution = min_level_res_;
-  for (int i = 0; i < multi_buckets.size(); i++) {
-    const int buckets_size = multi_buckets[i].size();
-    const int buckets_datasize = sizeof(Eigen::Vector4i) * buckets_size;
-    DeviceBuckets d_buckets(buckets_size);
-    check_error
-      << cudaMemcpyAsync(thrust::raw_pointer_cast(d_buckets.data()), multi_buckets[i].data(), buckets_datasize, cudaMemcpyHostToDevice, stream);
-    d_multi_buckets_[i] = d_buckets;
-
-    // create voxel map info
-    VoxelMapInfo info;
-    info.res = resolution;
-    info.inv_res = 1.0f / resolution;
-    info.max_bucket_scan_count = max_bucket_scan_count_;
-    info.num_buckets = buckets_size;
-    voxelmaps_info_[i] = info;
-
-    resolution = resolution * v_rate;
-  }
-
-  // Extract d_multi_buckets_ pointers
-  std::vector<Eigen::Vector4i*> ptrs;
-  ptrs.reserve(multi_buckets.size());
-  for (int i = 0; i < multi_buckets.size(); i++) {
-    ptrs.emplace_back(thrust::raw_pointer_cast(d_multi_buckets_[i].data()));
-  }
-
-  // Copy host to device (ptrs)
-  d_multi_buckets_ptrs_.resize(multi_buckets.size());
-  const int ptrs_datasize = sizeof(Eigen::Vector4i*) * multi_buckets.size();
-  check_error << cudaMemcpyAsync(thrust::raw_pointer_cast(d_multi_buckets_ptrs_.data()), ptrs.data(), ptrs_datasize, cudaMemcpyHostToDevice, stream);
-
-  // Copy host to device (voxel map info)
-  d_voxelmaps_info_.resize(voxelmaps_info_.size());
-  const int info_datasize = sizeof(VoxelMapInfo) * voxelmaps_info_.size();
-  check_error
-    << cudaMemcpyAsync(thrust::raw_pointer_cast(d_voxelmaps_info_.data()), voxelmaps_info_.data(), info_datasize, cudaMemcpyHostToDevice, stream);
-
-  check_error << cudaStreamSynchronize(stream);
-}
-}  // namespace gpu
+}  // namespace cpu

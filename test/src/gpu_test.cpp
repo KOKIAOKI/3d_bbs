@@ -1,7 +1,7 @@
 #include <gpu_bbs3d/bbs3d.cuh>
 #include <test.hpp>
 #include <util.hpp>
-#include <load.hpp>
+#include <load_yaml.hpp>
 #include <chrono>
 
 #include <pcl/common/transforms.h>
@@ -18,20 +18,27 @@ int BBS3DTest::run(std::string config) {
     return 1;
   };
 
-  if (use_gicp) gicp_ptr.reset(new GICP);
-
   // Load target pcds
   std::cout << "[Setting] Loading target pcds..." << std::endl;
-  std::vector<Eigen::Vector3f> tar_points;
-  if (!load_tar_clouds(tar_points)) {
+  pcl::PointCloud<pcl::PointXYZ>::Ptr tar_cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>());
+  if (!load_tar_clouds(tar_path, tar_leaf_size, tar_cloud_ptr)) {
     std::cout << "[ERROR] Loading target pcd failed" << std::endl;
     return 1;
   }
 
+  if (use_gicp) {
+    gicp_ptr.reset(new GICP);
+    gicp_ptr->setInputTarget(tar_cloud_ptr);
+  };
+
+  // pcl to eigen
+  std::vector<Eigen::Vector3f> tar_points;
+  pcl_to_eigen(tar_cloud_ptr, tar_points);
+
   // Load source pcds
   std::cout << "[Setting] Loading source pcds..." << std::endl;
-  std::map<std::string, std::vector<Eigen::Vector3f>> src_points_set;
-  if (!load_src_clouds(src_points_set)) {
+  std::vector<std::pair<std::string, pcl::PointCloud<pcl::PointXYZ>::Ptr>> src_cloud_set;
+  if (!load_src_clouds(src_path, min_scan_range, max_scan_range, src_leaf_size, src_cloud_set)) {
     std::cout << "[ERROR] Loading source pcds failed" << std::endl;
     return 1;
   };
@@ -43,11 +50,16 @@ int BBS3DTest::run(std::string config) {
   boost::filesystem::create_directory(pcd_save_folder_path);
 
   // ====3D-BBS====
-  // Set target points
-  auto initi_t1 = std::chrono::high_resolution_clock::now();
-  std::cout << "[Voxel map] Creating hierarchical voxel map..." << std::endl;
   std::unique_ptr<gpu::BBS3D> bbs3d_ptr(new gpu::BBS3D);
-  bbs3d_ptr->set_tar_points(tar_points, min_level_res, max_level);
+
+  // Set target points
+  std::cout << "[Voxel map] Creating hierarchical voxel map..." << std::endl;
+  auto initi_t1 = std::chrono::high_resolution_clock::now();
+  if (bbs3d_ptr->set_voxelmaps_coords(tar_path)) {
+    std::cout << "[Voxel map] Loaded voxelmaps coords directly" << std::endl;
+  } else {
+    bbs3d_ptr->set_tar_points(tar_points, min_level_res, max_level);
+  }
   bbs3d_ptr->set_angular_search_range(min_rpy.cast<float>(), max_rpy.cast<float>());
 
   auto init_t2 = std::chrono::high_resolution_clock::now();
@@ -56,10 +68,12 @@ int BBS3DTest::run(std::string config) {
 
   int sum_time = 0;
   // localization
-  for (const auto& src_points : src_points_set) {
+  for (const auto& src_cloud : src_cloud_set) {
     std::cout << "-------------------------------" << std::endl;
-    std::cout << "[Localize] pcd file name: " << src_points.first << std::endl;
-    bbs3d_ptr->set_src_points(src_points.second);
+    std::cout << "[Localize] pcd file name: " << src_cloud.first << std::endl;
+    std::vector<Eigen::Vector3f> src_points;
+    pcl_to_eigen(src_cloud.second, src_points);
+    bbs3d_ptr->set_src_points(src_points);
 
     auto localize_t1 = std::chrono::high_resolution_clock::now();
     bbs3d_ptr->set_score_threshold_percentage(static_cast<float>(score_threshold_percentage));
@@ -76,19 +90,26 @@ int BBS3DTest::run(std::string config) {
 
     sum_time += localize_time;
 
-    pcl::PointCloud<pcl::PointXYZ>::Ptr src_cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>());
-    eigen_to_pcl(src_points.second, src_cloud_ptr);
-
     pcl::PointCloud<pcl::PointXYZ>::Ptr output_cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>());
     if (use_gicp) {
-      gicp_ptr->setInputSource(src_cloud_ptr);
+      gicp_ptr->setInputSource(src_cloud.second);
       gicp_ptr->align(*output_cloud_ptr, bbs3d_ptr->get_global_pose());
+
+      Eigen::Isometry3f estimated_pose;
+      estimated_pose.matrix() = bbs3d_ptr->get_global_pose();
+      Eigen::Isometry3f ground_truth_pose;
+      ground_truth_pose.matrix() = gicp_ptr->final_transformation_;
+
+      Eigen::Isometry3f error = estimated_pose.inverse() * ground_truth_pose;
+      float error_t = error.translation().norm();
+      float error_r = Eigen::AngleAxisf(error.linear()).angle();
+      std::cout << "[Localize] Translation error: " << error_t << ", Rotation error: " << error_r << std::endl;
     } else {
-      pcl::transformPointCloud(*src_cloud_ptr, *output_cloud_ptr, bbs3d_ptr->get_global_pose());
+      pcl::transformPointCloud(*src_cloud.second, *output_cloud_ptr, bbs3d_ptr->get_global_pose());
     }
-    pcl::io::savePCDFileBinary(pcd_save_folder_path + "/" + src_points.first + ".pcd", *output_cloud_ptr);
+    pcl::io::savePCDFileBinary(pcd_save_folder_path + "/" + src_cloud.first + ".pcd", *output_cloud_ptr);
   }
-  std::cout << "[Localize] Average time: " << sum_time / src_points_set.size() << "[msec] per frame" << std::endl;
+  std::cout << "[Localize] Average time: " << sum_time / src_cloud_set.size() << "[msec] per frame" << std::endl;
   return 0;
 }
 

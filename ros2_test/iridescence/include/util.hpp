@@ -1,9 +1,8 @@
 #pragma once
-#include <boost/filesystem/operations.hpp>
-#include <pcl/io/pcd_io.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/filters/approximate_voxel_grid.h>
-#include <pcl/common/distances.h>
+#include <pcl/io/pcd_io.h>
+#include <pcl/common/transforms.h>
 
 std::string createDate() {
   time_t t = time(nullptr);
@@ -95,83 +94,41 @@ bool load_tar_clouds(const std::string& tar_path, const float tar_leaf_size, pcl
   return true;
 }
 
-bool can_convert_to_int(const std::vector<std::pair<std::string, std::string>>& name_vec) {
-  for (const auto& str : name_vec) {
-    try {
-      std::stoi(str.second);
-    } catch (const std::invalid_argument& e) {
-      return false;
-    } catch (const std::out_of_range& e) {
-      return false;
-    }
-  }
-  return true;
+Eigen::Matrix4f gravity_align(const sensor_msgs::msg::Imu& imu_msg) {
+  Eigen::Vector3f acc(imu_msg.linear_acceleration.x, imu_msg.linear_acceleration.y, imu_msg.linear_acceleration.z);
+  Eigen::Vector3f th;
+  th.x() = std::atan2(acc.y(), acc.z());
+  th.y() = std::atan2(-acc.x(), std::sqrt(acc.y() * acc.y() + acc.z() * acc.z()));
+  th.z() = 0.0f;
+
+  Eigen::Matrix3f rot;
+  rot = Eigen::AngleAxisf(th.x(), Eigen::Vector3f::UnitX()) * Eigen::AngleAxisf(th.y(), Eigen::Vector3f::UnitY()) *
+        Eigen::AngleAxisf(th.z(), Eigen::Vector3f::UnitZ());
+  Eigen::Matrix4f mat = Eigen::Matrix4f::Identity();
+  mat.block<3, 3>(0, 0) = rot;
+
+  return mat;
 }
 
-// template <typename T>
-bool load_src_clouds(
-  const std::string& src_path,
-  const double min_scan_range,
-  const double max_scan_range,
-  const float src_leaf_size,
-  std::vector<std::pair<std::string, pcl::PointCloud<pcl::PointXYZ>::Ptr>>& cloud_set) {
-  boost::filesystem::path dir(src_path);
-  if (!boost::filesystem::exists(dir)) {
-    std::cout << "[ERROR] Can not open folder" << std::endl;
-    return false;
+void gravity_align(
+  const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud_ptr,
+  pcl::PointCloud<pcl::PointXYZ>::Ptr& aligned_cloud_ptr,
+  const sensor_msgs::msg::Imu& imu_msg) {
+  Eigen::Matrix4f mat = gravity_align(imu_msg);
+  pcl::transformPointCloud(*cloud_ptr, *aligned_cloud_ptr, mat);
+}
+
+void transform_pointcloud(
+  const std::vector<Eigen::Vector3f>& source_points,
+  std::vector<Eigen::Vector3f>& output_points,
+  const Eigen::Matrix4f& trans_matrix) {
+  output_points.clear();
+  output_points.reserve(source_points.size());
+
+  for (const auto& point : source_points) {
+    Eigen::Vector4f homog_point(point[0], point[1], point[2], 1.0f);
+    Eigen::Vector4f transformed_homog = trans_matrix * homog_point;
+    Eigen::Vector3f transformed_point = transformed_homog.head<3>() / transformed_homog[3];
+    output_points.push_back(transformed_point);
   }
-
-  std::vector<std::pair<std::string, std::string>> pcd_files;
-  for (const auto& file : boost::filesystem::directory_iterator(src_path)) {
-    const std::string extension = file.path().extension().string();
-    if (extension != ".pcd" && extension != ".PCD") {
-      continue;
-    }
-    pcd_files.emplace_back(file.path().string(), file.path().stem().string());
-  }
-
-  if (can_convert_to_int(pcd_files)) {
-    std::sort(pcd_files.begin(), pcd_files.end(), [](const std::pair<std::string, std::string>& a, const std::pair<std::string, std::string>& b) {
-      return std::stoi(a.second) < std::stoi(b.second);
-    });
-  }
-
-  cloud_set.reserve(pcd_files.size());
-
-  for (const auto& file : pcd_files) {
-    // check load pcd
-    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>());
-    if (pcl::io::loadPCDFile(file.first, *cloud_ptr) == -1) {
-      std::cout << "[WARN] Can not open pcd file: " << file.first << std::endl;
-      continue;
-    }
-
-    // Cut scan range
-    pcl::PointCloud<pcl::PointXYZ>::Ptr src_cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
-    if (!(min_scan_range == 0.0 && max_scan_range == 0.0)) {
-      pcl::PointCloud<pcl::PointXYZ>::Ptr cropped_cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
-      for (size_t i = 0; i < cloud_ptr->points.size(); ++i) {
-        pcl::PointXYZ point = cloud_ptr->points[i];
-        double norm = pcl::euclideanDistance(point, pcl::PointXYZ(0, 0, 0));
-
-        if (norm >= min_scan_range && norm <= max_scan_range) {
-          cropped_cloud_ptr->points.push_back(point);
-        }
-      }
-      *src_cloud_ptr = *cropped_cloud_ptr;
-    } else {
-      *src_cloud_ptr = *cloud_ptr;
-    }
-
-    // Downsample
-    if (src_leaf_size != 0.0f) {
-      pcl::VoxelGrid<pcl::PointXYZ> filter;
-      filter.setLeafSize(src_leaf_size, src_leaf_size, src_leaf_size);
-      filter.setInputCloud(src_cloud_ptr);
-      filter.filter(*src_cloud_ptr);
-    }
-
-    cloud_set.emplace_back(file.second, src_cloud_ptr);
-  }
-  return true;
 }

@@ -1,8 +1,10 @@
 ################[Necessary]################
 ## Folder Paths
 target_clouds: "your_path/target"
-source_clouds: "your_path/source"
-output_folder: "your_path/output"
+
+## topic name
+lidar_topic_name: "/livox/points" ## msg type: sensor_msgs/PointCloud2
+imu_topic_name: "/livox/imu" ## msg type: sensor_msgs/Imu
 
 ## 3D-BBS Parameters
 min_level_res: 1.0 # [m]
@@ -29,5 +31,3 @@ min_scan_range: 0.0 # [m]
 max_scan_range: 100.0 # [m]
 # off: set 0.0 to both min_scan_range and max_scan_range
  
-## Final align (evaluate the error)
-use_gicp: false 
