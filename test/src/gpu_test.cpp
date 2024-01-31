@@ -66,8 +66,9 @@ int BBS3DTest::run(std::string config) {
   double init_time = std::chrono::duration_cast<std::chrono::nanoseconds>(init_t2 - initi_t1).count() / 1e6;
   std::cout << "[Voxel map] Execution time: " << init_time << "[msec] " << std::endl;
 
-  int sum_time = 0;
   // localization
+  double sum_time = 0;
+  int num_localized = 0;
   for (const auto& src_cloud : src_cloud_set) {
     std::cout << "-------------------------------" << std::endl;
     std::cout << "[Localize] pcd file name: " << src_cloud.first << std::endl;
@@ -89,6 +90,7 @@ int BBS3DTest::run(std::string config) {
     }
 
     sum_time += localize_time;
+    num_localized++;
 
     pcl::PointCloud<pcl::PointXYZ>::Ptr output_cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>());
     if (use_gicp) {
@@ -109,7 +111,11 @@ int BBS3DTest::run(std::string config) {
     }
     pcl::io::savePCDFileBinary(pcd_save_folder_path + "/" + src_cloud.first + ".pcd", *output_cloud_ptr);
   }
-  std::cout << "[Localize] Average time: " << sum_time / src_cloud_set.size() << "[msec] per frame" << std::endl;
+
+  if (num_localized != 0) {
+    std::cout << "[Localize] Average time: " << sum_time / num_localized << "[msec] per frame" << std::endl;
+  }
+
   return 0;
 }
 
