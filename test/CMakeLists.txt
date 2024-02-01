@@ -37,6 +37,21 @@ target_link_libraries(cpu_test
   yaml-cpp
 )
 
+# voxelmaps saver
+add_executable(saver
+  src/voxelmaps_saver.cpp
+)
+
+target_include_directories(saver 
+  PUBLIC
+  ${EIGEN3_INCLUDE_DIR}
+)
+
+target_link_libraries(saver
+  ${cpu_bbs3d_LIBRARY}
+  ${Boost_LIBRARIES} 
+)
+
 # CUDA
 if(BUILD_CUDA)
   # gpu_test
@@ -53,20 +68,5 @@ if(BUILD_CUDA)
     ${PCL_LIBRARIES}
     yaml-cpp
     ${gpu_bbs3d_LIBRARY}
-  )
-
-  # voxelmaps saver
-  add_executable(saver
-    src/voxelmaps_saver.cpp
-  )
-
-  target_include_directories(saver 
-    PUBLIC
-    ${EIGEN3_INCLUDE_DIR}
-  )
-
-  target_link_libraries(saver
-    ${cpu_bbs3d_LIBRARY}
-    ${Boost_LIBRARIES} 
   )
 endif()
