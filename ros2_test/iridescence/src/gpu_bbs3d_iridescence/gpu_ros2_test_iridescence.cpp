@@ -35,10 +35,15 @@ ROS2Test::ROS2Test(const rclcpp::NodeOptions& node_options) : Node("gpu_ros2_tes
     std::cout << "[Voxel map] Loaded voxelmaps coords directly" << std::endl;
   } else {
     gpu_bbs3d.set_tar_points(tar_points, min_level_res, max_level);
+    gpu_bbs3d.set_trans_search_range(tar_points);
   }
 
   gpu_bbs3d.set_angular_search_range(min_rpy.cast<float>(), max_rpy.cast<float>());
   gpu_bbs3d.set_score_threshold_percentage(static_cast<float>(score_threshold_percentage));
+  if (timeout_msec > 0) {
+    gpu_bbs3d.enable_timeout();
+    gpu_bbs3d.set_timeout_duration_in_msec(timeout_msec);
+  }
 
   // ==== ROS 2 sub ====
   cloud_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
@@ -115,17 +120,17 @@ void ROS2Test::click_callback() {
   gpu_bbs3d.set_src_points(src_points);
 
   std::cout << "[Localize] start" << std::endl;
-  auto start_loc = std::chrono::system_clock::now();
   gpu_bbs3d.localize();  // gloal localization
-  auto end_loc = std::chrono::system_clock::now();
 
   if (!gpu_bbs3d.has_localized()) {
-    std::cout << "[Failed] Score is below the threshold." << std::endl;
+    if (gpu_bbs3d.has_timed_out())
+      std::cout << "[Failed] Localization timed out." << std::endl;
+    else
+      std::cout << "[Failed] Score is below the threshold." << std::endl;
     return;
   }
 
-  float time = std::chrono::duration_cast<std::chrono::microseconds>(end_loc - start_loc).count() / 1000.0f;
-  std::cout << "[Localize] time: " << time << "ms" << std::endl;
+  std::cout << "[Localize] Execution time: " << gpu_bbs3d.get_elapsed_time() << "[msec] " << std::endl;
   std::cout << "[Localize] score: " << gpu_bbs3d.get_best_score() << std::endl;
 
   // viewer

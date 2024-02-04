@@ -4,7 +4,7 @@
 #include <iostream>
 #include <queue>
 #include <memory>
-#include <Eigen/Core>
+#include <chrono>
 #include <Eigen/Dense>
 
 namespace cpu {
@@ -69,6 +69,12 @@ public:
 
   void set_score_threshold_percentage(double percentage) { score_threshold_percentage_ = percentage; }
 
+  void enable_timeout() { use_timeout_ = true; }
+
+  void disable_timeout() { use_timeout_ = false; }
+
+  void set_timeout_duration_in_msec(const int msec);
+
   std::vector<Eigen::Vector3d> get_src_points() const { return src_points_; }
 
   bool set_voxelmaps_coords(const std::string& folder_path);
@@ -83,12 +89,16 @@ public:
 
   int get_best_score() const { return best_score_; }
 
+  double get_elapsed_time() const { return elapsed_time_; }
+
   double get_best_score_percentage() {
     if (src_points_.size() == 0)
       return 0.0;
     else
       return static_cast<double>(best_score_ / src_points_.size());
   };
+
+  bool has_timed_out() { return has_timed_out_; }
 
   bool has_localized() { return has_localized_; }
 
@@ -110,7 +120,8 @@ private:
 
 private:
   Eigen::Matrix4d global_pose_;
-  bool has_localized_;
+  bool has_timed_out_, has_localized_;
+  double elapsed_time_;
 
   std::vector<Eigen::Vector3d> src_points_;
 
@@ -123,6 +134,8 @@ private:
 
   int best_score_;
   double score_threshold_percentage_;
+  bool use_timeout_;
+  std::chrono::milliseconds timeout_duration_;
   Eigen::Vector3d min_rpy_;
   Eigen::Vector3d max_rpy_;
   std::pair<int, int> init_tx_range_;

@@ -70,7 +70,7 @@ std::vector<DiscreteTransformation> BBS3D::calc_scores(const std::vector<Discret
     d_transset.data(),
     transset_size - 1,
     d_src_points_.data(),
-    src_size_);
+    src_points_.size());
 
   std::vector<DiscreteTransformation> h_output(transset_size);
   check_error << cudaMemcpyAsync(

@@ -3,11 +3,6 @@
 #include <iostream>
 #include <Eigen/Core>
 
-#include <pcl/point_types.h>
-#include <pcl/registration/gicp.h>
-
-using GICP = pcl::GeneralizedIterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ>;
-
 class BBS3DTest {
 public:
   BBS3DTest();
@@ -19,8 +14,6 @@ private:
   bool load_config(const std::string& config);
 
 private:
-  std::unique_ptr<GICP> gicp_ptr;
-
   // path
   std::string tar_path, src_path, output_path;
 
@@ -38,6 +31,9 @@ private:
   // downsample
   float tar_leaf_size, src_leaf_size;
   double min_scan_range, max_scan_range;
+
+  // timeout
+  int timeout_msec;
 
   // align
   bool use_gicp;

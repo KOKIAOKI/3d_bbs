@@ -7,7 +7,9 @@ BBS3D::BBS3D()
 : v_rate_(2.0f),
   branch_copy_size_(10000),
   score_threshold_percentage_(0.0),
-  src_size_(-1),
+  use_timeout_(false),
+  timeout_duration_(10000),
+  has_timed_out_(false),
   has_localized_(false),
   voxelmaps_folder_name_("voxelmaps_coords") {
   check_error << cudaStreamCreate(&stream);
@@ -21,30 +23,31 @@ BBS3D::~BBS3D() {
   check_error << cudaStreamDestroy(stream);
 }
 
+void BBS3D::set_timeout_duration_in_msec(const int msec) {
+  timeout_duration_ = std::chrono::milliseconds(msec);
+}
+
 void BBS3D::set_tar_points(const std::vector<Eigen::Vector3f>& points, float min_level_res, int max_level) {
   voxelmaps_ptr_.reset(new VoxelMaps);
   voxelmaps_ptr_->set_min_res(min_level_res);
   voxelmaps_ptr_->set_max_level(max_level);
   voxelmaps_ptr_->create_voxelmaps(points, v_rate_, stream);
-
-  // Detect translation range from target points
-  set_trans_search_range(points);
 }
 
 void BBS3D::set_src_points(const std::vector<Eigen::Vector3f>& points) {
-  src_size_ = points.size();
+  int src_size = points.size();
   src_points_.clear();
   src_points_.shrink_to_fit();
-  src_points_.resize(src_size_);
+  src_points_.resize(src_size);
   std::copy(points.begin(), points.end(), src_points_.begin());
 
   d_src_points_.clear();
   d_src_points_.shrink_to_fit();
-  d_src_points_.resize(src_size_);
+  d_src_points_.resize(src_size);
   check_error << cudaMemcpyAsync(
     thrust::raw_pointer_cast(d_src_points_.data()),
     points.data(),
-    sizeof(Eigen::Vector3f) * src_size_,
+    sizeof(Eigen::Vector3f) * src_size,
     cudaMemcpyHostToDevice,
     stream);
 }
@@ -148,8 +151,14 @@ std::vector<DiscreteTransformation> BBS3D::create_init_transset(const AngularInf
 }
 
 void BBS3D::localize() {
+  // Calc localize time limit
+  const auto start_time = std::chrono::system_clock::now();
+  const auto time_limit = start_time + timeout_duration_;
+  has_timed_out_ = false;
+
+  // Initialize best score
   best_score_ = 0;
-  const int score_threshold = std::floor(src_size_ * score_threshold_percentage_);
+  const int score_threshold = std::floor(src_points_.size() * score_threshold_percentage_);
   int best_score = score_threshold;
   DiscreteTransformation best_trans(best_score);
 
@@ -167,6 +176,11 @@ void BBS3D::localize() {
   std::vector<DiscreteTransformation> branch_stock;
   branch_stock.reserve(branch_copy_size_);
   while (!trans_queue.empty()) {
+    if (use_timeout_ && std::chrono::system_clock::now() > time_limit) {
+      has_timed_out_ = true;
+      break;
+    }
+
     auto trans = trans_queue.top();
     trans_queue.pop();
 
@@ -204,13 +218,19 @@ void BBS3D::localize() {
     }
   }
 
-  if (best_score == score_threshold) {
-    has_localized_ = false;
+  // Calc localization elapsed time
+  const auto end_time = std::chrono::system_clock::now();
+  elapsed_time_ = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count() / 1e6;
+
+  // Not localized
+  if (best_score == score_threshold || has_timed_out_) {
+    has_localized_ = true;
     return;
   }
 
   global_pose_ = best_trans.create_matrix();
   best_score_ = best_score;
+  has_timed_out_ = false;
   has_localized_ = true;
 }
 }  // namespace gpu
