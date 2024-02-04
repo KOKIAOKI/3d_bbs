@@ -20,43 +20,6 @@ std::string createDate() {
   return (s.str());
 }
 
-template <typename T>
-void pcl_to_eigen(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud_ptr, std::vector<T>& points) {
-  points.resize(cloud_ptr->size());
-  std::transform(cloud_ptr->begin(), cloud_ptr->end(), points.begin(), [](const pcl::PointXYZ& p) { return T(p.x, p.y, p.z); });
-}
-
-void eigen_to_pcl(const std::vector<Eigen::Vector3d>& points, pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud_ptr) {
-  cloud_ptr->points.resize(points.size());
-  cloud_ptr->width = points.size();
-  cloud_ptr->height = 1;
-  cloud_ptr->is_dense = true;
-
-  std::transform(points.begin(), points.end(), cloud_ptr->points.begin(), [](const Eigen::Vector3d& v) {
-    pcl::PointXYZ point;
-    Eigen::Vector3f vf = v.cast<float>();
-    point.x = vf.x();
-    point.y = vf.y();
-    point.z = vf.z();
-    return point;
-  });
-}
-
-void eigen_to_pcl(const std::vector<Eigen::Vector3f>& points, pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud_ptr) {
-  cloud_ptr->points.resize(points.size());
-  cloud_ptr->width = points.size();
-  cloud_ptr->height = 1;
-  cloud_ptr->is_dense = true;
-
-  std::transform(points.begin(), points.end(), cloud_ptr->points.begin(), [](const Eigen::Vector3f& v) {
-    pcl::PointXYZ point;
-    point.x = v.x();
-    point.y = v.y();
-    point.z = v.z();
-    return point;
-  });
-}
-
 bool load_tar_clouds(const std::string& tar_path, const float tar_leaf_size, pcl::PointCloud<pcl::PointXYZ>::Ptr& tar_cloud_ptr) {
   // Load pcd file
   boost::filesystem::path dir(tar_path);
@@ -95,28 +58,4 @@ bool load_tar_clouds(const std::string& tar_path, const float tar_leaf_size, pcl
   }
 
   return true;
-}
-
-Eigen::Matrix4f gravity_align(const sensor_msgs::msg::Imu& imu_msg) {
-  Eigen::Vector3f acc(imu_msg.linear_acceleration.x, imu_msg.linear_acceleration.y, imu_msg.linear_acceleration.z);
-  Eigen::Vector3f th;
-  th.x() = std::atan2(acc.y(), acc.z());
-  th.y() = std::atan2(-acc.x(), std::sqrt(acc.y() * acc.y() + acc.z() * acc.z()));
-  th.z() = 0.0f;
-
-  Eigen::Matrix3f rot;
-  rot = Eigen::AngleAxisf(th.x(), Eigen::Vector3f::UnitX()) * Eigen::AngleAxisf(th.y(), Eigen::Vector3f::UnitY()) *
-        Eigen::AngleAxisf(th.z(), Eigen::Vector3f::UnitZ());
-  Eigen::Matrix4f mat = Eigen::Matrix4f::Identity();
-  mat.block<3, 3>(0, 0) = rot;
-
-  return mat;
-}
-
-void gravity_align(
-  const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud_ptr,
-  pcl::PointCloud<pcl::PointXYZ>::Ptr& aligned_cloud_ptr,
-  const sensor_msgs::msg::Imu& imu_msg) {
-  Eigen::Matrix4f mat = gravity_align(imu_msg);
-  pcl::transformPointCloud(*cloud_ptr, *aligned_cloud_ptr, mat);
 }

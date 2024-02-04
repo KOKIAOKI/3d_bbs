@@ -1,4 +1,6 @@
 #include <gpu_bbs3d/bbs3d.cuh>
+#include <pointcloud_iof/pcl_eigen_coverter.hpp>
+
 #include <test.hpp>
 #include <util.hpp>
 #include <load_yaml.hpp>

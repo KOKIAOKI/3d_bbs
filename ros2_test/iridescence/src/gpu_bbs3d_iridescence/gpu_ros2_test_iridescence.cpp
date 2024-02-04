@@ -1,3 +1,5 @@
+#include <pointcloud_iof/pcl_eigen_coverter.hpp>
+#include <pointcloud_iof/gravity_align.hpp>
 #include <ros2_test.hpp>
 #include <load.hpp>
 #include <util.hpp>
@@ -28,7 +30,7 @@ ROS2Test::ROS2Test(const rclcpp::NodeOptions& node_options) : Node("gpu_ros2_tes
 
   // pcl to eigen
   std::vector<Eigen::Vector3f> tar_points;
-  pcl_to_eigen(tar_cloud_ptr, tar_points);
+  pciof::pcl_to_eigen(tar_cloud_ptr, tar_points);
 
   std::cout << "[Voxel map] Creating hierarchical voxel map..." << std::endl;
   if (gpu_bbs3d.set_voxelmaps_coords(tar_path)) {
@@ -113,10 +115,12 @@ void ROS2Test::click_callback() {
   }
 
   int imu_index = get_nearest_imu_index(imu_buffer, source_cloud_msg_->header.stamp);
-  gravity_align(src_cloud, src_cloud, imu_buffer[imu_index]);
+  const auto imu_msg = imu_buffer[imu_index];
+  const Eigen::Vector3d acc = {imu_msg.linear_acceleration.x, imu_msg.linear_acceleration.y, imu_msg.linear_acceleration.z};
+  pcl::transformPointCloud(*src_cloud, *src_cloud, pciof::calc_gravity_alignment_matrix(acc.cast<float>()));
 
   std::vector<Eigen::Vector3f> src_points;
-  pcl_to_eigen(src_cloud, src_points);
+  pciof::pcl_to_eigen(src_cloud, src_points);
   gpu_bbs3d.set_src_points(src_points);
 
   std::cout << "[Localize] start" << std::endl;
@@ -165,7 +169,7 @@ void ROS2Test::cloud_callback(const sensor_msgs::msg::PointCloud2::SharedPtr msg
   pcl::fromROSMsg(*msg, *src_cloud);
 
   std::vector<Eigen::Vector3f> src_points;
-  pcl_to_eigen(src_cloud, src_points);
+  pciof::pcl_to_eigen(src_cloud, src_points);
 
   // sub viewer
   auto viewer = guik::viewer();
