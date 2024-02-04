@@ -38,7 +38,7 @@ int BBS3DTest::run(std::string config) {
 
   // pcl to eigen
   std::vector<Eigen::Vector3f> tar_points;
-  pcl_to_eigen(tar_cloud_ptr, tar_points);
+  pciof::pcl_to_eigen(tar_cloud_ptr, tar_points);
 
   // Load source pcds
   std::cout << "[Setting] Loading source pcds..." << std::endl;
@@ -85,7 +85,7 @@ int BBS3DTest::run(std::string config) {
     std::cout << "[Localize] pcd file name: " << src_cloud.first << std::endl;
 
     std::vector<Eigen::Vector3f> src_points;
-    pcl_to_eigen(src_cloud.second, src_points);
+    pciof::pcl_to_eigen(src_cloud.second, src_points);
     bbs3d_ptr->set_src_points(src_points);
     bbs3d_ptr->localize();
 
