@@ -1,60 +1,16 @@
 #pragma once
-#include <boost/filesystem/operations.hpp>
+#include <pcl/point_types.h>
+#include <pcl/point_cloud.h>
+#include <Eigen/Core>
+#include <vector>
+#include <string>
 #include <pcl/io/pcd_io.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/filters/approximate_voxel_grid.h>
 #include <pcl/common/distances.h>
+#include <boost/filesystem.hpp>
 
-std::string createDate() {
-  time_t t = time(nullptr);
-  const tm* local_time = localtime(&t);
-  std::stringstream s;
-  s << "20" << local_time->tm_year - 100 << "_";
-  s << local_time->tm_mon + 1 << "_";
-  s << local_time->tm_mday << "_";
-  s << local_time->tm_hour << "_";
-  s << local_time->tm_min << "_";
-  s << local_time->tm_sec;
-  return (s.str());
-}
-
-template <typename T>
-void pcl_to_eigen(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud_ptr, std::vector<T>& points) {
-  points.resize(cloud_ptr->size());
-  std::transform(cloud_ptr->begin(), cloud_ptr->end(), points.begin(), [](const pcl::PointXYZ& p) { return T(p.x, p.y, p.z); });
-}
-
-void eigen_to_pcl(const std::vector<Eigen::Vector3d>& points, pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud_ptr) {
-  cloud_ptr->points.resize(points.size());
-  cloud_ptr->width = points.size();
-  cloud_ptr->height = 1;
-  cloud_ptr->is_dense = true;
-
-  std::transform(points.begin(), points.end(), cloud_ptr->points.begin(), [](const Eigen::Vector3d& v) {
-    pcl::PointXYZ point;
-    Eigen::Vector3f vf = v.cast<float>();
-    point.x = vf.x();
-    point.y = vf.y();
-    point.z = vf.z();
-    return point;
-  });
-}
-
-void eigen_to_pcl(const std::vector<Eigen::Vector3f>& points, pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud_ptr) {
-  cloud_ptr->points.resize(points.size());
-  cloud_ptr->width = points.size();
-  cloud_ptr->height = 1;
-  cloud_ptr->is_dense = true;
-
-  std::transform(points.begin(), points.end(), cloud_ptr->points.begin(), [](const Eigen::Vector3f& v) {
-    pcl::PointXYZ point;
-    point.x = v.x();
-    point.y = v.y();
-    point.z = v.z();
-    return point;
-  });
-}
-
+namespace pciof {
 bool load_tar_clouds(const std::string& tar_path, const float tar_leaf_size, pcl::PointCloud<pcl::PointXYZ>::Ptr& tar_cloud_ptr) {
   // Load pcd file
   boost::filesystem::path dir(tar_path);
@@ -108,8 +64,7 @@ bool can_convert_to_int(const std::vector<std::pair<std::string, std::string>>& 
   return true;
 }
 
-// template <typename T>
-bool load_src_clouds(
+bool load_src_points_with_filename(
   const std::string& src_path,
   const double min_scan_range,
   const double max_scan_range,
@@ -175,3 +130,4 @@ bool load_src_clouds(
   }
   return true;
 }
+}  // namespace pciof

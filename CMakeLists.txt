@@ -16,6 +16,12 @@ if (BUILD_CUDA)
   link_directories(${CUDA_LIBRARY_DIRS})
 endif()
 
+# Common include directories
+include_directories(
+  ${EIGEN3_INCLUDE_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}/bbs3d/include>
+)
+
 add_library(cpu_bbs3d
   SHARED
   bbs3d/src/cpu_bbs3d/bbs3d.cpp
@@ -24,30 +30,17 @@ add_library(cpu_bbs3d
   bbs3d/src/cpu_bbs3d/voxelmaps_io.cpp
 )
 
-target_include_directories(cpu_bbs3d
-  PUBLIC
-  ${EIGEN3_INCLUDE_DIR}
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/bbs3d/include>
-  $<INSTALL_INTERFACE:include>
-)
-
 install(TARGETS cpu_bbs3d DESTINATION lib)
 
 if(BUILD_CUDA)
   cuda_add_library(gpu_bbs3d
-    SHARED bbs3d/src/gpu_bbs3d/bbs3d.cu
+    SHARED 
+    bbs3d/src/gpu_bbs3d/bbs3d.cu
     bbs3d/src/gpu_bbs3d/calc_score.cu
     bbs3d/src/gpu_bbs3d/discreate_transformation.cu
     bbs3d/src/gpu_bbs3d/voxelmaps.cu
     bbs3d/src/gpu_bbs3d/stream_manager/check_error.cu
     bbs3d/src/gpu_bbs3d/voxelmaps_io.cu
-  )
-
-  target_include_directories(gpu_bbs3d
-    PUBLIC
-    ${EIGEN3_INCLUDE_DIR}
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/bbs3d/include>
-    $<INSTALL_INTERFACE:include>
   )
 
   install(TARGETS gpu_bbs3d DESTINATION lib)

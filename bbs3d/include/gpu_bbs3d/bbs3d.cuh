@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <iostream>
 #include <queue>
-#include <Eigen/Core>
+#include <chrono>
 #include <Eigen/Dense>
 
 // thrust
@@ -72,6 +72,12 @@ public:
 
   void set_score_threshold_percentage(float percentage) { score_threshold_percentage_ = percentage; }
 
+  void enable_timeout() { use_timeout_ = true; }
+
+  void disable_timeout() { use_timeout_ = false; }
+
+  void set_timeout_duration_in_msec(const int msec);
+
   std::vector<Eigen::Vector3f> get_src_points() const { return src_points_; }
 
   bool set_voxelmaps_coords(const std::string& folder_path);
@@ -86,12 +92,16 @@ public:
 
   int get_best_score() const { return best_score_; }
 
+  double get_elapsed_time() const { return elapsed_time_; }
+
   float get_best_score_percentage() {
     if (src_points_.size() == 0)
       return 0.0f;
     else
       return static_cast<float>(best_score_ / src_points_.size());
   };
+
+  bool has_timed_out() { return has_timed_out_; }
 
   bool has_localized() { return has_localized_; }
 
@@ -111,14 +121,14 @@ private:
 
 private:
   Eigen::Matrix4f global_pose_;
-  bool has_localized_;
+  bool has_timed_out_, has_localized_;
+  double elapsed_time_;
 
   cudaStream_t stream;
 
   std::vector<Eigen::Vector3f> src_points_;
 
   thrust::device_vector<Eigen::Vector3f> d_src_points_;
-  std::vector<thrust::device_vector<DiscreteTransformation>> d_transset_stock_;
 
   std::unique_ptr<VoxelMaps> voxelmaps_ptr_;
   std::string voxelmaps_folder_name_;
@@ -126,8 +136,10 @@ private:
   float v_rate_;  // voxel expansion rate
   float inv_v_rate_;
 
-  int src_size_, branch_copy_size_, best_score_;
+  int branch_copy_size_, best_score_;
   double score_threshold_percentage_;
+  bool use_timeout_;
+  std::chrono::milliseconds timeout_duration_;
   Eigen::Vector3f min_rpy_;
   Eigen::Vector3f max_rpy_;
   std::pair<int, int> init_tx_range_;

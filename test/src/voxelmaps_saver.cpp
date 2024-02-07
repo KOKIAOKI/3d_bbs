@@ -1,5 +1,8 @@
 #include <cpu_bbs3d/bbs3d.hpp>
-#include <pointcloud_iof/load.hpp>
+#include <pointcloud_iof/pcd_loader_without_pcl.hpp>
+
+#include <algorithm>
+#include <iterator>
 
 int main(int argc, char** argv) {
   std::string target_pcd_folder = argv[1];
@@ -14,12 +17,9 @@ int main(int argc, char** argv) {
     return 1;
   }
 
-  // float to double
   std::vector<Eigen::Vector3d> tar_points_d;
   tar_points_d.resize(tar_points.size());
-  for (int i = 0; i < tar_points.size(); i++) {
-    tar_points_d[i] = tar_points[i].cast<double>();
-  }
+  std::transform(tar_points.begin(), tar_points.end(), tar_points_d.begin(), [](const Eigen::Vector3f& point) { return point.cast<double>(); });
 
   std::cout << "[Voxel map] Creating hierarchical voxel map..." << std::endl;
   std::unique_ptr<cpu::BBS3D> bbs3d_ptr(new cpu::BBS3D);

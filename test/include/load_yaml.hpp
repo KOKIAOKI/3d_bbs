@@ -52,6 +52,8 @@ bool BBS3DTest::load_config(const std::string& config) {
   min_scan_range = conf["min_scan_range"].as<double>();
   max_scan_range = conf["max_scan_range"].as<double>();
 
+  timeout_msec = conf["timeout_msec"].as<int>();
+
   use_gicp = conf["use_gicp"].as<bool>();
   return true;
 }

@@ -9,7 +9,7 @@ The latest implementation demonstrates faster processing times than those publis
 Specifically, when tested in a real environment with the following hardware configuration (Intel Core i7-10700K 3.8GHz, 32GB RAM, and NVIDIA GeForce RTX2060), the processing times are as follows: 
 - Hierarchical voxelmap construction
   - Paper: 9,272 ms on average
-  - **Latest**: 3494 ms on average
+  - **Latest**: 3,494 ms on average
   - **Use saved voxelmap**: 130 ms on average
 - Localize
   - Paper: 878 ms on average
@@ -17,7 +17,7 @@ Specifically, when tested in a real environment with the following hardware conf
 
 ## Dependencies
 - bbs3d (Lower versions are not tested)
-  - Eigen3
+  - Eigen3 version 3.4.0 or higher
   - CMake version 3.15 or higher
   - GPU version: CUDA version 12.0 or higher
 - test

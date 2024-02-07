@@ -1,6 +1,8 @@
+#include <pointcloud_iof/pcl_eigen_coverter.hpp>
+#include <pointcloud_iof/pcd_loader.hpp>
+#include <pointcloud_iof/gravity_alignment.hpp>
 #include <ros2_test_rviz2.hpp>
 #include <load_rviz2.hpp>
-#include <util.hpp>
 #include <chrono>
 
 // pcl
@@ -41,7 +43,7 @@ ROS2Test::ROS2Test(const rclcpp::NodeOptions& node_options) : Node("gpu_ros2_tes
 
   std::cout << "[ROS2] Loading target clouds..." << std::endl;
   pcl::PointCloud<pcl::PointXYZ>::Ptr tar_cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>());
-  if (!load_tar_clouds(tar_path, tar_leaf_size, tar_cloud_ptr)) {
+  if (!pciof::load_tar_clouds(tar_path, tar_leaf_size, tar_cloud_ptr)) {
     std::cout << "[ERROR] Couldn't load target clouds" << std::endl;
   }
 
@@ -58,7 +60,7 @@ ROS2Test::ROS2Test(const rclcpp::NodeOptions& node_options) : Node("gpu_ros2_tes
 
   // pcl to eigen
   std::vector<Eigen::Vector3f> tar_points;
-  pcl_to_eigen(tar_cloud_ptr, tar_points);
+  pciof::pcl_to_eigen(tar_cloud_ptr, tar_points);
 
   // broadcast viewer frame
   broadcast_viewer_frame(tar_points);
@@ -69,10 +71,16 @@ ROS2Test::ROS2Test(const rclcpp::NodeOptions& node_options) : Node("gpu_ros2_tes
     std::cout << "[Voxel map] Loaded voxelmaps coords directly" << std::endl;
   } else {
     gpu_bbs3d.set_tar_points(tar_points, min_level_res, max_level);
+    gpu_bbs3d.set_trans_search_range(tar_points);
   }
 
   gpu_bbs3d.set_angular_search_range(min_rpy.cast<float>(), max_rpy.cast<float>());
   gpu_bbs3d.set_score_threshold_percentage(static_cast<float>(score_threshold_percentage));
+  if (timeout_msec > 0) {
+    gpu_bbs3d.enable_timeout();
+    gpu_bbs3d.set_timeout_duration_in_msec(timeout_msec);
+  }
+
   std::cout << "*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*" << std::endl;
   std::cout << "   [ROS2] 3D-BBS initialized" << std::endl;
   std::cout << "*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*" << std::endl;
@@ -150,27 +158,29 @@ void ROS2Test::click_callback(const std_msgs::msg::Bool::SharedPtr msg) {
   }
 
   int imu_index = get_nearest_imu_index(imu_buffer, source_cloud_msg_->header.stamp);
-  gravity_align(src_cloud, src_cloud, imu_buffer[imu_index]);
+  const auto imu_msg = imu_buffer[imu_index];
+  const Eigen::Vector3d acc = {imu_msg.linear_acceleration.x, imu_msg.linear_acceleration.y, imu_msg.linear_acceleration.z};
+  pcl::transformPointCloud(*src_cloud, *src_cloud, pciof::calc_gravity_alignment_matrix(acc.cast<float>()));
 
   std::vector<Eigen::Vector3f> src_points;
-  pcl_to_eigen(src_cloud, src_points);
+  pciof::pcl_to_eigen(src_cloud, src_points);
   gpu_bbs3d.set_src_points(src_points);
 
   std::cout << "[Localize] start" << std::endl;
-  auto start_loc = std::chrono::system_clock::now();
   gpu_bbs3d.localize();  // gloal localization
-  auto end_loc = std::chrono::system_clock::now();
 
   if (!gpu_bbs3d.has_localized()) {
-    std::cout << "[Failed] Score is below the threshold." << std::endl;
+    if (gpu_bbs3d.has_timed_out())
+      std::cout << "[Failed] Localization timed out." << std::endl;
+    else
+      std::cout << "[Failed] Score is below the threshold." << std::endl;
     return;
   }
 
-  float time = std::chrono::duration_cast<std::chrono::microseconds>(end_loc - start_loc).count() / 1000.0f;
-  std::cout << "[Localize] time: " << time << "ms" << std::endl;
+  std::cout << "[Localize] Execution time: " << gpu_bbs3d.get_elapsed_time() << "[msec] " << std::endl;
   std::cout << "[Localize] score: " << gpu_bbs3d.get_best_score() << std::endl;
 
-  publish_results(source_cloud_msg_->header, src_cloud, gpu_bbs3d.get_global_pose(), gpu_bbs3d.get_best_score(), time);
+  publish_results(source_cloud_msg_->header, src_cloud, gpu_bbs3d.get_global_pose(), gpu_bbs3d.get_best_score(), gpu_bbs3d.get_elapsed_time());
 }
 
 int ROS2Test::get_nearest_imu_index(const std::vector<sensor_msgs::msg::Imu>& imu_buffer, const builtin_interfaces::msg::Time& stamp) {

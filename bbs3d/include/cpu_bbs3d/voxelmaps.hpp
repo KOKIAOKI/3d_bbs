@@ -2,7 +2,6 @@
 
 #include <iostream>
 #include <unordered_map>
-#include <Eigen/Core>
 #include <Eigen/Dense>
 #include <boost/functional/hash/hash.hpp>
 

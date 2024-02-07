@@ -1,33 +1,37 @@
 ################[Necessary]################
-## Folder Paths
+## Folder paths
 target_clouds: "your_path/target"
 source_clouds: "your_path/source"
 output_folder: "your_path/output"
 
-## 3D-BBS Parameters
-min_level_res: 1.0 # [m]
+## 3D-BBS parameters
+min_level_res: 1.0 # [m], e.g. outdoor: 1.0, indoor: 0.5
 max_level: 6
 
-## Angular Search Range
+## Angular search range [rad]
 # 6.28 input is converted to 2*M_PI
-min_rpy: [-0.02,-0.02,0.0]
-max_rpy: [0.02,0.02,6.28]
+min_rpy: [-0.02,-0.02,0.0] # [roll, pitch, yaw]
+max_rpy: [0.02,0.02,6.28] # [roll, pitch, yaw]
 
 ## Score threshold
 # score_threshold = floor(src_points.size() * score_threshold_percentage)
 score_threshold_percentage: 0.9
 
 ################[Optional]################
-## Downsample target clouds parameter [m]
+## Downsample target clouds [m]
 tar_leaf_size: 0.1 # off: 0.0
 
-## Downsample source clouds parameter [m]
+## Downsample source clouds [m]
 src_leaf_size: 2.0 # off: 0.0
 
-## Crop source clouds parameter [m]
+## Crop source clouds [m]
 min_scan_range: 0.0 # [m]
 max_scan_range: 100.0 # [m]
 # off: set 0.0 to both min_scan_range and max_scan_range
+
+## Timeout [msec]
+# Enter the number as int
+timeout_msec: 0 # off: 0
  
 ## Final align (evaluate the error)
 use_gicp: false 

@@ -83,4 +83,7 @@ private:
   // downsample
   float tar_leaf_size, src_leaf_size;
   double min_scan_range, max_scan_range;
+
+  // timeout
+  int timeout_msec;
 };
