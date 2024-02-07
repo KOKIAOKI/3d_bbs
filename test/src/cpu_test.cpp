@@ -1,8 +1,8 @@
 #include <cpu_bbs3d/bbs3d.hpp>
 #include <pointcloud_iof/pcl_eigen_coverter.hpp>
+#include <pointcloud_iof/pcd_loader.hpp>
 
 #include <test.hpp>
-#include <util.hpp>
 #include <load_yaml.hpp>
 #include <chrono>
 
@@ -10,6 +10,19 @@
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
 #include <pcl/registration/gicp.h>
+
+std::string create_date() {
+  time_t t = time(nullptr);
+  const tm* local_time = localtime(&t);
+  std::stringstream s;
+  s << "20" << local_time->tm_year - 100 << "_";
+  s << local_time->tm_mon + 1 << "_";
+  s << local_time->tm_mday << "_";
+  s << local_time->tm_hour << "_";
+  s << local_time->tm_min << "_";
+  s << local_time->tm_sec;
+  return (s.str());
+}
 
 BBS3DTest::BBS3DTest() {}
 
@@ -25,7 +38,7 @@ int BBS3DTest::run(std::string config) {
   // Load target pcds
   std::cout << "[Setting] Loading target pcds..." << std::endl;
   pcl::PointCloud<pcl::PointXYZ>::Ptr tar_cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>());
-  if (!load_tar_clouds(tar_path, tar_leaf_size, tar_cloud_ptr)) {
+  if (!pciof::load_tar_clouds(tar_path, tar_leaf_size, tar_cloud_ptr)) {
     std::cout << "[ERROR] Loading target pcd failed" << std::endl;
     return 1;
   }
@@ -43,14 +56,14 @@ int BBS3DTest::run(std::string config) {
   // Load source pcds
   std::cout << "[Setting] Loading source pcds..." << std::endl;
   std::vector<std::pair<std::string, pcl::PointCloud<pcl::PointXYZ>::Ptr>> src_cloud_set;
-  if (!load_src_clouds(src_path, min_scan_range, max_scan_range, src_leaf_size, src_cloud_set)) {
+  if (!pciof::load_src_points_with_filename(src_path, min_scan_range, max_scan_range, src_leaf_size, src_cloud_set)) {
     std::cout << "[ERROR] Loading source pcds failed" << std::endl;
     return 1;
   };
 
   // Create output folder with date
   std::cout << "[Setting] Create output folder with date..." << std::endl;
-  std::string date = createDate();
+  std::string date = create_date();
   std::string pcd_save_folder_path = output_path + "/" + date;
   boost::filesystem::create_directory(pcd_save_folder_path);
 
@@ -64,12 +77,12 @@ int BBS3DTest::run(std::string config) {
     std::cout << "[Voxel map] Loaded voxelmaps coords directly" << std::endl;
   } else {
     bbs3d_ptr->set_tar_points(tar_points, min_level_res, max_level);
+    bbs3d_ptr->set_trans_search_range(tar_points);
   }
   auto init_t2 = std::chrono::high_resolution_clock::now();
   double init_time = std::chrono::duration_cast<std::chrono::nanoseconds>(init_t2 - initi_t1).count() / 1e6;
   std::cout << "[Voxel map] Execution time: " << init_time << "[msec] " << std::endl;
 
-  bbs3d_ptr->set_trans_search_range(tar_points);
   bbs3d_ptr->set_angular_search_range(min_rpy, max_rpy);
   bbs3d_ptr->set_score_threshold_percentage(score_threshold_percentage);
   if (timeout_msec > 0) {

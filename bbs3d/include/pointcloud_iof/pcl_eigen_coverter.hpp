@@ -7,6 +7,11 @@
 namespace pciof {
 template <typename T>
 void pcl_to_eigen(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud_ptr, std::vector<T>& points) {
+  // nullptr check
+  if (!cloud_ptr) {
+    return;
+  }
+
   points.resize(cloud_ptr->size());
   std::transform(cloud_ptr->begin(), cloud_ptr->end(), points.begin(), [](const pcl::PointXYZ& p) { return T(p.x, p.y, p.z); });
 }

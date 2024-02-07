@@ -1,8 +1,8 @@
 #include <pointcloud_iof/pcl_eigen_coverter.hpp>
-#include <pointcloud_iof/gravity_align.hpp>
+#include <pointcloud_iof/pcd_loader.hpp>
+#include <pointcloud_iof/gravity_alignment.hpp>
 #include <ros2_test_rviz2.hpp>
 #include <load_rviz2.hpp>
-#include <util.hpp>
 #include <chrono>
 
 // pcl
@@ -43,7 +43,7 @@ ROS2Test::ROS2Test(const rclcpp::NodeOptions& node_options) : Node("gpu_ros2_tes
 
   std::cout << "[ROS2] Loading target clouds..." << std::endl;
   pcl::PointCloud<pcl::PointXYZ>::Ptr tar_cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>());
-  if (!load_tar_clouds(tar_path, tar_leaf_size, tar_cloud_ptr)) {
+  if (!pciof::load_tar_clouds(tar_path, tar_leaf_size, tar_cloud_ptr)) {
     std::cout << "[ERROR] Couldn't load target clouds" << std::endl;
   }
 

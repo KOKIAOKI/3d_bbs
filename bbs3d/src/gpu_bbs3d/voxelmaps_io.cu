@@ -1,7 +1,6 @@
 #include <gpu_bbs3d/bbs3d.cuh>
 #include <gpu_bbs3d/voxelmaps.cuh>
-#include <pointcloud_iof/load.hpp>
-
+#include <pointcloud_iof/pcd_loader_without_pcl.hpp>
 #include <boost/filesystem.hpp>
 
 namespace gpu {

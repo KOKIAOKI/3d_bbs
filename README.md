@@ -17,7 +17,7 @@ Specifically, when tested in a real environment with the following hardware conf
 
 ## Dependencies
 - bbs3d (Lower versions are not tested)
-  - Eigen3
+  - Eigen3 version 3.4.0 or higher
   - CMake version 3.15 or higher
   - GPU version: CUDA version 12.0 or higher
 - test

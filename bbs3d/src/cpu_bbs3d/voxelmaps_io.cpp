@@ -1,6 +1,6 @@
 #include <cpu_bbs3d/bbs3d.hpp>
 #include <cpu_bbs3d/voxelmaps.hpp>
-#include <pointcloud_iof/load.hpp>
+#include <pointcloud_iof/pcd_loader_without_pcl.hpp>
 
 #include <boost/filesystem.hpp>
 

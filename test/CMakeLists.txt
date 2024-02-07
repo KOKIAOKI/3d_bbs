@@ -9,7 +9,7 @@ find_package(Eigen3 REQUIRED)
 find_package(cpu_bbs3d REQUIRED)
 find_package(OpenMP)
 
-if (OPENMP_FOUND)
+if (OpenMP_FOUND)
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
   set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 endif()

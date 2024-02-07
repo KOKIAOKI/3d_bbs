@@ -1,8 +1,8 @@
 #include <pointcloud_iof/pcl_eigen_coverter.hpp>
-#include <pointcloud_iof/gravity_align.hpp>
+#include <pointcloud_iof/pcd_loader.hpp>
+#include <pointcloud_iof/gravity_alignment.hpp>
 #include <ros2_test.hpp>
 #include <load.hpp>
-#include <util.hpp>
 #include <chrono>
 
 // pcl
@@ -12,6 +12,21 @@
 #include <pcl/filters/approximate_voxel_grid.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/common/transforms.h>
+
+void transform_pointcloud(
+  const std::vector<Eigen::Vector3f>& source_points,
+  std::vector<Eigen::Vector3f>& output_points,
+  const Eigen::Matrix4f& trans_matrix) {
+  output_points.clear();
+  output_points.reserve(source_points.size());
+
+  for (const auto& point : source_points) {
+    Eigen::Vector4f homog_point(point[0], point[1], point[2], 1.0f);
+    Eigen::Vector4f transformed_homog = trans_matrix * homog_point;
+    Eigen::Vector3f transformed_point = transformed_homog.head<3>() / transformed_homog[3];
+    output_points.push_back(transformed_point);
+  }
+}
 
 ROS2Test::ROS2Test(const rclcpp::NodeOptions& node_options) : Node("gpu_ros2_test_iridescence", node_options) {
   //  ==== Load config file ====
@@ -24,7 +39,7 @@ ROS2Test::ROS2Test(const rclcpp::NodeOptions& node_options) : Node("gpu_ros2_tes
   // ==== Set target cloud ====
   std::cout << "[ROS2] Loading target clouds..." << std::endl;
   pcl::PointCloud<pcl::PointXYZ>::Ptr tar_cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>());
-  if (!load_tar_clouds(tar_path, tar_leaf_size, tar_cloud_ptr)) {
+  if (!pciof::load_tar_clouds(tar_path, tar_leaf_size, tar_cloud_ptr)) {
     std::cout << "[ERROR] Couldn't load target clouds" << std::endl;
   }
 
