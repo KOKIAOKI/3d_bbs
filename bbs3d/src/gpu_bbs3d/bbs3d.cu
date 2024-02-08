@@ -224,7 +224,7 @@ void BBS3D::localize() {
 
   // Not localized
   if (best_score == score_threshold || has_timed_out_) {
-    has_localized_ = true;
+    has_localized_ = false;
     return;
   }
 
