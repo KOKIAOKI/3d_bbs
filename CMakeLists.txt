@@ -19,7 +19,8 @@ endif()
 # Common include directories
 include_directories(
   ${EIGEN3_INCLUDE_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}/bbs3d/include>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/bbs3d/include>
+  $<INSTALL_INTERFACE:include>
 )
 
 add_library(cpu_bbs3d
