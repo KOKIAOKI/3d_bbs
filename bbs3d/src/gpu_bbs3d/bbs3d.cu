@@ -62,6 +62,12 @@ void BBS3D::set_trans_search_range(const std::vector<Eigen::Vector3f>& points) {
     max_xyz = max_xyz.cwiseMax(point);
   }
 
+  set_trans_search_range(min_xyz, max_xyz);
+}
+
+void BBS3D::set_trans_search_range(const Eigen::Vector3f& min_xyz, const Eigen::Vector3f& max_xyz) {
+  min_xyz_ = min_xyz;
+  max_xyz_ = max_xyz;
   const int max_level = voxelmaps_ptr_->get_max_level();
   const float top_res = voxelmaps_ptr_->voxelmaps_info_[max_level].res;
   init_tx_range_ = std::make_pair<int, int>(std::floor(min_xyz.x() / top_res), std::ceil(max_xyz.x() / top_res));
@@ -69,7 +75,7 @@ void BBS3D::set_trans_search_range(const std::vector<Eigen::Vector3f>& points) {
   init_tz_range_ = std::make_pair<int, int>(std::floor(min_xyz.z() / top_res), std::ceil(max_xyz.z() / top_res));
 }
 
-void BBS3D::calc_angluar_info(std::vector<AngularInfo>& ang_info_vec) {
+void BBS3D::calc_angular_info(std::vector<AngularInfo>& ang_info_vec) {
   float max_norm = src_points_[0].norm();
   for (const auto& point : src_points_) {
     float norm = point.norm();
@@ -165,7 +171,7 @@ void BBS3D::localize() {
   // Preapre initial transset
   const int max_level = voxelmaps_ptr_->get_max_level();
   std::vector<AngularInfo> ang_info_vec(max_level + 1);
-  calc_angluar_info(ang_info_vec);
+  calc_angular_info(ang_info_vec);
   const auto init_transset = create_init_transset(ang_info_vec[max_level]);
 
   // Calc initial transset scores

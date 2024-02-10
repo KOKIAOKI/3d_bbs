@@ -55,6 +55,8 @@ public:
 
   void set_trans_search_range(const std::vector<Eigen::Vector3d>& points);
 
+  void set_trans_search_range(const Eigen::Vector3d& min_xyz, const Eigen::Vector3d& max_xyz);
+
   void set_angular_search_range(const Eigen::Vector3d& min_rpy, const Eigen::Vector3d& max_rpy) {
     min_rpy_ = min_rpy;
     max_rpy_ = max_rpy;
@@ -79,8 +81,8 @@ public:
 
   bool set_voxelmaps_coords(const std::string& folder_path);
 
-  std::vector<std::pair<int, int>> get_trans_search_range() const {
-    return std::vector<std::pair<int, int>>{init_tx_range_, init_ty_range_, init_tz_range_};
+  std::pair<Eigen::Vector3d, Eigen::Vector3d> get_trans_search_range() const {
+    return std::pair<Eigen::Vector3d, Eigen::Vector3d>{min_xyz_, max_xyz_};
   }
 
   std::vector<Eigen::Vector3d> get_angular_search_range() const { return std::vector<Eigen::Vector3d>{min_rpy_, max_rpy_}; }
@@ -114,7 +116,7 @@ public:
   bool save_voxel_params(const std::string& folder_path);
 
 private:
-  void calc_angluar_info(std::vector<AngularInfo>& ang_info_vec);
+  void calc_angular_info(std::vector<AngularInfo>& ang_info_vec);
 
   std::vector<DiscreteTransformation> create_init_transset(const AngularInfo& init_ang_info);
 
@@ -136,6 +138,8 @@ private:
   double score_threshold_percentage_;
   bool use_timeout_;
   std::chrono::milliseconds timeout_duration_;
+  Eigen::Vector3d min_xyz_;
+  Eigen::Vector3d max_xyz_;
   Eigen::Vector3d min_rpy_;
   Eigen::Vector3d max_rpy_;
   std::pair<int, int> init_tx_range_;
