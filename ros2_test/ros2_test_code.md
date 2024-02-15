@@ -34,7 +34,7 @@ target_clouds: "your_path/target"
 
 The ros2_test_data you download in the next step will work with default parameter values.
 
-### 3. Run
+### 3. Run (localize with click button)
 **1. First terminal**  
 ```shell script
 cd 3d_bbs/ros2_test
@@ -66,6 +66,14 @@ The red point cloud is the matched source point.
 You can save the voxelmaps coordinates and skip 3D-BBS voxel construction if you reuse the same parameters of `min_level_res` and `max_level`.  
 Please refer to step 5 of [test_code.md](./test/test_code.md)  
 After saving the voxelmaps, please try 3. Run again.
+
+### 4. Run (localize with finger snap)
+
+```shell script
+cd 3d_bbs/ros2_test
+source install/setup.bash
+ros2 launch ros2_test_rviz2 finger_snap.py
+```
 
 </div></details>
 
