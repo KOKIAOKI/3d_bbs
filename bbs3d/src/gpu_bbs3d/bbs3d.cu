@@ -136,15 +136,7 @@ std::vector<DiscreteTransformation> BBS3D::create_init_transset(const AngularInf
         for (int roll = 0; roll < init_ang_info.num_division.x(); roll++) {
           for (int pitch = 0; pitch < init_ang_info.num_division.y(); pitch++) {
             for (int yaw = 0; yaw < init_ang_info.num_division.z(); yaw++) {
-              transset.emplace_back(DiscreteTransformation(
-                0,
-                max_level,
-                tx,
-                ty,
-                tz,
-                roll * init_ang_info.rpy_res.x() + init_ang_info.min_rpy.x(),
-                pitch * init_ang_info.rpy_res.y() + init_ang_info.min_rpy.y(),
-                yaw * init_ang_info.rpy_res.z() + init_ang_info.min_rpy.z()));
+              transset.emplace_back(DiscreteTransformation(0, max_level, tx, ty, tz, roll, pitch, yaw));
             }
           }
         }
@@ -170,10 +162,18 @@ void BBS3D::localize() {
   const int max_level = voxelmaps_ptr_->get_max_level();
   std::vector<AngularInfo> ang_info_vec(max_level + 1);
   calc_angular_info(ang_info_vec);
+  thrust::device_vector<AngularInfo> d_ang_info_vec(ang_info_vec.size());
+  check_error << cudaMemcpyAsync(
+    thrust::raw_pointer_cast(d_ang_info_vec.data()),
+    ang_info_vec.data(),
+    sizeof(AngularInfo) * ang_info_vec.size(),
+    cudaMemcpyHostToDevice,
+    stream);
+
   const auto init_transset = create_init_transset(ang_info_vec[max_level]);
 
   // Calc initial transset scores
-  const auto init_transset_output = calc_scores(init_transset);
+  const auto init_transset_output = calc_scores(init_transset, d_ang_info_vec);
 
   std::priority_queue<DiscreteTransformation> trans_queue(init_transset_output.begin(), init_transset_output.end());
 
@@ -190,7 +190,7 @@ void BBS3D::localize() {
 
     // Calculate remaining branch_stock when queue is empty
     if (trans_queue.empty() && !branch_stock.empty()) {
-      const auto transset_output = calc_scores(branch_stock);
+      const auto transset_output = calc_scores(branch_stock, d_ang_info_vec);
       for (const auto& output : transset_output) {
         if (output.score < best_score) continue;  // pruning
         trans_queue.push(output);
@@ -208,11 +208,11 @@ void BBS3D::localize() {
       best_score = trans.score;
     } else {
       const int child_level = trans.level - 1;
-      trans.branch(branch_stock, child_level, static_cast<int>(v_rate_), ang_info_vec[child_level]);
+      trans.branch(branch_stock, child_level, static_cast<int>(v_rate_), ang_info_vec[child_level].num_division);
     }
 
     if (branch_stock.size() >= branch_copy_size_) {
-      const auto transset_output = calc_scores(branch_stock);
+      const auto transset_output = calc_scores(branch_stock, d_ang_info_vec);
       for (const auto& output : transset_output) {
         if (output.score < best_score) continue;  // pruning
         trans_queue.push(output);
@@ -232,7 +232,7 @@ void BBS3D::localize() {
   }
 
   float min_res = voxelmaps_ptr_->get_min_res();
-  global_pose_ = best_trans.create_matrix(min_res);
+  global_pose_ = best_trans.create_matrix(min_res, ang_info_vec[0].rpy_res, ang_info_vec[0].min_rpy);
   best_score_ = best_score;
   has_timed_out_ = false;
   has_localized_ = true;

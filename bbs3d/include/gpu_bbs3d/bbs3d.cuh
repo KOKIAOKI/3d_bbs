@@ -24,16 +24,16 @@ struct DiscreteTransformation {
 public:
   DiscreteTransformation();
   DiscreteTransformation(int score);
-  DiscreteTransformation(int score, int level, int x, int y, int z, float roll, float pitch, float yaw);
+  DiscreteTransformation(int score, int level, int x, int y, int z, int roll, int pitch, int yaw);
   ~DiscreteTransformation();
 
   bool operator<(const DiscreteTransformation& rhs) const;
 
   bool is_leaf() const;
 
-  Eigen::Matrix4f create_matrix(const float trans_res);
+  Eigen::Matrix4f create_matrix(const float trans_res, const Eigen::Vector3f& rpy_res, const Eigen::Vector3f& min_rpy);
 
-  void branch(std::vector<DiscreteTransformation>& b, const int child_level, const int v_rate, const AngularInfo& ang_info);
+  void branch(std::vector<DiscreteTransformation>& b, const int child_level, const int v_rate, const Eigen::Vector3i& num_division);
 
 public:
   int score;
@@ -41,9 +41,9 @@ public:
   int x;
   int y;
   int z;
-  float roll;
-  float pitch;
-  float yaw;
+  int roll;
+  int pitch;
+  int yaw;
 };
 
 class BBS3D {
@@ -113,7 +113,9 @@ private:
 
   std::vector<DiscreteTransformation> create_init_transset(const AngularInfo& init_ang_info);
 
-  std::vector<DiscreteTransformation> calc_scores(const std::vector<DiscreteTransformation>& h_transset);
+  std::vector<DiscreteTransformation> calc_scores(
+    const std::vector<DiscreteTransformation>& h_transset,
+    thrust::device_vector<AngularInfo>& d_ang_info_vec);
 
   // pcd iof
   bool load_voxel_params(const std::string& voxelmaps_folder_path);

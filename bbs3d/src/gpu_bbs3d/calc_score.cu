@@ -6,6 +6,7 @@ namespace gpu {
 __global__ void calc_scores_kernel(
   const thrust::device_ptr<Eigen::Vector4i*> multi_buckets_ptrs,
   const thrust::device_ptr<VoxelMapInfo> voxelmap_info_ptr,
+  const thrust::device_ptr<AngularInfo> d_ang_info_vec_ptr,
   thrust::device_ptr<DiscreteTransformation> trans_ptr,
   size_t index_size,
   const thrust::device_ptr<Eigen::Vector3f> points_ptr,
@@ -17,6 +18,7 @@ __global__ void calc_scores_kernel(
 
   DiscreteTransformation& trans = *thrust::raw_pointer_cast(trans_ptr + pose_index);
   const VoxelMapInfo& voxelmap_info = *thrust::raw_pointer_cast(voxelmap_info_ptr + trans.level);
+  const AngularInfo& ang_info = *thrust::raw_pointer_cast(d_ang_info_vec_ptr + trans.level);
   const Eigen::Vector4i* buckets = thrust::raw_pointer_cast(multi_buckets_ptrs)[trans.level];
 
   int score = 0;
@@ -25,8 +27,9 @@ __global__ void calc_scores_kernel(
 
     const Eigen::Vector3f translation(trans.x * voxelmap_info.res, trans.y * voxelmap_info.res, trans.z * voxelmap_info.res);
     Eigen::Matrix3f rotation;
-    rotation = Eigen::AngleAxisf(trans.yaw, Eigen::Vector3f::UnitZ()) * Eigen::AngleAxisf(trans.pitch, Eigen::Vector3f::UnitY()) *
-               Eigen::AngleAxisf(trans.roll, Eigen::Vector3f::UnitX());
+    rotation = Eigen::AngleAxisf(trans.yaw * ang_info.rpy_res.z() + ang_info.min_rpy.z(), Eigen::Vector3f::UnitZ()) *
+               Eigen::AngleAxisf(trans.pitch * ang_info.rpy_res.y() + ang_info.min_rpy.y(), Eigen::Vector3f::UnitY()) *
+               Eigen::AngleAxisf(trans.roll * ang_info.rpy_res.x() + ang_info.min_rpy.x(), Eigen::Vector3f::UnitX());
     const Eigen::Vector3f transed_point = rotation * point + translation;
 
     // coord to hash
@@ -51,7 +54,9 @@ __global__ void calc_scores_kernel(
   trans.score = score;
 }
 
-std::vector<DiscreteTransformation> BBS3D::calc_scores(const std::vector<DiscreteTransformation>& h_transset) {
+std::vector<DiscreteTransformation> BBS3D::calc_scores(
+  const std::vector<DiscreteTransformation>& h_transset,
+  thrust::device_vector<AngularInfo>& d_ang_info_vec) {
   size_t transset_size = h_transset.size();
   thrust::device_vector<DiscreteTransformation> d_transset(transset_size);
   check_error << cudaMemcpyAsync(
@@ -67,6 +72,7 @@ std::vector<DiscreteTransformation> BBS3D::calc_scores(const std::vector<Discret
   calc_scores_kernel<<<num_blocks, block_size, 0, stream>>>(
     voxelmaps_ptr_->d_multi_buckets_ptrs_.data(),
     voxelmaps_ptr_->d_voxelmaps_info_.data(),
+    d_ang_info_vec.data(),
     d_transset.data(),
     transset_size - 1,
     d_src_points_.data(),
