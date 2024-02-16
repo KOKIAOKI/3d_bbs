@@ -23,7 +23,7 @@ __global__ void calc_scores_kernel(
   for (size_t i = 0; i < num_points; i++) {
     const Eigen::Vector3f& point = thrust::raw_pointer_cast(points_ptr)[i];
 
-    const Eigen::Vector3f translation(trans.x, trans.y, trans.z);
+    const Eigen::Vector3f translation(trans.x * voxelmap_info.res, trans.y * voxelmap_info.res, trans.z * voxelmap_info.res);
     Eigen::Matrix3f rotation;
     rotation = Eigen::AngleAxisf(trans.yaw, Eigen::Vector3f::UnitZ()) * Eigen::AngleAxisf(trans.pitch, Eigen::Vector3f::UnitY()) *
                Eigen::AngleAxisf(trans.roll, Eigen::Vector3f::UnitX());

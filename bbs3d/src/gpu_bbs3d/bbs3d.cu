@@ -127,7 +127,6 @@ std::vector<DiscreteTransformation> BBS3D::create_init_transset(const AngularInf
                                  (init_ang_info.num_division.y()) * (init_ang_info.num_division.z());
 
   const int max_level = voxelmaps_ptr_->get_max_level();
-  const float init_trans_res = voxelmaps_ptr_->voxelmaps_info_[max_level].res;
 
   std::vector<DiscreteTransformation> transset;
   transset.reserve(init_transset_size);
@@ -140,10 +139,9 @@ std::vector<DiscreteTransformation> BBS3D::create_init_transset(const AngularInf
               transset.emplace_back(DiscreteTransformation(
                 0,
                 max_level,
-                init_trans_res,
-                tx * init_trans_res,
-                ty * init_trans_res,
-                tz * init_trans_res,
+                tx,
+                ty,
+                tz,
                 roll * init_ang_info.rpy_res.x() + init_ang_info.min_rpy.x(),
                 pitch * init_ang_info.rpy_res.y() + init_ang_info.min_rpy.y(),
                 yaw * init_ang_info.rpy_res.z() + init_ang_info.min_rpy.z()));
@@ -210,8 +208,7 @@ void BBS3D::localize() {
       best_score = trans.score;
     } else {
       const int child_level = trans.level - 1;
-      const float child_res = trans.resolution * inv_v_rate_;
-      trans.branch(branch_stock, child_level, child_res, static_cast<int>(v_rate_), ang_info_vec[child_level]);
+      trans.branch(branch_stock, child_level, static_cast<int>(v_rate_), ang_info_vec[child_level]);
     }
 
     if (branch_stock.size() >= branch_copy_size_) {
@@ -234,7 +231,8 @@ void BBS3D::localize() {
     return;
   }
 
-  global_pose_ = best_trans.create_matrix();
+  float min_res = voxelmaps_ptr_->get_min_res();
+  global_pose_ = best_trans.create_matrix(min_res);
   best_score_ = best_score;
   has_timed_out_ = false;
   has_localized_ = true;

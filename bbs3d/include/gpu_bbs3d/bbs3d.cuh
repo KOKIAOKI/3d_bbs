@@ -24,24 +24,23 @@ struct DiscreteTransformation {
 public:
   DiscreteTransformation();
   DiscreteTransformation(int score);
-  DiscreteTransformation(int score, int level, float resolution, float x, float y, float z, float roll, float pitch, float yaw);
+  DiscreteTransformation(int score, int level, int x, int y, int z, float roll, float pitch, float yaw);
   ~DiscreteTransformation();
 
   bool operator<(const DiscreteTransformation& rhs) const;
 
   bool is_leaf() const;
 
-  Eigen::Matrix4f create_matrix();
+  Eigen::Matrix4f create_matrix(const float trans_res);
 
-  void branch(std::vector<DiscreteTransformation>& b, const int child_level, const float child_res, const int v_rate, const AngularInfo& ang_info);
+  void branch(std::vector<DiscreteTransformation>& b, const int child_level, const int v_rate, const AngularInfo& ang_info);
 
 public:
   int score;
   int level;
-  float resolution;
-  float x;
-  float y;
-  float z;
+  int x;
+  int y;
+  int z;
   float roll;
   float pitch;
   float yaw;

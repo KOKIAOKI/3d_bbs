@@ -112,7 +112,6 @@ std::vector<DiscreteTransformation> BBS3D::create_init_transset(const AngularInf
                                  (init_ang_info.num_division.y()) * (init_ang_info.num_division.z());
 
   const int max_level = voxelmaps_ptr_->get_max_level();
-  const double init_trans_res = voxelmaps_ptr_->voxelmaps_res_[max_level];
 
   std::vector<DiscreteTransformation> transset;
   transset.reserve(init_transset_size);
@@ -125,10 +124,9 @@ std::vector<DiscreteTransformation> BBS3D::create_init_transset(const AngularInf
               transset.emplace_back(DiscreteTransformation(
                 0,
                 max_level,
-                init_trans_res,
-                tx * init_trans_res,
-                ty * init_trans_res,
-                tz * init_trans_res,
+                tx,
+                ty,
+                tz,
                 roll * init_ang_info.rpy_res.x() + init_ang_info.min_rpy.x(),
                 pitch * init_ang_info.rpy_res.y() + init_ang_info.min_rpy.y(),
                 yaw * init_ang_info.rpy_res.z() + init_ang_info.min_rpy.z()));
@@ -161,9 +159,10 @@ void BBS3D::localize() {
 
   // Calc initial transset scores
   const auto& top_buckets = voxelmaps_ptr_->multi_buckets_[max_level];
+  double init_trans_res = voxelmaps_ptr_->voxelmaps_res_[max_level];
 #pragma omp parallel for num_threads(num_threads_)
   for (int i = 0; i < init_transset.size(); i++) {
-    init_transset[i].calc_score(top_buckets, max_bucket_scan_count, src_points_);
+    init_transset[i].calc_score(top_buckets, init_trans_res, max_bucket_scan_count, src_points_);
   }
 
   std::priority_queue<DiscreteTransformation> trans_queue(init_transset.begin(), init_transset.end());
@@ -187,14 +186,13 @@ void BBS3D::localize() {
       best_score = trans.score;
     } else {
       const int child_level = trans.level - 1;
-      const double child_res = trans.resolution * inv_v_rate_;
-      auto children = trans.branch(child_level, child_res, static_cast<int>(v_rate_), ang_info_vec[child_level]);
+      auto children = trans.branch(child_level, static_cast<int>(v_rate_), ang_info_vec[child_level]);
 
       const auto& buckets = voxelmaps_ptr_->multi_buckets_[child_level];
-
+      double trans_res = voxelmaps_ptr_->voxelmaps_res_[child_level];
 #pragma omp parallel for num_threads(num_threads_)
       for (int i = 0; i < children.size(); i++) {
-        children[i].calc_score(buckets, max_bucket_scan_count, src_points_);
+        children[i].calc_score(buckets, trans_res, max_bucket_scan_count, src_points_);
       }
 
       for (const auto& child : children) {
@@ -218,7 +216,8 @@ void BBS3D::localize() {
     return;
   }
 
-  global_pose_ = best_trans.create_matrix();
+  double min_res = voxelmaps_ptr_->get_min_res();
+  global_pose_ = best_trans.create_matrix(min_res);
   best_score_ = best_score;
   has_timed_out_ = false;
   has_localized_ = true;

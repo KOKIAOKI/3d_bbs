@@ -20,25 +20,28 @@ struct DiscreteTransformation {
 public:
   DiscreteTransformation();
   DiscreteTransformation(int score);
-  DiscreteTransformation(int score, int level, double resolution, double x, double y, double z, double roll, double pitch, double yaw);
+  DiscreteTransformation(int score, int level, int x, int y, int z, double roll, double pitch, double yaw);
   ~DiscreteTransformation();
 
   bool operator<(const DiscreteTransformation& rhs) const;
 
   bool is_leaf() const;
 
-  Eigen::Matrix4d create_matrix() const;
+  Eigen::Matrix4d create_matrix(const double trans_res) const;
 
-  std::vector<DiscreteTransformation> branch(const int child_level, const double child_res, const int v_rate, const AngularInfo& ang_info) const;
+  std::vector<DiscreteTransformation> branch(const int child_level, const int v_rate, const AngularInfo& ang_info) const;
 
-  void calc_score(const std::vector<Eigen::Vector4i>& buckets, const int max_bucket_scan_count, const std::vector<Eigen::Vector3d>& points);
+  void calc_score(
+    const std::vector<Eigen::Vector4i>& buckets,
+    const double trans_res,
+    const int max_bucket_scan_count,
+    const std::vector<Eigen::Vector3d>& points);
 
   int score;
   int level;
-  double resolution;
-  double x;
-  double y;
-  double z;
+  int x;
+  int y;
+  int z;
   double roll;
   double pitch;
   double yaw;

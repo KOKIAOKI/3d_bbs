@@ -6,28 +6,17 @@ DiscreteTransformation::DiscreteTransformation() {}
 DiscreteTransformation::DiscreteTransformation(int score) {
   this->score = score;
   this->level = 0;
-  this->resolution = 0.0;
-  this->x = 0.0;
-  this->y = 0.0;
-  this->z = 0.0;
+  this->x = 0;
+  this->y = 0;
+  this->z = 0;
   this->roll = 0.0;
   this->pitch = 0.0;
   this->yaw = 0.0;
 }
 
-DiscreteTransformation::DiscreteTransformation(
-  int score,
-  int level,
-  double resolution,
-  double x,
-  double y,
-  double z,
-  double roll,
-  double pitch,
-  double yaw) {
+DiscreteTransformation::DiscreteTransformation(int score, int level, int x, int y, int z, double roll, double pitch, double yaw) {
   this->score = score;
   this->level = level;
-  this->resolution = resolution;
   this->x = x;
   this->y = y;
   this->z = z;
@@ -46,16 +35,15 @@ bool DiscreteTransformation::is_leaf() const {
   return level == 0;
 }
 
-Eigen::Matrix4d DiscreteTransformation::create_matrix() const {
-  Eigen::Translation3d translation(x, y, z);
+Eigen::Matrix4d DiscreteTransformation::create_matrix(const double trans_res) const {
+  Eigen::Translation3d translation(x * trans_res, y * trans_res, z * trans_res);
   Eigen::AngleAxisd rollAngle(roll, Eigen::Vector3d::UnitX());
   Eigen::AngleAxisd pitchAngle(pitch, Eigen::Vector3d::UnitY());
   Eigen::AngleAxisd yawAngle(yaw, Eigen::Vector3d::UnitZ());
   return (translation * yawAngle * pitchAngle * rollAngle).matrix();
 }
 
-std::vector<DiscreteTransformation>
-DiscreteTransformation::branch(const int child_level, const double child_res, const int v_rate, const AngularInfo& ang_info) const {
+std::vector<DiscreteTransformation> DiscreteTransformation::branch(const int child_level, const int v_rate, const AngularInfo& ang_info) const {
   std::vector<DiscreteTransformation> b;
   b.reserve(v_rate * v_rate * v_rate * ang_info.num_division.x() * ang_info.num_division.y() * ang_info.num_division.z());
 
@@ -68,10 +56,9 @@ DiscreteTransformation::branch(const int child_level, const double child_res, co
               b.emplace_back(DiscreteTransformation(
                 0,
                 child_level,
-                child_res,
-                x + child_res * i,
-                y + child_res * j,
-                z + child_res * k,
+                x * v_rate + i,
+                y * v_rate + j,
+                z * v_rate + k,
                 roll + l * ang_info.rpy_res.x() + ang_info.min_rpy.x(),
                 pitch + m * ang_info.rpy_res.y() + ang_info.min_rpy.y(),
                 yaw + n * ang_info.rpy_res.z() + ang_info.min_rpy.z()));
@@ -86,12 +73,13 @@ DiscreteTransformation::branch(const int child_level, const double child_res, co
 
 void DiscreteTransformation::calc_score(
   const std::vector<Eigen::Vector4i>& buckets,
+  const double trans_res,
   const int max_bucket_scan_count,
   const std::vector<Eigen::Vector3d>& points) {
   const int num_buckets = buckets.size();
-  const double inv_res = 1.0 / resolution;
+  const double inv_res = 1.0 / trans_res;
   Eigen::Transform<double, 3, Eigen::Affine> transform;
-  transform = create_matrix();
+  transform = create_matrix(trans_res);
 
   for (int i = 0; i < points.size(); i++) {
     const Eigen::Vector3d transed_point = transform * points[i];
