@@ -7,7 +7,7 @@ __global__ void calc_scores_kernel(
   const thrust::device_ptr<Eigen::Vector4i*> multi_buckets_ptrs,
   const thrust::device_ptr<VoxelMapInfo> voxelmap_info_ptr,
   const thrust::device_ptr<AngularInfo> d_ang_info_vec_ptr,
-  thrust::device_ptr<DiscreteTransformation> trans_ptr,
+  thrust::device_ptr<DiscreteTransformation<float>> trans_ptr,
   size_t index_size,
   const thrust::device_ptr<Eigen::Vector3f> points_ptr,
   size_t num_points) {
@@ -16,7 +16,7 @@ __global__ void calc_scores_kernel(
     return;
   }
 
-  DiscreteTransformation& trans = *thrust::raw_pointer_cast(trans_ptr + pose_index);
+  DiscreteTransformation<float>& trans = *thrust::raw_pointer_cast(trans_ptr + pose_index);
   const VoxelMapInfo& voxelmap_info = *thrust::raw_pointer_cast(voxelmap_info_ptr + trans.level);
   const AngularInfo& ang_info = *thrust::raw_pointer_cast(d_ang_info_vec_ptr + trans.level);
   const Eigen::Vector4i* buckets = thrust::raw_pointer_cast(multi_buckets_ptrs)[trans.level];
@@ -54,15 +54,15 @@ __global__ void calc_scores_kernel(
   trans.score = score;
 }
 
-std::vector<DiscreteTransformation> BBS3D::calc_scores(
-  const std::vector<DiscreteTransformation>& h_transset,
+std::vector<DiscreteTransformation<float>> BBS3D::calc_scores(
+  const std::vector<DiscreteTransformation<float>>& h_transset,
   thrust::device_vector<AngularInfo>& d_ang_info_vec) {
   size_t transset_size = h_transset.size();
-  thrust::device_vector<DiscreteTransformation> d_transset(transset_size);
+  thrust::device_vector<DiscreteTransformation<float>> d_transset(transset_size);
   check_error << cudaMemcpyAsync(
     thrust::raw_pointer_cast(d_transset.data()),
     h_transset.data(),
-    sizeof(DiscreteTransformation) * transset_size,
+    sizeof(DiscreteTransformation<float>) * transset_size,
     cudaMemcpyHostToDevice,
     stream);
 
@@ -78,11 +78,11 @@ std::vector<DiscreteTransformation> BBS3D::calc_scores(
     d_src_points_.data(),
     src_points_.size());
 
-  std::vector<DiscreteTransformation> h_output(transset_size);
+  std::vector<DiscreteTransformation<float>> h_output(transset_size);
   check_error << cudaMemcpyAsync(
     h_output.data(),
     thrust::raw_pointer_cast(d_transset.data()),
-    sizeof(DiscreteTransformation) * transset_size,
+    sizeof(DiscreteTransformation<float>) * transset_size,
     cudaMemcpyDeviceToHost,
     stream);
 
