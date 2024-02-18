@@ -6,7 +6,7 @@
 #include <chrono>
 #include <Eigen/Dense>
 
-#include <discrete_transformation/discreate_transformation.hpp>
+#include <discrete_transformation/discrete_transformation.hpp>
 
 // thrust
 #include <cuda_runtime.h>

@@ -26,7 +26,6 @@ include_directories(
 add_library(cpu_bbs3d
   SHARED
   bbs3d/src/cpu_bbs3d/bbs3d.cpp
-  bbs3d/src/cpu_bbs3d/discreate_transformation.cpp
   bbs3d/src/cpu_bbs3d/voxelmaps.cpp
   bbs3d/src/cpu_bbs3d/voxelmaps_io.cpp
 )
