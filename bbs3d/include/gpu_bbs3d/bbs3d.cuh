@@ -6,6 +6,8 @@
 #include <chrono>
 #include <Eigen/Dense>
 
+#include <discrete_transformation/discrete_transformation.hpp>
+
 // thrust
 #include <cuda_runtime.h>
 #include <thrust/host_vector.h>
@@ -18,33 +20,6 @@ struct AngularInfo {
   Eigen::Vector3i num_division;
   Eigen::Vector3f rpy_res;
   Eigen::Vector3f min_rpy;
-};
-
-struct DiscreteTransformation {
-public:
-  DiscreteTransformation();
-  DiscreteTransformation(int score);
-  DiscreteTransformation(int score, int level, float resolution, float x, float y, float z, float roll, float pitch, float yaw);
-  ~DiscreteTransformation();
-
-  bool operator<(const DiscreteTransformation& rhs) const;
-
-  bool is_leaf() const;
-
-  Eigen::Matrix4f create_matrix();
-
-  void branch(std::vector<DiscreteTransformation>& b, const int child_level, const float child_res, const int v_rate, const AngularInfo& ang_info);
-
-public:
-  int score;
-  int level;
-  float resolution;
-  float x;
-  float y;
-  float z;
-  float roll;
-  float pitch;
-  float yaw;
 };
 
 class BBS3D {
@@ -112,9 +87,11 @@ public:
 private:
   void calc_angular_info(std::vector<AngularInfo>& ang_info_vec);
 
-  std::vector<DiscreteTransformation> create_init_transset(const AngularInfo& init_ang_info);
+  std::vector<DiscreteTransformation<float>> create_init_transset(const AngularInfo& init_ang_info);
 
-  std::vector<DiscreteTransformation> calc_scores(const std::vector<DiscreteTransformation>& h_transset);
+  std::vector<DiscreteTransformation<float>> calc_scores(
+    const std::vector<DiscreteTransformation<float>>& h_transset,
+    thrust::device_vector<AngularInfo>& d_ang_info_vec);
 
   // pcd iof
   bool load_voxel_params(const std::string& voxelmaps_folder_path);

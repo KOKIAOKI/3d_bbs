@@ -7,6 +7,8 @@
 #include <chrono>
 #include <Eigen/Dense>
 
+#include <discrete_transformation/discrete_transformation.hpp>
+
 namespace cpu {
 class VoxelMaps;
 
@@ -14,34 +16,6 @@ struct AngularInfo {
   Eigen::Vector3i num_division;
   Eigen::Vector3d rpy_res;
   Eigen::Vector3d min_rpy;
-};
-
-struct DiscreteTransformation {
-public:
-  DiscreteTransformation();
-  DiscreteTransformation(int score);
-  DiscreteTransformation(int score, int level, double resolution, double x, double y, double z, double roll, double pitch, double yaw);
-  ~DiscreteTransformation();
-
-  bool operator<(const DiscreteTransformation& rhs) const;
-
-  bool is_leaf() const;
-
-  Eigen::Matrix4d create_matrix() const;
-
-  std::vector<DiscreteTransformation> branch(const int child_level, const double child_res, const int v_rate, const AngularInfo& ang_info) const;
-
-  void calc_score(const std::vector<Eigen::Vector4i>& buckets, const int max_bucket_scan_count, const std::vector<Eigen::Vector3d>& points);
-
-  int score;
-  int level;
-  double resolution;
-  double x;
-  double y;
-  double z;
-  double roll;
-  double pitch;
-  double yaw;
 };
 
 class BBS3D {
@@ -118,7 +92,16 @@ public:
 private:
   void calc_angular_info(std::vector<AngularInfo>& ang_info_vec);
 
-  std::vector<DiscreteTransformation> create_init_transset(const AngularInfo& init_ang_info);
+  std::vector<DiscreteTransformation<double>> create_init_transset(const AngularInfo& init_ang_info);
+
+  void calc_score(
+    DiscreteTransformation<double>& trans,
+    const double trans_res,
+    const Eigen::Vector3d& rpy_res,
+    const Eigen::Vector3d& min_rpy,
+    const std::vector<Eigen::Vector4i>& buckets,
+    const int max_bucket_scan_count,
+    const std::vector<Eigen::Vector3d>& points);
 
 private:
   Eigen::Matrix4d global_pose_;
