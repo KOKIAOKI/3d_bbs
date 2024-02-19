@@ -106,15 +106,14 @@ void BBS3D::calc_angular_info(std::vector<AngularInfo>& ang_info_vec) {
   }
 }
 
-std::vector<DiscreteTransformation> BBS3D::create_init_transset(const AngularInfo& init_ang_info) {
+std::vector<DiscreteTransformation<double>> BBS3D::create_init_transset(const AngularInfo& init_ang_info) {
   const int init_transset_size = (init_tx_range_.second - init_tx_range_.first + 1) * (init_ty_range_.second - init_ty_range_.first + 1) *
                                  (init_tz_range_.second - init_tz_range_.first + 1) * (init_ang_info.num_division.x()) *
                                  (init_ang_info.num_division.y()) * (init_ang_info.num_division.z());
 
   const int max_level = voxelmaps_ptr_->get_max_level();
-  const double init_trans_res = voxelmaps_ptr_->voxelmaps_res_[max_level];
 
-  std::vector<DiscreteTransformation> transset;
+  std::vector<DiscreteTransformation<double>> transset;
   transset.reserve(init_transset_size);
   for (int tx = init_tx_range_.first; tx <= init_tx_range_.second; tx++) {
     for (int ty = init_ty_range_.first; ty <= init_ty_range_.second; ty++) {
@@ -122,16 +121,7 @@ std::vector<DiscreteTransformation> BBS3D::create_init_transset(const AngularInf
         for (int roll = 0; roll < init_ang_info.num_division.x(); roll++) {
           for (int pitch = 0; pitch < init_ang_info.num_division.y(); pitch++) {
             for (int yaw = 0; yaw < init_ang_info.num_division.z(); yaw++) {
-              transset.emplace_back(DiscreteTransformation(
-                0,
-                max_level,
-                init_trans_res,
-                tx * init_trans_res,
-                ty * init_trans_res,
-                tz * init_trans_res,
-                roll * init_ang_info.rpy_res.x() + init_ang_info.min_rpy.x(),
-                pitch * init_ang_info.rpy_res.y() + init_ang_info.min_rpy.y(),
-                yaw * init_ang_info.rpy_res.z() + init_ang_info.min_rpy.z()));
+              transset.emplace_back(DiscreteTransformation<double>(0, max_level, tx, ty, tz, roll, pitch, yaw));
             }
           }
         }
@@ -139,6 +129,40 @@ std::vector<DiscreteTransformation> BBS3D::create_init_transset(const AngularInf
     }
   }
   return transset;
+}
+
+void BBS3D::calc_score(
+  DiscreteTransformation<double>& trans,
+  const double trans_res,
+  const Eigen::Vector3d& rpy_res,
+  const Eigen::Vector3d& min_rpy,
+  const std::vector<Eigen::Vector4i>& buckets,
+  const int max_bucket_scan_count,
+  const std::vector<Eigen::Vector3d>& points) {
+  const int num_buckets = buckets.size();
+  const double inv_res = 1.0 / trans_res;
+  Eigen::Transform<double, 3, Eigen::Affine> transform;
+  transform = trans.create_matrix(trans_res, rpy_res, min_rpy);
+
+  for (int i = 0; i < points.size(); i++) {
+    const Eigen::Vector3d transed_point = transform * points[i];
+    const Eigen::Vector3i coord = (transed_point.array() * inv_res).floor().cast<int>();
+    const std::uint32_t hash = (coord[0] * 73856093) ^ (coord[1] * 19349669) ^ (coord[2] * 83492791);
+
+    for (int j = 0; j < max_bucket_scan_count; j++) {
+      const std::uint32_t bucket_index = (hash + j) % num_buckets;
+      const Eigen::Vector4i& bucket = buckets[bucket_index];
+
+      if (bucket.x() != coord.x() || bucket.y() != coord.y() || bucket.z() != coord.z()) {
+        continue;
+      }
+
+      if (bucket.w() == 1) {
+        trans.score++;
+        break;
+      }
+    }
+  }
 }
 
 void BBS3D::localize() {
@@ -150,7 +174,7 @@ void BBS3D::localize() {
   best_score_ = 0;
   const int score_threshold = std::floor(src_points_.size() * score_threshold_percentage_);
   int best_score = score_threshold;
-  DiscreteTransformation best_trans(best_score);
+  DiscreteTransformation<double> best_trans(best_score);
 
   // Preapre initial transset
   const int max_bucket_scan_count = voxelmaps_ptr_->get_max_bucket_scan_count();
@@ -161,12 +185,15 @@ void BBS3D::localize() {
 
   // Calc initial transset scores
   const auto& top_buckets = voxelmaps_ptr_->multi_buckets_[max_level];
+  double init_trans_res = voxelmaps_ptr_->voxelmaps_res_[max_level];
+  const Eigen::Vector3d& rpy_res = ang_info_vec[max_level].rpy_res;
+  const Eigen::Vector3d& min_rpy = ang_info_vec[max_level].min_rpy;
 #pragma omp parallel for num_threads(num_threads_)
   for (int i = 0; i < init_transset.size(); i++) {
-    init_transset[i].calc_score(top_buckets, max_bucket_scan_count, src_points_);
+    calc_score(init_transset[i], init_trans_res, rpy_res, min_rpy, top_buckets, max_bucket_scan_count, src_points_);
   }
 
-  std::priority_queue<DiscreteTransformation> trans_queue(init_transset.begin(), init_transset.end());
+  std::priority_queue<DiscreteTransformation<double>> trans_queue(init_transset.begin(), init_transset.end());
 
   while (!trans_queue.empty()) {
     if (use_timeout_ && std::chrono::system_clock::now() > time_limit) {
@@ -187,14 +214,17 @@ void BBS3D::localize() {
       best_score = trans.score;
     } else {
       const int child_level = trans.level - 1;
-      const double child_res = trans.resolution * inv_v_rate_;
-      auto children = trans.branch(child_level, child_res, static_cast<int>(v_rate_), ang_info_vec[child_level]);
+      const Eigen::Vector3i& num_division = ang_info_vec[child_level].num_division;
+      const Eigen::Vector3d& rpy_res = ang_info_vec[child_level].rpy_res;
+      const Eigen::Vector3d& min_rpy = ang_info_vec[child_level].min_rpy;
+      auto children = trans.branch(child_level, static_cast<int>(v_rate_), num_division);
 
       const auto& buckets = voxelmaps_ptr_->multi_buckets_[child_level];
+      double trans_res = voxelmaps_ptr_->voxelmaps_res_[child_level];
 
 #pragma omp parallel for num_threads(num_threads_)
       for (int i = 0; i < children.size(); i++) {
-        children[i].calc_score(buckets, max_bucket_scan_count, src_points_);
+        calc_score(children[i], trans_res, rpy_res, min_rpy, buckets, max_bucket_scan_count, src_points_);
       }
 
       for (const auto& child : children) {
@@ -218,7 +248,8 @@ void BBS3D::localize() {
     return;
   }
 
-  global_pose_ = best_trans.create_matrix();
+  double min_res = voxelmaps_ptr_->get_min_res();
+  global_pose_ = best_trans.create_matrix(min_res, ang_info_vec[0].rpy_res, ang_info_vec[0].min_rpy);
   best_score_ = best_score;
   has_timed_out_ = false;
   has_localized_ = true;
