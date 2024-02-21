@@ -2,11 +2,8 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Bool
 import numpy as np
+import time
 import sounddevice as sd
-import matplotlib.pyplot as plt
-
-# pip install sounddevice
-# sudo apt-get install portaudio19-dev
 
 class AudioAnalyzerNode(Node):
     def __init__(self):
@@ -15,53 +12,38 @@ class AudioAnalyzerNode(Node):
 
         # Sounddevice settings
         self.RATE = 44100
-        self.BUFFER_SIZE = 16384
+        self.BLOCK_SIZE = 2048
+        self.MIN_FREQ = 2000
+        self.MAX_FREQ = 4000
+        self.MAG_THRESHOLD = 1000000
 
-        self.min_freq = 2000
-        self.max_freq = 4000
-        self.mag_threshold = 1000000
+        # Setup audio stream
+        self.audio_stream = sd.InputStream(
+            samplerate=self.RATE,
+            blocksize=self.BLOCK_SIZE,
+            channels=1,
+            dtype='int16',
+            callback=self.audio_callback
+        )
 
     def run(self):
-        data_buffer = np.zeros(self.BUFFER_SIZE*16, int)
+        with self.audio_stream:
+            rclpy.spin(self)
 
-        fig = plt.figure()
-        fft_fig = fig.add_subplot(2, 1, 1)
-        wave_fig = fig.add_subplot(2, 1, 2)
+    def audio_callback(self, indata, frames, time, status):
+        if status:
+            print(status)
+        else:
+            fft_data = np.fft.fft(indata[:, 0], n=self.BLOCK_SIZE)
+            freq = np.fft.fftfreq(self.BLOCK_SIZE, d=1/self.RATE)
 
-        while rclpy.ok():
-            try:
-                # Read audio data from stream
-                audio_data = sd.rec(self.BUFFER_SIZE, samplerate=self.RATE, channels=1, dtype='int16')
-                sd.wait()
-
-                fft_data = np.fft.fft(audio_data[:, 0])
-                freq = np.fft.fftfreq(self.BUFFER_SIZE, d=1/self.RATE)
-
-                # Check if any magnitude in the specified frequency range exceeds the threshold
-                freq_range_indices = np.where((freq >= self.min_freq) & (freq <= self.max_freq ))[0]
-                magnitudes_in_range = np.abs(fft_data[freq_range_indices])
-                if any(magnitudes_in_range > self.mag_threshold ):
-                    msg = Bool()
-                    msg.data = True
-                    self.publisher_.publish(msg)
-
-                # plot
-                data_buffer = np.append(data_buffer[self.BUFFER_SIZE:], audio_data[:, 0])
-                wave_fig.clear()
-                fft_fig.clear()
-                wave_fig.plot(data_buffer)
-                fft_fig.plot(freq[:self.BUFFER_SIZE//4], np.abs(fft_data[:self.BUFFER_SIZE//4]))
-                wave_fig.set_ylim(-10000, 10000)
-
-                plt.pause(0.001)
-
-            except KeyboardInterrupt:
-                break
-
-    def cleanup(self):
-        self.stream.stop_stream()
-        self.stream.close()
-        self.audio.terminate()
+            # Check if any magnitude in the specified frequency range exceeds the threshold
+            freq_range_indices = np.where((freq >= self.MIN_FREQ) & (freq <= self.MAX_FREQ))[0]
+            magnitudes_in_range = np.abs(fft_data[freq_range_indices])
+            if any(magnitudes_in_range > self.MAG_THRESHOLD):
+                msg = Bool()
+                msg.data = True
+                self.publisher_.publish(msg)
 
 def main(args=None):
     rclpy.init(args=args)
@@ -69,7 +51,6 @@ def main(args=None):
     try:
         node.run()
     finally:
-        node.cleanup()
         rclpy.shutdown()
 
 if __name__ == '__main__':

@@ -19,7 +19,7 @@ Note:
 - Build ros2_test_rviz2 and click_loc
 ```shell script
 cd 3d_bbs/ros2_test
-colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-select ros2_test_rviz2 click_loc
+colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-select ros2_test_rviz2 click_loc finger_snap
 ```
 
 ### 2. Config file setting
@@ -68,12 +68,23 @@ Please refer to step 5 of [test_code.md](./test/test_code.md)
 After saving the voxelmaps, please try 3. Run again.
 
 ### 4. Run (localize with finger snap)
-
+Please install following packages.
+```
+pip install sounddevice
+sudo apt-get install portaudio19-dev
+```
+The steps to play the ros2 bag are the same as the previous step.  
+Launch finger_snap.py and try snapping your fingers!! 🤌
 ```shell script
 cd 3d_bbs/ros2_test
 source install/setup.bash
-ros2 launch ros2_test_rviz2 finger_snap.py
+ros2 launch ros2_test_rviz2 finger_snap_launch.py
 ```
+
+If finger_snap.py don't recognize your finger picking, please adjust the parameters directly.  
+-  self.min_freq = 2000 # Minimum frequency to check for finger snap
+- self.max_freq = 4000 # Maximum frequency to check for finger snap
+- self.mag_threshold = 1000000 # Magnitude threshold for finger snap detection  
 
 </div></details>
 
