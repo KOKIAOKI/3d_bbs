@@ -12,7 +12,7 @@ class AudioAnalyzerNode(Node):
 
         # Sounddevice settings
         self.RATE = 44100
-        self.BLOCK_SIZE = 2048
+        self.BLOCK_SIZE = 3000
         self.MIN_FREQ = 2000
         self.MAX_FREQ = 4000
         self.MAG_THRESHOLD = 1000000

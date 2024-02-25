@@ -5,20 +5,11 @@ import os
 def generate_launch_description():
     config_file = os.path.join('config/ros2_test.yaml')
     rviz_config_file = os.path.join('rviz2/rviz2_config/rviz2.rviz')
-    rviz_livox_points_config_file = os.path.join('rviz2/rviz2_config/livox_points.rviz')
-
 
     rviz_node = launch_ros.actions.Node(
         package='rviz2',
         executable='rviz2',
         arguments=['-d', rviz_config_file],
-        output='screen',
-    )
-
-    rviz_livox_points_config_file = launch_ros.actions.Node(
-        package='rviz2',
-        executable='rviz2',
-        arguments=['-d', rviz_livox_points_config_file],
         output='screen',
     )
 
@@ -29,10 +20,17 @@ def generate_launch_description():
         parameters=[{"config":config_file}],
     )
 
+    click_loc_node = launch_ros.actions.Node(
+        package='click_loc',
+        executable='click_loc',
+        output='screen',
+    )
+
     finger_snap_node = launch_ros.actions.Node(
         package='finger_snap',
         executable='finger_snap',
         output='screen',
     )
 
-    return launch.LaunchDescription([rviz_node, rviz_livox_points_config_file, gpu_ros2_test_rviz2, finger_snap_node])
+    return launch.LaunchDescription([rviz_node, gpu_ros2_test_rviz2, click_loc_node, finger_snap_node])
+ 

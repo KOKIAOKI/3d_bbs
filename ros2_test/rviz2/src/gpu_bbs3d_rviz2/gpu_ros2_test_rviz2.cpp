@@ -226,6 +226,22 @@ void ROS2Test::publish_results(
   global_pose_msg->pose.orientation.w = q.w();
   global_pose_pub_->publish(*global_pose_msg);
 
+  // Create a transform message
+  geometry_msgs::msg::TransformStamped transformStamped;
+  transformStamped.header.stamp = this->now();
+  transformStamped.header.frame_id = "map";
+  transformStamped.child_frame_id = "global_pose";
+  transformStamped.transform.translation.x = best_pose(0, 3);
+  transformStamped.transform.translation.y = best_pose(1, 3);
+  transformStamped.transform.translation.z = best_pose(2, 3);
+  transformStamped.transform.rotation.x = q.x();
+  transformStamped.transform.rotation.y = q.y();
+  transformStamped.transform.rotation.z = q.z();
+  transformStamped.transform.rotation.w = q.w();
+
+  // Broadcast the transform
+  tf2_broadcaster_.sendTransform(transformStamped);
+
   // Publish score
   std_msgs::msg::Int32::SharedPtr score_msg(new std_msgs::msg::Int32);
   score_msg->data = best_score;
