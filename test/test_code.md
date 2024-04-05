@@ -14,13 +14,13 @@ mkdir build && cd build
 - CPU ver. & GPU ver.
 ```shell script
 cmake .. -DCMAKE_BUILD_TYPE=Release
-make -j8
+make -j
 ```
 
 - CPU ver. only  
 ```shell script
 cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_CUDA=OFF
-make -j8
+make -j
 ```
 
 ### 2. Download
@@ -48,7 +48,7 @@ cd 3d_bbs/test/build/
 ./cpu_test <config_file_path>
 ```
 
-## 5. (Optional) Load voxelmap coordinates directly
+### 5. (Optional) Load voxelmap coordinates directly
 You can save the voxelmaps coordinates and skip 3D-BBS voxel construction if you reuse the same parameters of `min_level_res` and `max_level`.
 ```
 cd 3d_bbs/test/build/
@@ -56,6 +56,22 @@ cd 3d_bbs/test/build/
 ```
 Then, try again 4.Run. Voxelmaps coordinates in 'voxelmaps_coords' are automatically loaded.  
 Note: Test code preferentially uses the parameters in the generated text file 'voxel_params.txt'.
+
+## Use bbs3d in your cmake project
+1. Copy `test/cmake` to your project
+1. Copy description above `# Common include directories` in `test/CMakeLists.txt` to `your CMakeLists.txt`
+1. Add either of the following depending on your implementation. If you are using the CPU version, replace `gpu` with `cpu`.
+- If using PCL:
+```
+find_package(PCL REQUIRED)
+target_include_directories(yours ${PCL_INCLUDE_DIRS})
+target_link_libraries(yours ${PCL_LIBRARIES} ${gpu_bbs3d_LIBRARY})
+```
+- Otherwise:
+```
+find_package(Eigen3 REQUIRED)
+target_include_directories(yours ${EIGEN3_INCLUDE_DIR} ${gpu_bbs3d_LIBRARY})
+```
 
 ## Using your own 3D point cloud map and LiDAR scan data
 ### Convert ros2 bag to pcd file

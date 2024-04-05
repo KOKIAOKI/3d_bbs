@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 project(bbs3d)
 
-find_package(Eigen3 REQUIRED)
-
 find_package(OpenMP)
 if (OPENMP_FOUND)
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
@@ -18,7 +16,7 @@ endif()
 
 # Common include directories
 include_directories(
-  ${EIGEN3_INCLUDE_DIR}
+  thirdparty/Eigen
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/bbs3d/include>
   $<INSTALL_INTERFACE:include>
 )
