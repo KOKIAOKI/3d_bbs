@@ -57,22 +57,6 @@ cd 3d_bbs/test/build/
 Then, try again 4.Run. Voxelmaps coordinates in 'voxelmaps_coords' are automatically loaded.  
 Note: Test code preferentially uses the parameters in the generated text file 'voxel_params.txt'.
 
-## Use bbs3d in your cmake project
-1. Copy `test/cmake` to your project
-1. Copy description above `# Common include directories` in `test/CMakeLists.txt` to `your CMakeLists.txt`
-1. Add either of the following depending on your implementation. If you are using the CPU version, replace `gpu` with `cpu`.
-- If using PCL:
-```
-find_package(PCL REQUIRED)
-target_include_directories(yours ${PCL_INCLUDE_DIRS})
-target_link_libraries(yours ${PCL_LIBRARIES} ${gpu_bbs3d_LIBRARY})
-```
-- Otherwise:
-```
-find_package(Eigen3 REQUIRED)
-target_include_directories(yours ${EIGEN3_INCLUDE_DIR} ${gpu_bbs3d_LIBRARY})
-```
-
 ## Using your own 3D point cloud map and LiDAR scan data
 ### Convert ros2 bag to pcd file
 If you have your own ros2 bag data, you can convert LiDAR msgs to pcd file with package below so that point cloud aligns in the direction of gravitational acceleration using IMU msgs.  
