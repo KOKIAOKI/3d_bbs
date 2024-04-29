@@ -10,13 +10,14 @@ Specifically, when tested in a real environment with the following hardware conf
   - Paper: 9,272 ms on average
   - **Latest**: 3,494 ms on average
   - **Use saved voxelmap**: 130 ms on average
-- Localize
+- Global localization
   - Paper: 878 ms on average
   - **Latest**: **189 ms** on average  
 
 ## Dependencies
 - bbs3d (Lower versions are not tested)
   - CMake
+  - Eigen3 (3.4.0 or higher)
   - OpenMP
   - CUDA (12.0 or higher)
 - test
@@ -34,10 +35,12 @@ For more information, you can check [docker_start.md](./docker/docker_start.md)
 ## 3d_bbs core source code
 ### Build and Install
 ```shell script
-git clone https://github.com/KOKIAOKI/3d_bbs.git --recursive
+git clone https://github.com/KOKIAOKI/3d_bbs.git
 cd 3d_bbs
 mkdir build && cd build
 ```
+
+Note: If you are using Eigen3 below 3.4.0, git clone with ``--recursive``
 
 - CPU ver. & GPU ver. (Please ignore the large number of warnings)
 ```shell script

@@ -1,12 +1,25 @@
 cmake_minimum_required(VERSION 3.5)
 project(bbs3d)
 
-find_package(OpenMP)
-if (OPENMP_FOUND)
-    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+## find thirdparty/Eigen or Eigen3 package
+option(USE_THIRDPARTY_EIGEN "Include thirdparty eigen" OFF)
+file(GLOB entries "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/Eigen*")
+list(LENGTH entries num_entries)
+if(num_entries EQUAL 0)
+  set(thirdparty_empty ON)
+else()
+  set(thirdparty_empty OFF)
+  find_package(Eigen3 REQUIRED)
 endif()
 
+## find OpenMP
+find_package(OpenMP)
+if (OPENMP_FOUND)
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+endif()
+
+## find CUDA
 option(BUILD_CUDA "Build GPU ver" ON)
 if (BUILD_CUDA)
   find_package(CUDA REQUIRED)
@@ -15,8 +28,14 @@ if (BUILD_CUDA)
 endif()
 
 # Common include directories
+if(USE_THIRDPARTY_EIGEN)
+  include_directories(thirdparty/Eigen)
+else()
+  include_directories(${EIGEN3_INCLUDE_DIR})
+endif()
+
 include_directories(
-  thirdparty/Eigen
+  ${CMAKE_CURRENT_SOURCE_DIR}/bbs3d/include
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/bbs3d/include>
   $<INSTALL_INTERFACE:include>
 )
