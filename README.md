@@ -4,22 +4,22 @@ Please refer to our [paper](https://arxiv.org/abs/2310.10023).
 
 <img alt="overview" src="figs/overview.jpg" width="50%">
 
-
 The latest implementation demonstrates faster processing times than those published in the paper.  
 Specifically, when tested in a real environment with the following hardware configuration (Intel Core i7-10700K 3.8GHz, 32GB RAM, and NVIDIA GeForce RTX2060), the processing times are as follows: 
 - Hierarchical voxelmap construction
   - Paper: 9,272 ms on average
   - **Latest**: 3,494 ms on average
   - **Use saved voxelmap**: 130 ms on average
-- Localize
+- Global localization
   - Paper: 878 ms on average
   - **Latest**: **189 ms** on average  
 
 ## Dependencies
 - bbs3d (Lower versions are not tested)
-  - Eigen3 version 3.4.0 or higher
-  - CMake version 3.15 or higher
-  - GPU version: CUDA version 12.0 or higher
+  - CMake
+  - Eigen3 (3.4.0 or higher)
+  - OpenMP
+  - CUDA (12.0 or higher)
 - test
   - (All bbs3d dependencies)
   - PCL
@@ -40,17 +40,19 @@ cd 3d_bbs
 mkdir build && cd build
 ```
 
+Note: If you are using Eigen3 below 3.4.0, git clone with ``--recursive``
+
 - CPU ver. & GPU ver. (Please ignore the large number of warnings)
 ```shell script
 cmake .. -DCMAKE_BUILD_TYPE=Release
-make -j8
+make -j
 sudo make install
 ```
 
 - CPU ver. only
 ```shell script
 cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_CUDA=OFF
-make -j8
+make -j
 sudo make install
 ```
 

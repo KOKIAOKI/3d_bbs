@@ -4,8 +4,6 @@ project(test)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/cmake")
 option(BUILD_CUDA "Build GPU ver" ON)
 
-find_package(PCL REQUIRED)
-find_package(Eigen3 REQUIRED)
 find_package(cpu_bbs3d REQUIRED)
 find_package(OpenMP)
 
@@ -21,10 +19,12 @@ if (BUILD_CUDA)
   link_directories(${CUDA_LIBRARY_DIRS})
 endif()
 
+
 # Common include directories
+find_package(PCL REQUIRED)
 include_directories(
   ${PROJECT_SOURCE_DIR}/include
-  ${EIGEN3_INCLUDE_DIR}
+  ${PCL_INCLUDE_DIRS}
 )
 
 # Common libraries
