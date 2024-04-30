@@ -1,7 +1,5 @@
 # ROS 2 Test code
-Experiance the real-time global localization visually!
-
-## Test
+Experiance the real-time global localization visually!  
 You can try 3D-BBS with two different viewers, Rviz2 and Iridescence.  
 Note: 
 - This is only supported on GPU

@@ -1,10 +1,9 @@
-<h1 align="center"> 3D-BBS: Global Localization for 3D Point Cloud Scan Matching Using Branch-and-Bound Algorithm </h1> <br>
-<div style="text-align: center;">
-This repository contains the public source code for the paper to be published at ICRA2024 in Yokohama.
-
-If you like the 3D-BBS, we kindly ask for your support by giving our repository star ⭐! 
-
-📄 **[Paper](https://arxiv.org/abs/2310.10023)** | 🎞️  **[Video](https://youtu.be/QGxnDnwkG1k)**
+<div align="center">
+  <h1>3D-BBS: Global Localization for 3D Point Cloud Scan Matching Using Branch-and-Bound Algorithm</h1>
+  <br>
+  <p>This repository contains the public source code for the paper to be published at ICRA2024 in Yokohama.</p>
+  <p>If you like the 3D-BBS, we kindly ask for your support by giving our repository star ⭐!</p>
+  <p><a href="https://arxiv.org/abs/2310.10023"><b>📄  Paper</b></a> | <a href="https://youtu.be/QGxnDnwkG1k"><b>🎞️ Video</b></a></p>
 </div>
 
 ```
@@ -31,19 +30,23 @@ If you like the 3D-BBS, we kindly ask for your support by giving our repository 
 ### Output
 - $4\times4$ transformation matrix about coarse sensor pose in map coordinates.
 
-
 ### Main Features 
 - **Full search algorithm** based on branch-and-bound (BnB) scan matching
 - **Fast processing (latest: about 20 ms ~)** by proposed GPU-accelerated BnB and roto-translational branching
 - **No initial pose** (we assume that the roll and pitch angles are roughly estimated by IMU for faster processing)
+- **Low voxel map memory consumption** due to sparse hash map
 
 ### Other Features
+<details><summary> Click here! </summary><div>
+
 - Optional **Voxelmap pre-construction** and direct read function
 - Optional **timeout** function
 - **Minimal dependencies** in core source code so that user can **easily integrate** into the other projects
 - **Docker support** by @Taeyoung96
 - **Test data** is available, allowing evaluation of localization error and processing time.
 - **ROS2 implementation example**
+</div></details>
+
 
 ## 📣 News
 The latest implementation demonstrates faster processing time than our paper. 
@@ -67,7 +70,7 @@ The hardware configuration (Intel Core i7-10700K 3.8GHz, 32GB RAM, and NVIDIA Ge
 - test
   - (All bbs3d dependencies)
   - PCL
-- ros2 test
+- ros2_test
   - (All bbs3d dependencies)
   - ros2 humble
 
@@ -123,8 +126,8 @@ target_include_directories(yours ${EIGEN3_INCLUDE_DIR} ${gpu_bbs3d_LIBRARY})
 </div></details>
 
 
-## Acknowledgement
-We would like to thank the authors for providing the public code.  
+## 🌈 Acknowledgement
+We sincerely appreciate the authors for generously sharing their public code.  
+[hdl_global_localization](https://github.com/koide3/hdl_global_localization)  
 [cartographer](https://github.com/cartographer-project/cartographer)  
 [TEASER-plusplus](https://github.com/MIT-SPARK/TEASER-plusplus)   
-[hdl_global_localization](https://github.com/koide3/hdl_global_localization)  
