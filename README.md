@@ -115,7 +115,7 @@ See [ros2_test_code.md](./ros2_test/ros2_test_code.md)
 ## 💻 Use 3D-BBS in your cmake project
 <details><summary> Click here! </summary><div>
 
-1. Copy `test/cmake` to your project directry
+1. Copy `test/cmake` to your project directory
 1. Copy description above `# Common include directories` in `test/CMakeLists.txt` to `your CMakeLists.txt`
 1. Add either of the following depending on your implementation  
 If you use the CPU version, replace `gpu` with `cpu`.
