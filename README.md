@@ -34,7 +34,7 @@
 - **Full search algorithm** based on branch-and-bound (BnB) scan matching
 - **Fast processing (latest: about 20 ms ~)** by proposed GPU-accelerated BnB and roto-translational branching
 - **No initial pose** (we assume that the roll and pitch angles are roughly estimated by IMU for faster processing)
-- **Low voxel map memory consumption** due to sparse hash map
+- **Low voxelmap memory consumption** due to sparse hash map
 
 ### Other Features
 <details><summary> Click here! </summary><div>
@@ -54,7 +54,7 @@ Performance on our test data:
 - Hierarchical voxelmap construction
   - Paper: 9,272 ms on average
   - **Latest**: 3,494 ms on average
-  - **Use saved voxelmap**: 130 ms on average
+  - **Load saved voxelmaps directly**: 130 ms on average (See [step 5 on this page](./test/test_code.md) to save voxelmaps)
 - Global localization
   - Paper: 878 ms on average
   - **Latest**: **189 ms** on average  
@@ -127,7 +127,7 @@ target_include_directories(yours ${EIGEN3_INCLUDE_DIR} ${gpu_bbs3d_LIBRARY})
 
 
 ## 🌈 Acknowledgement
-We sincerely appreciate the authors for generously sharing their public code.  
+I sincerely appreciate the authors for generously sharing their public code.  
 [hdl_global_localization](https://github.com/koide3/hdl_global_localization)  
 [cartographer](https://github.com/cartographer-project/cartographer)  
 [TEASER-plusplus](https://github.com/MIT-SPARK/TEASER-plusplus)   
