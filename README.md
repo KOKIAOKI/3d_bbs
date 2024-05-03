@@ -47,7 +47,6 @@
 - **ROS2 implementation example**
 </div></details>
 
-
 ## 📣 News
 The latest implementation demonstrates faster processing time than our paper. 
 Performance on our test data:
@@ -102,7 +101,6 @@ make -j
 sudo make install
 ```
 
-
 ## 📋 Test code
 See [test_code.md](./test/test_code.md)  
 <img alt="overview" src="figs/test_topreadme.png" width="40%">
@@ -124,7 +122,6 @@ find_package(Eigen3 REQUIRED)
 target_include_directories(yours ${EIGEN3_INCLUDE_DIR} ${gpu_bbs3d_LIBRARY})
 ```
 </div></details>
-
 
 ## 🌈 Acknowledgement
 I sincerely appreciate the authors for generously sharing their public code.  
