@@ -3,13 +3,13 @@ project(bbs3d)
 
 ## find thirdparty/Eigen or Eigen3 package
 option(USE_THIRDPARTY_EIGEN "Include thirdparty eigen" OFF)
-file(GLOB entries "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/Eigen*")
+file(GLOB entries "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/Eigen/*")
 list(LENGTH entries num_entries)
+message(STATUS "num_entries in thirdparty/Eigen: ${num_entries}")
 if(num_entries EQUAL 0)
-  set(thirdparty_empty ON)
-else()
-  set(thirdparty_empty OFF)
   find_package(Eigen3 REQUIRED)
+else()
+  set(USE_THIRDPARTY_EIGEN ON)
 endif()
 
 ## find OpenMP
@@ -30,8 +30,10 @@ endif()
 # Common include directories
 if(USE_THIRDPARTY_EIGEN)
   include_directories(thirdparty/Eigen)
+  message(STATUS "Use thirdparty Eigen")
 else()
   include_directories(${EIGEN3_INCLUDE_DIR})
+  message(STATUS "Use EIGEN3_INCLUDE_DIR")
 endif()
 
 include_directories(
