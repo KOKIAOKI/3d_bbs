@@ -94,7 +94,7 @@ std::vector<Vector3<T>> read_pcd(const std::string& path) {
 
   // check if T and x y z sizez are the same
   if (sizeof(T) != sizes[xyz_cols.x()] || sizeof(T) != sizes[xyz_cols.y()] || sizeof(T) != sizes[xyz_cols.z()]) {
-    std::cout << "T and x y z sizez are not the same" << std::endl;
+    std::cout << "T and x y z sizes are not the same" << std::endl;
     return {};
   }
 

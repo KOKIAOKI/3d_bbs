@@ -11,7 +11,7 @@ template <typename T>
 bool load_tar_points(const std::string& tar_folder_path, const T& filter_voxel_width, std::vector<Vector3<T>>& points) {
   boost::filesystem::path dir(tar_folder_path);
   if (!boost::filesystem::exists(dir)) {
-    std::cout << "[ERROR] Can not open folder" << std::endl;
+    std::cerr << "[ERROR] Can not open folder" << std::endl;
     return false;
   }
 
@@ -25,19 +25,18 @@ bool load_tar_points(const std::string& tar_folder_path, const T& filter_voxel_w
     const auto loaded_points = read_pcd<T>(file_name);
 
     if (loaded_points.empty()) {
-      std::cout << "[ERROR] Failed to read point cloud from " << file_name << std::endl;
+      std::cerr << "[ERROR] Failed to read point cloud from " << file_name << std::endl;
       return false;
     }
 
     const auto filtered_points = filter<T>(loaded_points, filter_voxel_width);
 
-    points.reserve(points.size() + filtered_points.size());
     points.insert(points.end(), filtered_points.begin(), filtered_points.end());
   }
   return true;
 }
 
-bool can_convert_to_int(const std::vector<std::pair<std::string, std::string>>& name_vec) {
+bool is_number(const std::vector<std::pair<std::string, std::string>>& name_vec) {
   for (const auto& str : name_vec) {
     try {
       std::stoi(str.second);
@@ -53,7 +52,8 @@ bool can_convert_to_int(const std::vector<std::pair<std::string, std::string>>& 
 std::vector<std::pair<std::string, std::string>> load_pcd_file_paths(const std::string& folder_path) {
   boost::filesystem::path dir(folder_path);
   if (!boost::filesystem::exists(dir)) {
-    return {};  // output error
+    std::cerr << "[ERROR] Can not open folder" << std::endl;
+    exit(1);
   }
 
   std::vector<std::pair<std::string, std::string>> pcd_files;
@@ -65,7 +65,7 @@ std::vector<std::pair<std::string, std::string>> load_pcd_file_paths(const std::
     pcd_files.emplace_back(file.path().string(), file.path().stem().string());
   }
 
-  if (can_convert_to_int(pcd_files)) {
+  if (is_number(pcd_files)) {
     std::sort(pcd_files.begin(), pcd_files.end(), [](const std::pair<std::string, std::string>& a, const std::pair<std::string, std::string>& b) {
       return std::stoi(a.second) < std::stoi(b.second);
     });
@@ -78,7 +78,7 @@ template <typename T>
 bool load_src_points(std::string src_folder_path, T min_range, T max_range, T voxel_width, std::vector<std::vector<Vector3<T>>>& src_points_set) {
   const auto pcd_files = load_pcd_file_paths(src_folder_path);
   if (pcd_files.empty()) {
-    std::cout << "[ERROR] No pcd files in the folder" << std::endl;
+    std::cerr << "[ERROR] No pcd files in the folder" << std::endl;
     return false;
   }
 
@@ -88,7 +88,7 @@ bool load_src_points(std::string src_folder_path, T min_range, T max_range, T vo
     const auto& pcd_file = pcd_files[i];
     const auto loaded_points = read_pcd<T>(pcd_file.first);
     if (loaded_points.empty()) {
-      std::cout << "[ERROR] Failed to read point cloud from " << pcd_file.first << std::endl;
+      std::cerr << "[ERROR] Failed to read point cloud from " << pcd_file.first << std::endl;
       return false;
     }
 
@@ -109,7 +109,7 @@ bool load_src_points_with_filename(
   std::pair<std::string, std::vector<Vector3<T>>>& src_points_set) {
   const auto pcd_files = load_pcd_file_paths(src_folder_path);
   if (pcd_files.empty()) {
-    std::cout << "[ERROR] No pcd files in the folder" << std::endl;
+    std::cerr << "[ERROR] No pcd files in the folder" << std::endl;
     return false;
   }
 
@@ -119,7 +119,7 @@ bool load_src_points_with_filename(
     const auto& pcd_file = pcd_files[i];
     const auto loaded_points = read_pcd<T>(pcd_file.first);
     if (loaded_points.empty()) {
-      std::cout << "[ERROR] Failed to read point cloud from " << pcd_file.first << std::endl;
+      std::cerr << "[ERROR] Failed to read point cloud from " << pcd_file.first << std::endl;
       return false;
     }
 

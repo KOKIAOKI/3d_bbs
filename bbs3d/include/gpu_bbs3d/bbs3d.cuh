@@ -6,7 +6,8 @@
 #include <chrono>
 #include <Eigen/Dense>
 
-#include <discrete_transformation/discrete_transformation.hpp>
+#include "voxelmaps/voxelmaps.cuh"
+#include "discrete_transformation/discrete_transformation.hpp"
 
 // thrust
 #include <cuda_runtime.h>
@@ -14,8 +15,6 @@
 #include <thrust/device_vector.h>
 
 namespace gpu {
-class VoxelMaps;
-
 struct AngularInfo {
   Eigen::Vector3i num_division;
   Eigen::Vector3f rpy_res;
@@ -25,6 +24,7 @@ struct AngularInfo {
 class BBS3D {
 public:
   BBS3D();
+  BBS3D(const DeviceVoxelMaps<float>::Ptr voxelmaps);
   ~BBS3D();
 
   void set_tar_points(const std::vector<Eigen::Vector3f>& points, float min_level_res, int max_level);
@@ -35,14 +35,11 @@ public:
 
   void set_trans_search_range(const Eigen::Vector3f& min_xyz, const Eigen::Vector3f& max_xyz);
 
+  void set_trans_search_range_with_voxelmaps();
+
   void set_angular_search_range(const Eigen::Vector3f& min_rpy, const Eigen::Vector3f& max_rpy) {
     min_rpy_ = min_rpy;
     max_rpy_ = max_rpy;
-  }
-
-  void set_voxel_expantion_rate(const float rate) {
-    v_rate_ = rate;
-    inv_v_rate_ = 1.0f / rate;
   }
 
   void set_branch_copy_size(int size) { branch_copy_size_ = size; }
@@ -93,11 +90,6 @@ private:
     const std::vector<DiscreteTransformation<float>>& h_transset,
     thrust::device_vector<AngularInfo>& d_ang_info_vec);
 
-  // pcd iof
-  bool load_voxel_params(const std::string& voxelmaps_folder_path);
-
-  std::vector<std::vector<Eigen::Vector4i>> set_multi_buckets(const std::string& voxelmaps_folder_path);
-
 private:
   Eigen::Matrix4f global_pose_;
   bool has_timed_out_, has_localized_;
@@ -106,14 +98,9 @@ private:
   cudaStream_t stream;
 
   std::vector<Eigen::Vector3f> src_points_;
-
   thrust::device_vector<Eigen::Vector3f> d_src_points_;
 
-  std::unique_ptr<VoxelMaps> voxelmaps_ptr_;
-  std::string voxelmaps_folder_name_;
-
-  float v_rate_;  // voxel expansion rate
-  float inv_v_rate_;
+  DeviceVoxelMaps<float>::Ptr voxelmaps_;
 
   int branch_copy_size_, best_score_;
   double score_threshold_percentage_;

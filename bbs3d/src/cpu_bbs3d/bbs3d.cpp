@@ -1,19 +1,32 @@
-#include <cpu_bbs3d/voxelmaps.hpp>
-#include <cpu_bbs3d/bbs3d.hpp>
+#include "voxelmaps/voxelmaps.hpp"
+#include "cpu_bbs3d/bbs3d.hpp"
+#include "hash/hash.hpp"
 
 namespace cpu {
+// This will be deprecated
 BBS3D::BBS3D()
-: v_rate_(2.0),
+: num_threads_(4),
+  score_threshold_percentage_(0.0),
+  use_timeout_(false),
+  timeout_duration_(10000),
+  has_timed_out_(false),
+  has_localized_(false) {
+  min_rpy_ << -0.02, -0.02, 0.0;
+  max_rpy_ << 0.02, 0.02, 2 * M_PI;
+}
+
+BBS3D::BBS3D(const VoxelMaps<double>::Ptr voxelmaps)
+: voxelmaps_(voxelmaps),
   num_threads_(4),
   score_threshold_percentage_(0.0),
   use_timeout_(false),
   timeout_duration_(10000),
   has_timed_out_(false),
-  has_localized_(false),
-  voxelmaps_folder_name_("voxelmaps_coords") {
-  inv_v_rate_ = 1.0 / v_rate_;
+  has_localized_(false) {
   min_rpy_ << -0.02, -0.02, 0.0;
   max_rpy_ << 0.02, 0.02, 2 * M_PI;
+
+  set_trans_search_range_with_voxelmaps();
 }
 
 BBS3D::~BBS3D() {}
@@ -22,11 +35,17 @@ void BBS3D::set_timeout_duration_in_msec(const int msec) {
   timeout_duration_ = std::chrono::milliseconds(msec);
 }
 
+// This function will be deprecated
+bool BBS3D::set_voxelmaps_coords(const std::string& path) {
+  voxelmaps_ = std::make_shared<VoxelMaps<double>>();
+  if (!voxelmaps_->set_voxelmaps_coords(path)) return false;
+
+  set_trans_search_range_with_voxelmaps();
+  return true;
+}
+
 void BBS3D::set_tar_points(const std::vector<Eigen::Vector3d>& points, double min_level_res, int max_level) {
-  voxelmaps_ptr_.reset(new VoxelMaps);
-  voxelmaps_ptr_->set_min_res(min_level_res);
-  voxelmaps_ptr_->set_max_level(max_level);
-  voxelmaps_ptr_->create_voxelmaps(points, v_rate_);
+  voxelmaps_ = std::make_shared<VoxelMaps<double>>(points, min_level_res, max_level);
 }
 
 void BBS3D::set_src_points(const std::vector<Eigen::Vector3d>& points) {
@@ -53,11 +72,26 @@ void BBS3D::set_trans_search_range(const Eigen::Vector3d& min_xyz, const Eigen::
   min_xyz_ = min_xyz;
   max_xyz_ = max_xyz;
 
-  const int max_level = voxelmaps_ptr_->get_max_level();
-  const double top_res = voxelmaps_ptr_->voxelmaps_res_[max_level];
+  const int max_level = voxelmaps_->max_level();
+  const double top_res = voxelmaps_->info_vec_[max_level].res;
   init_tx_range_ = std::make_pair<int, int>(std::floor(min_xyz.x() / top_res), std::ceil(max_xyz.x() / top_res));
   init_ty_range_ = std::make_pair<int, int>(std::floor(min_xyz.y() / top_res), std::ceil(max_xyz.y() / top_res));
   init_tz_range_ = std::make_pair<int, int>(std::floor(min_xyz.z() / top_res), std::ceil(max_xyz.z() / top_res));
+}
+
+void BBS3D::set_trans_search_range_with_voxelmaps() {
+  // The minimum and maximum x, y, z values are selected from the 3D coordinate vector.
+  Eigen::Vector4i min_xyz = Eigen::Vector4i::Constant(std::numeric_limits<int>::max());
+  Eigen::Vector4i max_xyz = Eigen::Vector4i::Constant(std::numeric_limits<int>::lowest());
+  int max_level = voxelmaps_->max_level();
+  const auto& top_buckets = voxelmaps_->buckets_vec_[max_level];
+  for (const auto& bucket : top_buckets) {
+    min_xyz = min_xyz.cwiseMin(bucket);
+    max_xyz = max_xyz.cwiseMax(bucket);
+  }
+  init_tx_range_ = std::make_pair(min_xyz.x(), max_xyz.x());
+  init_ty_range_ = std::make_pair(min_xyz.y(), max_xyz.y());
+  init_tz_range_ = std::make_pair(min_xyz.z(), max_xyz.z());
 }
 
 void BBS3D::calc_angular_info(std::vector<AngularInfo>& ang_info_vec) {
@@ -69,9 +103,9 @@ void BBS3D::calc_angular_info(std::vector<AngularInfo>& ang_info_vec) {
     }
   }
 
-  const int max_level = voxelmaps_ptr_->get_max_level();
+  const int max_level = voxelmaps_->max_level();
   for (int i = max_level; i >= 0; i--) {
-    const double cosine = 1 - (std::pow(voxelmaps_ptr_->voxelmaps_res_[i], 2) / std::pow(max_norm, 2)) * 0.5;
+    const double cosine = 1 - (std::pow(voxelmaps_->info_vec_[i].res, 2) / std::pow(max_norm, 2)) * 0.5;
     double ori_res = std::acos(std::max(cosine, -1.0));
     ori_res = std::floor(ori_res * 10000) / 10000;
     Eigen::Vector3d rpy_res_temp;
@@ -111,7 +145,7 @@ std::vector<DiscreteTransformation<double>> BBS3D::create_init_transset(const An
                                  (init_tz_range_.second - init_tz_range_.first + 1) * (init_ang_info.num_division.x()) *
                                  (init_ang_info.num_division.y()) * (init_ang_info.num_division.z());
 
-  const int max_level = voxelmaps_ptr_->get_max_level();
+  const int max_level = voxelmaps_->max_level();
 
   std::vector<DiscreteTransformation<double>> transset;
   transset.reserve(init_transset_size);
@@ -137,7 +171,6 @@ void BBS3D::calc_score(
   const Eigen::Vector3d& rpy_res,
   const Eigen::Vector3d& min_rpy,
   const std::vector<Eigen::Vector4i>& buckets,
-  const int max_bucket_scan_count,
   const std::vector<Eigen::Vector3d>& points) {
   const int num_buckets = buckets.size();
   const double inv_res = 1.0 / trans_res;
@@ -147,9 +180,9 @@ void BBS3D::calc_score(
   for (int i = 0; i < points.size(); i++) {
     const Eigen::Vector3d transed_point = transform * points[i];
     const Eigen::Vector3i coord = (transed_point.array() * inv_res).floor().cast<int>();
-    const std::uint32_t hash = (coord[0] * 73856093) ^ (coord[1] * 19349669) ^ (coord[2] * 83492791);
+    const std::uint32_t hash = hash::coord_to_hash(coord);
 
-    for (int j = 0; j < max_bucket_scan_count; j++) {
+    for (int j = 0; j < voxelmaps_->max_bucket_scan_count(); j++) {
       const std::uint32_t bucket_index = (hash + j) % num_buckets;
       const Eigen::Vector4i& bucket = buckets[bucket_index];
 
@@ -177,20 +210,19 @@ void BBS3D::localize() {
   DiscreteTransformation<double> best_trans(best_score);
 
   // Preapre initial transset
-  const int max_bucket_scan_count = voxelmaps_ptr_->get_max_bucket_scan_count();
-  const int max_level = voxelmaps_ptr_->get_max_level();
+  const int max_level = voxelmaps_->max_level();
   std::vector<AngularInfo> ang_info_vec(max_level + 1);
   calc_angular_info(ang_info_vec);
   auto init_transset = create_init_transset(ang_info_vec[max_level]);
 
   // Calc initial transset scores
-  const auto& top_buckets = voxelmaps_ptr_->multi_buckets_[max_level];
-  double init_trans_res = voxelmaps_ptr_->voxelmaps_res_[max_level];
+  const auto& top_buckets = voxelmaps_->buckets_vec_[max_level];
+  double init_trans_res = voxelmaps_->info_vec_[max_level].res;
   const Eigen::Vector3d& rpy_res = ang_info_vec[max_level].rpy_res;
   const Eigen::Vector3d& min_rpy = ang_info_vec[max_level].min_rpy;
 #pragma omp parallel for num_threads(num_threads_)
   for (int i = 0; i < init_transset.size(); i++) {
-    calc_score(init_transset[i], init_trans_res, rpy_res, min_rpy, top_buckets, max_bucket_scan_count, src_points_);
+    calc_score(init_transset[i], init_trans_res, rpy_res, min_rpy, top_buckets, src_points_);
   }
 
   std::priority_queue<DiscreteTransformation<double>> trans_queue(init_transset.begin(), init_transset.end());
@@ -217,14 +249,14 @@ void BBS3D::localize() {
       const Eigen::Vector3i& num_division = ang_info_vec[child_level].num_division;
       const Eigen::Vector3d& rpy_res = ang_info_vec[child_level].rpy_res;
       const Eigen::Vector3d& min_rpy = ang_info_vec[child_level].min_rpy;
-      auto children = trans.branch(child_level, static_cast<int>(v_rate_), num_division);
+      auto children = trans.branch(child_level, voxelmaps_->v_rate(), num_division);
 
-      const auto& buckets = voxelmaps_ptr_->multi_buckets_[child_level];
-      double trans_res = voxelmaps_ptr_->voxelmaps_res_[child_level];
+      const auto& buckets = voxelmaps_->buckets_vec_[child_level];
+      double trans_res = voxelmaps_->info_vec_[child_level].res;
 
 #pragma omp parallel for num_threads(num_threads_)
       for (int i = 0; i < children.size(); i++) {
-        calc_score(children[i], trans_res, rpy_res, min_rpy, buckets, max_bucket_scan_count, src_points_);
+        calc_score(children[i], trans_res, rpy_res, min_rpy, buckets, src_points_);
       }
 
       for (const auto& child : children) {
@@ -248,8 +280,7 @@ void BBS3D::localize() {
     return;
   }
 
-  double min_res = voxelmaps_ptr_->get_min_res();
-  global_pose_ = best_trans.create_matrix(min_res, ang_info_vec[0].rpy_res, ang_info_vec[0].min_rpy);
+  global_pose_ = best_trans.create_matrix(voxelmaps_->min_res(), ang_info_vec[0].rpy_res, ang_info_vec[0].min_rpy);
   best_score_ = best_score;
   has_timed_out_ = false;
   has_localized_ = true;

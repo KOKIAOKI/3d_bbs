@@ -45,8 +45,6 @@ include_directories(
 add_library(cpu_bbs3d
   SHARED
   bbs3d/src/cpu_bbs3d/bbs3d.cpp
-  bbs3d/src/cpu_bbs3d/voxelmaps.cpp
-  bbs3d/src/cpu_bbs3d/voxelmaps_io.cpp
 )
 
 install(TARGETS cpu_bbs3d DESTINATION lib)
@@ -55,10 +53,7 @@ if(BUILD_CUDA)
   cuda_add_library(gpu_bbs3d
     SHARED 
     bbs3d/src/gpu_bbs3d/bbs3d.cu
-    bbs3d/src/gpu_bbs3d/calc_score.cu
-    bbs3d/src/gpu_bbs3d/voxelmaps.cu
     bbs3d/src/gpu_bbs3d/stream_manager/check_error.cu
-    bbs3d/src/gpu_bbs3d/voxelmaps_io.cu
   )
 
   install(TARGETS gpu_bbs3d DESTINATION lib)

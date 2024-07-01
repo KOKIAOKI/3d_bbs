@@ -7,10 +7,10 @@
 #include <chrono>
 #include <Eigen/Dense>
 
-#include <discrete_transformation/discrete_transformation.hpp>
+#include "voxelmaps/voxelmaps.hpp"
+#include "discrete_transformation/discrete_transformation.hpp"
 
 namespace cpu {
-class VoxelMaps;
 
 struct AngularInfo {
   Eigen::Vector3i num_division;
@@ -21,6 +21,7 @@ struct AngularInfo {
 class BBS3D {
 public:
   BBS3D();
+  BBS3D(const VoxelMaps<double>::Ptr voxelmaps);
   ~BBS3D();
 
   void set_tar_points(const std::vector<Eigen::Vector3d>& points, double min_level_res, int max_level);
@@ -36,11 +37,6 @@ public:
     max_rpy_ = max_rpy;
   }
 
-  void set_voxel_expantion_rate(const double rate) {
-    v_rate_ = rate;
-    inv_v_rate_ = 1.0 / rate;
-  }
-
   void set_num_threads(const int num_threads) { num_threads_ = num_threads; }
 
   void set_score_threshold_percentage(double percentage) { score_threshold_percentage_ = percentage; }
@@ -53,7 +49,7 @@ public:
 
   std::vector<Eigen::Vector3d> get_src_points() const { return src_points_; }
 
-  bool set_voxelmaps_coords(const std::string& folder_path);
+  bool set_voxelmaps_coords(const std::string& path);
 
   std::pair<Eigen::Vector3d, Eigen::Vector3d> get_trans_search_range() const {
     return std::pair<Eigen::Vector3d, Eigen::Vector3d>{min_xyz_, max_xyz_};
@@ -80,16 +76,9 @@ public:
 
   void localize();
 
-  // pcd iof
-  bool load_voxel_params(const std::string& voxelmaps_folder_path);
-
-  bool set_multi_buckets(const std::string& folder_path);
-
-  bool save_voxelmaps_pcd(const std::string& folder_path);
-
-  bool save_voxel_params(const std::string& folder_path);
-
 private:
+  void set_trans_search_range_with_voxelmaps();
+
   void calc_angular_info(std::vector<AngularInfo>& ang_info_vec);
 
   std::vector<DiscreteTransformation<double>> create_init_transset(const AngularInfo& init_ang_info);
@@ -100,7 +89,6 @@ private:
     const Eigen::Vector3d& rpy_res,
     const Eigen::Vector3d& min_rpy,
     const std::vector<Eigen::Vector4i>& buckets,
-    const int max_bucket_scan_count,
     const std::vector<Eigen::Vector3d>& points);
 
 private:
@@ -110,11 +98,8 @@ private:
 
   std::vector<Eigen::Vector3d> src_points_;
 
-  std::unique_ptr<VoxelMaps> voxelmaps_ptr_;
-  std::string voxelmaps_folder_name_;
+  VoxelMaps<double>::Ptr voxelmaps_;
 
-  double v_rate_;  // voxel expansion rate
-  double inv_v_rate_;
   int num_threads_;
 
   int best_score_;

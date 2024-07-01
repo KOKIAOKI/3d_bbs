@@ -38,7 +38,7 @@ public:
     return (translation * yawAngle * pitchAngle * rollAngle).matrix();
   }
 
-  void branch(std::vector<DiscreteTransformation>& b, const int child_level, const int v_rate, const Eigen::Vector3i& num_division) {
+  void branch(std::vector<DiscreteTransformation>& b, const int child_level, const size_t v_rate, const Eigen::Vector3i& num_division) {
     for (int i = 0; i < v_rate; i++) {
       for (int j = 0; j < v_rate; j++) {
         for (int k = 0; k < v_rate; k++) {
@@ -62,7 +62,7 @@ public:
     }
   }
 
-  std::vector<DiscreteTransformation> branch(const int child_level, const int v_rate, const Eigen::Vector3i& num_division) {
+  std::vector<DiscreteTransformation> branch(const int child_level, const size_t v_rate, const Eigen::Vector3i& num_division) {
     std::vector<DiscreteTransformation> b;
     b.reserve(v_rate * v_rate * v_rate * num_division.x() * num_division.y() * num_division.z());
     for (int i = 0; i < v_rate; i++) {
