@@ -42,20 +42,22 @@ include_directories(
   $<INSTALL_INTERFACE:include>
 )
 
-add_library(cpu_bbs3d
-  SHARED
-  bbs3d/src/cpu_bbs3d/bbs3d.cpp
-)
-
-install(TARGETS cpu_bbs3d DESTINATION lib)
+add_library(cpu_bbs3d SHARED bbs3d/src/bbs3d/cpu_bbs3d/bbs3d.cpp)
 
 if(BUILD_CUDA)
-  cuda_add_library(gpu_bbs3d
-    SHARED 
-    bbs3d/src/gpu_bbs3d/bbs3d.cu
-    bbs3d/src/gpu_bbs3d/stream_manager/check_error.cu
+  cuda_add_library(gpu_bbs3d SHARED     
+    bbs3d/src/bbs3d/gpu_bbs3d/bbs3d.cu
+    bbs3d/src/bbs3d/gpu_bbs3d/stream_manager/check_error.cu
   )
+endif()
 
+add_library(bbs3d SHARED $<TARGET_OBJECTS:cpu_bbs3d>)
+if(BUILD_CUDA)
+  target_sources(bbs3d PRIVATE $<TARGET_OBJECTS:gpu_bbs3d>)
+endif()
+
+install(TARGETS bbs3d cpu_bbs3d DESTINATION lib)
+if(BUILD_CUDA)
   install(TARGETS gpu_bbs3d DESTINATION lib)
 endif()
 

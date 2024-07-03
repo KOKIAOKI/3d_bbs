@@ -1,4 +1,4 @@
-#include <gpu_bbs3d/stream_manager/check_error.cuh>
+#include "bbs3d/gpu_bbs3d/stream_manager/check_error.cuh"
 
 namespace gpu {
 

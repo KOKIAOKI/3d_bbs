@@ -1,6 +1,5 @@
-#include "voxelmaps/voxelmaps.hpp"
-#include "cpu_bbs3d/bbs3d.hpp"
-#include "hash/hash.hpp"
+#include "bbs3d/cpu_bbs3d/bbs3d.hpp"
+#include "bbs3d/hash/hash.hpp"
 
 namespace cpu {
 // This will be deprecated

@@ -1,6 +1,6 @@
-#include <gpu_bbs3d/bbs3d.cuh>
-#include <pointcloud_iof/pcl_eigen_converter.hpp>
-#include <pointcloud_iof/pcd_loader.hpp>
+#include <bbs3d/gpu_bbs3d/bbs3d.cuh>
+#include <bbs3d/pointcloud_iof/pcl_eigen_converter.hpp>
+#include <bbs3d/pointcloud_iof/pcd_loader.hpp>
 
 #include <test.hpp>
 #include <load_yaml.hpp>

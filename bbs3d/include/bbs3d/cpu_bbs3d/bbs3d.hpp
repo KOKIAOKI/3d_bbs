@@ -7,8 +7,8 @@
 #include <chrono>
 #include <Eigen/Dense>
 
-#include "voxelmaps/voxelmaps.hpp"
-#include "discrete_transformation/discrete_transformation.hpp"
+#include "voxelmaps.hpp"
+#include "bbs3d/discrete_transformation/discrete_transformation.hpp"
 
 namespace cpu {
 

@@ -6,8 +6,8 @@
 #include <chrono>
 #include <Eigen/Dense>
 
-#include "voxelmaps/voxelmaps.cuh"
-#include "discrete_transformation/discrete_transformation.hpp"
+#include "voxelmaps.cuh"
+#include "bbs3d/discrete_transformation/discrete_transformation.hpp"
 
 // thrust
 #include <cuda_runtime.h>

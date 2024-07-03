@@ -1,5 +1,6 @@
-#include "voxelmaps/voxelmaps.hpp"
-#include "gpu_bbs3d/stream_manager/check_error.cuh"
+#pragma once
+#include "bbs3d/cpu_bbs3d/voxelmaps.hpp"
+#include "bbs3d/gpu_bbs3d/stream_manager/check_error.cuh"
 #include <thrust/host_vector.h>
 #include <thrust/device_vector.h>
 

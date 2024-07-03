@@ -1,6 +1,6 @@
 #pragma once
-#include "pointcloud_iof/pcd_loader_without_pcl.hpp"
-#include "hash/hash.hpp"
+#include "bbs3d/pointcloud_iof/pcd_loader_without_pcl.hpp"
+#include "bbs3d/hash/hash.hpp"
 #include <unordered_map>
 #include <Eigen/Dense>
 #include <boost/functional/hash/hash.hpp>

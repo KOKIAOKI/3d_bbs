@@ -1,4 +1,4 @@
-#include <voxelmaps/voxelmaps.hpp>
+#include <bbs3d/cpu_bbs3d/voxelmaps.hpp>
 
 int main(int argc, char** argv) {
   std::string target_pcd_folder = argv[1];
