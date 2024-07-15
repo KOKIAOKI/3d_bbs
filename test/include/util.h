@@ -20,19 +20,6 @@ std::string create_date() {
   return (s.str());
 }
 
-bool can_convert_to_int(const std::vector<std::string>& name_vec) {
-  for (const auto& name : name_vec) {
-    try {
-      std::stoi(std::filesystem::path(name).stem().string());
-    } catch (const std::invalid_argument& e) {
-      return false;
-    } catch (const std::out_of_range& e) {
-      return false;
-    }
-  }
-  return true;
-}
-
 small_gicp::PointCloud::Ptr pcl_to_small_gicp(const pcl::PointCloud<pcl::PointXYZ>::Ptr& pcl_cloud_ptr) {
   // transform pcl_cloud_ptr to PointCloudPtr
   auto cloud_ptr = std::make_shared<small_gicp::PointCloud>();

@@ -47,6 +47,7 @@ add_library(cpu_bbs3d SHARED bbs3d/src/bbs3d/cpu_bbs3d/bbs3d.cpp)
 if(BUILD_CUDA)
   cuda_add_library(gpu_bbs3d SHARED     
     bbs3d/src/bbs3d/gpu_bbs3d/bbs3d.cu
+    bbs3d/src/bbs3d/gpu_bbs3d/voxelmaps.cu
     bbs3d/src/bbs3d/gpu_bbs3d/stream_manager/check_error.cu
   )
 endif()

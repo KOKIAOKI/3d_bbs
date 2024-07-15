@@ -25,8 +25,8 @@ struct BBSResult {
 
 class BBS3D {
 public:
-  BBS3D() {};
-  ~BBS3D() {};
+  BBS3D();
+  ~BBS3D();
 
   // parameters
   double score_threshold_percentage = 0.0;
@@ -35,7 +35,7 @@ public:
   bool search_entire_map = true;
   bool calc_ang_info = true;
   Eigen::Vector3f min_xyz, max_xyz, min_rpy, max_rpy;
-  int branch_copy_size;
+  int branch_copy_size = 10000;
 
   void print() {
     std::cout << "----------------------- BBS3D  parameters -----------------------" << std::endl;
@@ -60,13 +60,14 @@ public:
   float calc_max_norm(const std::vector<Eigen::Vector3f>& src_points);
 
 private:
-  std::shared_ptr<DeviceVoxelMaps> d_voxelmaps_;
+  DeviceVoxelMaps::Ptr d_voxelmaps_;
   cudaStream_t stream;
 
   std::vector<DiscreteTransformation<float>> create_init_transset();
 
   std::vector<DiscreteTransformation<float>> calc_scores(
     const std::vector<DiscreteTransformation<float>>& h_transset,
-    const thrust::device_vector<Eigen::Vector3f>& d_src_points);
+    const thrust::device_vector<Eigen::Vector3f>& d_src_points,
+    const size_t src_points_size);
 };
 }  // namespace gpu

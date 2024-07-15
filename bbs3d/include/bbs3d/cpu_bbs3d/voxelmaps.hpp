@@ -1,5 +1,6 @@
 #pragma once
-#include "bbs3d/pointcloud_iof/pcd_loader_without_pcl.hpp"
+#include "bbs3d/pointcloud_iof/find_point_cloud_files.hpp"
+#include "bbs3d/pointcloud_iof/pcd_io.hpp"
 #include "bbs3d/hash/hash.hpp"
 
 #include <algorithm>
@@ -67,7 +68,7 @@ public:
   std::pair<int, int> top_ty_range() const { return top_ty_range_; }
   std::pair<int, int> top_tz_range() const { return top_tz_range_; }
 
-  std::tuple<double, Vector3, Vector3> pose_to_matrix_tool(const int level) const {
+  std::tuple<T, Vector3, Vector3> pose_to_matrix_tool(const int level) const {
     const auto& ang_info = ang_info_vec[level];
     return std::make_tuple(info_vec[level].res, ang_info.rpy_res, ang_info.min_rpy);
   }
@@ -286,13 +287,20 @@ private:
   }
 
   bool set_multi_buckets(const std::string& voxelmaps_folder_path) {
-    const auto pcd_files = pciof::load_pcd_file_paths(voxelmaps_folder_path);
+    auto pcd_files = pciof::find_point_cloud_files(voxelmaps_folder_path);
+    if (pciof::can_convert_to_int(pcd_files)) {
+      std::sort(pcd_files.begin(), pcd_files.end(), [](const std::string& a, const std::string& b) {
+        return std::stoi(std::filesystem::path(a).stem().string()) < std::stoi(std::filesystem::path(b).stem().string());
+      });
+    } else {
+      return false;
+    }
+
     buckets_vec.resize(pcd_files.size());
     info_vec.resize(pcd_files.size());
 
     for (int i = 0; i < pcd_files.size(); i++) {
-      const auto& file = pcd_files[i];
-      const auto coords = pciof::read_pcd<int>(file.first);
+      const auto coords = pciof::read_pcd<int>(pcd_files[i]);
 
       if (coords.empty()) return false;
 

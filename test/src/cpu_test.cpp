@@ -2,8 +2,10 @@
 
 // bbs3d
 #include <bbs3d/cpu_bbs3d/bbs3d.hpp>
+#include <bbs3d/pointcloud_iof/find_point_cloud_files.hpp>
 #include <bbs3d/pointcloud_iof/pcl_eigen_converter.hpp>
 #include <bbs3d/pointcloud_iof/pcl_loader.hpp>
+#include <bbs3d/pointcloud_iof/filter.hpp>
 
 // parameters and utils
 #include "test_params.hpp"
@@ -33,23 +35,26 @@ int main(int argc, char** argv) {
   auto src_cloud_files = pciof::find_point_cloud_files(params.src_path);
 
   // sort src files
-  if (can_convert_to_int(src_cloud_files)) {
+  if (pciof::can_convert_to_int(src_cloud_files)) {
     std::sort(src_cloud_files.begin(), src_cloud_files.end(), [](const std::string& a, const std::string& b) {
       return std::stoi(std::filesystem::path(a).stem().string()) < std::stoi(std::filesystem::path(b).stem().string());
     });
   }
 
   const auto pcl_tar_cloud = pciof::create_tar_cloud(tar_cloud_files);
-  const auto tar_points = pciof::pcl_to_eigen<double>(pcl_tar_cloud);
 
   // gicp setting
-  auto small_gicp_tar = pcl_to_small_gicp(pcl_tar_cloud);
-  small_gicp_tar = small_gicp::voxelgrid_sampling_omp(*small_gicp_tar, 0.2, 8);
-  auto tar_tree = std::make_shared<small_gicp::KdTree<small_gicp::PointCloud>>(small_gicp_tar, small_gicp::KdTreeBuilderOMP(8));
-  small_gicp::estimate_covariances_omp(*small_gicp_tar, *tar_tree, 10, 8);
+  small_gicp::PointCloud::Ptr small_gicp_tar;
+  small_gicp::KdTree<small_gicp::PointCloud>::Ptr tar_tree;
   small_gicp::Registration<small_gicp::GICPFactor, small_gicp::ParallelReductionOMP> gicp;
-  gicp.reduction.num_threads = 8;
-  gicp.rejector.max_dist_sq = 1.0;
+  if (params.use_gicp) {
+    small_gicp_tar = pcl_to_small_gicp(pcl_tar_cloud);
+    small_gicp_tar = small_gicp::voxelgrid_sampling_omp(*small_gicp_tar, 0.2, 8);
+    tar_tree = std::make_shared<small_gicp::KdTree<small_gicp::PointCloud>>(small_gicp_tar, small_gicp::KdTreeBuilderOMP(8));
+    small_gicp::estimate_covariances_omp(*small_gicp_tar, *tar_tree, 10, 8);
+    gicp.reduction.num_threads = 8;
+    gicp.rejector.max_dist_sq = 1.0;
+  }
 
   // Create output folder with date
   std::string date = create_date();
@@ -73,6 +78,7 @@ int main(int argc, char** argv) {
   bool has_set_voxelmaps = voxelmaps.set_voxelmaps(params.tar_path);
   if (!has_set_voxelmaps) {
     // TODO downsample in voxelmaps
+    const auto tar_points = pciof::pcl_to_eigen<double>(pcl_tar_cloud);
     voxelmaps.create_voxelmaps(tar_points, params.min_level_res, params.max_level);
     voxelmaps.save_voxelmaps(params.tar_path);
   }

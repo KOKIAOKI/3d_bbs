@@ -4,21 +4,29 @@
 #include "bbs3d/hash/hash.hpp"
 
 namespace gpu {
+BBS3D::BBS3D() {
+  check_error << cudaStreamCreate(&stream);
+}
+
+BBS3D::~BBS3D() {
+  check_error << cudaStreamDestroy(stream);
+}
+
 void BBS3D::copy_voxelmaps_to_device(const cpu::VoxelMaps<float>& voxelmaps) {
   d_voxelmaps_ = std::make_shared<DeviceVoxelMaps>(voxelmaps, stream);
 }
 
 BBSResult BBS3D::localize(const std::vector<Eigen::Vector3f>& src_points) {
   BBSResult result;
+  size_t src_points_size = src_points.size();
 
   // Calc BBS time limit
   const auto start_time = std::chrono::system_clock::now();
   const auto time_limit = start_time + std::chrono::milliseconds(timeout_duration_msec);
 
   // Score threshold
-  const int score_threshold = std::floor(src_points.size() * score_threshold_percentage);
+  const int score_threshold = std::floor(src_points_size * score_threshold_percentage);
   DiscreteTransformation<float> best_trans(score_threshold);
-
   // Calc angular info
   if (calc_ang_info) {
     const auto max_norm = calc_max_norm(src_points);
@@ -27,17 +35,18 @@ BBSResult BBS3D::localize(const std::vector<Eigen::Vector3f>& src_points) {
 
   // copy host src_points to device
   thrust::device_vector<Eigen::Vector3f> d_src_points;
+  d_src_points.resize(src_points_size);
   check_error << cudaMemcpyAsync(
     thrust::raw_pointer_cast(d_src_points.data()),
     src_points.data(),
-    sizeof(Eigen::Vector3f) * src_points.size(),
+    sizeof(Eigen::Vector3f) * src_points_size,
     cudaMemcpyHostToDevice,
     stream);
+  check_error << cudaStreamSynchronize(stream);
 
   // Preapre initial transset
   auto init_transset = create_init_transset();
-  const auto init_transset_output = calc_scores(init_transset, d_src_points);
-
+  const auto init_transset_output = calc_scores(init_transset, d_src_points, src_points_size);
   std::priority_queue<DiscreteTransformation<float>> trans_queue(init_transset_output.begin(), init_transset_output.end());
 
   std::vector<DiscreteTransformation<float>> branch_stock;
@@ -53,7 +62,7 @@ BBSResult BBS3D::localize(const std::vector<Eigen::Vector3f>& src_points) {
 
     // Calculate remaining branch_stock when queue is empty
     if (trans_queue.empty() && !branch_stock.empty()) {
-      const auto transset_output = calc_scores(branch_stock, d_src_points);
+      const auto transset_output = calc_scores(branch_stock, d_src_points, src_points_size);
       for (const auto& output : transset_output) {
         if (output.score < result.best_score) continue;  // pruning
         trans_queue.push(output);
@@ -75,7 +84,7 @@ BBSResult BBS3D::localize(const std::vector<Eigen::Vector3f>& src_points) {
     }
 
     if (branch_stock.size() >= branch_copy_size) {
-      const auto transset_output = calc_scores(branch_stock, d_src_points);
+      const auto transset_output = calc_scores(branch_stock, d_src_points, src_points_size);
       for (const auto& output : transset_output) {
         if (output.score < result.best_score) continue;  // pruning
         trans_queue.push(output);
@@ -94,7 +103,7 @@ BBSResult BBS3D::localize(const std::vector<Eigen::Vector3f>& src_points) {
     return result;
   }
 
-  result.global_pose = best_trans.create_matrix(d_voxelmaps_->pose_to_matrix_tool_lv0());
+  result.global_pose = best_trans.create_matrix(d_voxelmaps_->pose_to_matrix_tool(0));
   result.localized = true;
   result.timed_out = false;
 
@@ -151,9 +160,9 @@ std::vector<DiscreteTransformation<float>> BBS3D::create_init_transset() {
 }
 
 __global__ void calc_scores_kernel(
-  const thrust::device_ptr<Eigen::Vector4i* const> multi_buckets_ptrs,
-  const thrust::device_ptr<const cpu::VoxelMapInfo<float>> voxelmap_info_ptr,
-  const thrust::device_ptr<const cpu::AngularInfo<float>> d_ang_info_vec_ptr,
+  const thrust::device_ptr<Eigen::Vector4i*> multi_buckets_ptrs,
+  const thrust::device_ptr<cpu::VoxelMapInfo<float>> voxelmap_info_ptr,
+  const thrust::device_ptr<cpu::AngularInfo<float>> d_ang_info_vec_ptr,
   thrust::device_ptr<DiscreteTransformation<float>> trans_ptr,
   size_t index_size,
   const thrust::device_ptr<const Eigen::Vector3f> points_ptr,
@@ -203,7 +212,8 @@ __global__ void calc_scores_kernel(
 
 std::vector<DiscreteTransformation<float>> BBS3D::calc_scores(
   const std::vector<DiscreteTransformation<float>>& h_transset,
-  const thrust::device_vector<Eigen::Vector3f>& d_src_points) {
+  const thrust::device_vector<Eigen::Vector3f>& d_src_points,
+  const size_t src_points_size) {
   size_t transset_size = h_transset.size();
 
   thrust::device_vector<DiscreteTransformation<float>> d_transset(transset_size);
@@ -224,7 +234,7 @@ std::vector<DiscreteTransformation<float>> BBS3D::calc_scores(
     d_transset.data(),
     transset_size - 1,
     d_src_points.data(),
-    d_src_points.size());  // TODO
+    src_points_size);  // TODO
 
   std::vector<DiscreteTransformation<float>> h_output(transset_size);
   check_error << cudaMemcpyAsync(
