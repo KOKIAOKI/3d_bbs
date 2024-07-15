@@ -73,6 +73,7 @@ int main(int argc, char** argv) {
   bbs3d.max_xyz = params.max_xyz.cast<float>();  // set search_entire_map to false
   bbs3d.min_rpy = params.min_rpy.cast<float>();
   bbs3d.max_rpy = params.max_rpy.cast<float>();
+  bbs3d.branch_copy_size = 10000;
 
   // Voxelmaps
   cpu::VoxelMaps<float> voxelmaps;

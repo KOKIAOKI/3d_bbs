@@ -46,11 +46,11 @@ void DeviceVoxelMaps::copy_voxel_info_to_device(const std::vector<cpu::VoxelMapI
 
   // Copy host to device (voxel map info)
   d_info_vec.resize(info_vec.size());
-  const int info_datasize = sizeof(cpu::VoxelMapInfo<float>) * info_vec.size();
+  const int info_datasize = sizeof(VoxelMapInfo) * info_vec.size();
   check_error << cudaMemcpyAsync(thrust::raw_pointer_cast(d_info_vec.data()), info_vec.data(), info_datasize, cudaMemcpyHostToDevice, stream);
 }
 
-void DeviceVoxelMaps::copy_ang_info_to_device(const std::vector<cpu::AngularInfo<float>>& ang_info_vec, cudaStream_t stream) {
+void DeviceVoxelMaps::copy_ang_info_to_device(const std::vector<AngularInfo>& ang_info_vec, cudaStream_t stream) {
   // Preapre initial transset
   h_ang_info_vec = ang_info_vec;
   d_ang_info_vec.resize(max_level_ + 1);
@@ -58,7 +58,7 @@ void DeviceVoxelMaps::copy_ang_info_to_device(const std::vector<cpu::AngularInfo
   check_error << cudaMemcpyAsync(
     thrust::raw_pointer_cast(d_ang_info_vec.data()),
     h_ang_info_vec.data(),
-    sizeof(cpu::AngularInfo<float>) * h_ang_info_vec.size(),
+    sizeof(AngularInfo) * h_ang_info_vec.size(),
     cudaMemcpyHostToDevice,
     stream);
 
@@ -66,7 +66,7 @@ void DeviceVoxelMaps::copy_ang_info_to_device(const std::vector<cpu::AngularInfo
 }
 
 void DeviceVoxelMaps::calc_angular_info(const float max_norm, const Eigen::Vector3f& min_rpy, const Eigen::Vector3f& max_rpy, cudaStream_t stream) {
-  std::vector<cpu::AngularInfo<float>> ang_info_vec;
+  std::vector<AngularInfo> ang_info_vec;
   ang_info_vec.resize(max_level_ + 1);
 
   for (int i = max_level_; i >= 0; i--) {

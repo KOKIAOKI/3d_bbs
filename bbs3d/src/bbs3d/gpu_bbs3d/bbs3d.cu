@@ -1,7 +1,6 @@
 #include "bbs3d/gpu_bbs3d/bbs3d.cuh"
 #include "bbs3d/gpu_bbs3d/stream_manager/check_error.cuh"
 #include "bbs3d/discrete_transformation/discrete_transformation.hpp"
-#include "bbs3d/hash/hash.hpp"
 
 namespace gpu {
 BBS3D::BBS3D() {
@@ -161,8 +160,8 @@ std::vector<DiscreteTransformation<float>> BBS3D::create_init_transset() {
 
 __global__ void calc_scores_kernel(
   const thrust::device_ptr<Eigen::Vector4i*> multi_buckets_ptrs,
-  const thrust::device_ptr<cpu::VoxelMapInfo<float>> voxelmap_info_ptr,
-  const thrust::device_ptr<cpu::AngularInfo<float>> d_ang_info_vec_ptr,
+  const thrust::device_ptr<VoxelMapInfo> voxelmap_info_ptr,
+  const thrust::device_ptr<AngularInfo> d_ang_info_vec_ptr,
   thrust::device_ptr<DiscreteTransformation<float>> trans_ptr,
   size_t index_size,
   const thrust::device_ptr<const Eigen::Vector3f> points_ptr,
@@ -173,8 +172,8 @@ __global__ void calc_scores_kernel(
   }
 
   DiscreteTransformation<float>& trans = *thrust::raw_pointer_cast(trans_ptr + pose_index);
-  const cpu::VoxelMapInfo<float>& voxelmap_info = *thrust::raw_pointer_cast(voxelmap_info_ptr + trans.level);
-  const cpu::AngularInfo<float>& ang_info = *thrust::raw_pointer_cast(d_ang_info_vec_ptr + trans.level);
+  const VoxelMapInfo& voxelmap_info = *thrust::raw_pointer_cast(voxelmap_info_ptr + trans.level);
+  const AngularInfo& ang_info = *thrust::raw_pointer_cast(d_ang_info_vec_ptr + trans.level);
   const Eigen::Vector4i* buckets = thrust::raw_pointer_cast(multi_buckets_ptrs)[trans.level];
 
   int score = 0;
