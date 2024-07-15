@@ -10,16 +10,8 @@ max_level: 6
 
 ## Angular search range [rad]
 # 6.28 input is converted to 2*M_PI
-min_rpy: [-0.02,-0.02,0.0] # [roll, pitch, yaw]
-max_rpy: [0.02,0.02,6.28] # [roll, pitch, yaw]
-
-## Score threshold
-# score_threshold = floor(src_points.size() * score_threshold_percentage)
-score_threshold_percentage: 0.9
-
-################[Optional]################
-## Downsample target clouds [m]
-tar_leaf_size: 0.1 # off: 0.0
+min_rpy: [-0.02, -0.02, 0.0] # [roll, pitch, yaw]
+max_rpy: [0.02, 0.02, 6.28] # [roll, pitch, yaw]
 
 ## Downsample source clouds [m]
 src_leaf_size: 2.0 # off: 0.0
@@ -29,9 +21,20 @@ min_scan_range: 0.0 # [m]
 max_scan_range: 100.0 # [m]
 # off: set 0.0 to both min_scan_range and max_scan_range
 
-## Timeout [msec]
+## Score threshold
+# score_threshold = floor(src_points.size() * score_threshold_percentage)
+score_threshold_percentage: 0.9
+
+################[Optional]################
+## If you want to specify a search range for translations, search_entire_map to false.
+search_entire_map: true
+## translation search range [m]
+min_xyz: [5.0, 5.0, 5.0] # [x, y, z] 
+max_xyz: [5.0, 5.0, 5.0] # [x, y, z]
+
+## Timeout duration [msec]
 # Enter the number as int
-timeout_msec: 0 # off: 0
+timeout_duration_msec: 0 # off: 0
  
 ## Final align (evaluate the error)
-use_gicp: false 
+use_gicp: true 

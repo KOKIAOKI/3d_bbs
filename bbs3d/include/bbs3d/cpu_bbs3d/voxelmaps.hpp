@@ -1,6 +1,8 @@
 #pragma once
 #include "bbs3d/pointcloud_iof/pcd_loader_without_pcl.hpp"
 #include "bbs3d/hash/hash.hpp"
+
+#include <algorithm>
 #include <unordered_map>
 #include <Eigen/Dense>
 #include <boost/functional/hash/hash.hpp>
@@ -13,6 +15,15 @@ struct VoxelMapInfo {
   int max_bucket_scan_count;
   T res;      // voxel resolution
   T inv_res;  // inverse of voxel resolution
+};
+
+template <typename T>
+struct AngularInfo {
+  using Vector3 = Eigen::Matrix<T, 3, 1>;
+
+  Eigen::Vector3i num_division;
+  Vector3 rpy_res;
+  Vector3 min_rpy;
 };
 
 // hash map
@@ -33,66 +44,53 @@ struct VctorEqual {
 template <typename T>
 class VoxelMaps {
   using Vector3 = Eigen::Matrix<T, 3, 1>;
+  using UnorderedVoxelMap = std::unordered_map<Eigen::Vector3i, int, VectorHash, VctorEqual>;
+  using Buckets = std::vector<Eigen::Vector4i>;
 
 public:
   using Ptr = std::shared_ptr<VoxelMaps>;
   using ConstPtr = std::shared_ptr<const VoxelMaps>;
 
-  using UnorderedVoxelMap = std::unordered_map<Eigen::Vector3i, int, VectorHash, VctorEqual>;
-  using Buckets = std::vector<Eigen::Vector4i>;
-
   // public member variables
-  std::vector<Buckets> buckets_vec_;
-  std::vector<VoxelMapInfo<T>> info_vec_;
+  std::vector<Buckets> buckets_vec;
+  std::vector<VoxelMapInfo<T>> info_vec;
+  std::vector<AngularInfo<T>> ang_info_vec;
 
   // get member variables
   T min_res() const { return min_res_; }
+  T max_res() const { return max_res_; }
   size_t max_level() const { return max_level_; }
   size_t v_rate() const { return v_rate_; }
   size_t max_bucket_scan_count() const { return max_bucket_scan_count_; }
   std::string voxelmaps_folder_name() const { return voxelmaps_folder_name_; }
+  std::pair<int, int> top_tx_range() const { return top_tx_range_; }
+  std::pair<int, int> top_ty_range() const { return top_ty_range_; }
+  std::pair<int, int> top_tz_range() const { return top_tz_range_; }
 
-  // constructor
-  // constructor 1: create voxelmaps from points
-  VoxelMaps() : v_rate_(2), max_bucket_scan_count_(10), success_rate_threshold_(0.999), voxelmaps_folder_name_("voxelmaps_coords") {}
-
-  // constructor 2: create voxelmaps from points
-  VoxelMaps(const std::vector<Vector3>& points, T min_res, size_t max_level)
-  : min_res_(min_res),
-    max_level_(max_level),
-    v_rate_(2),
-    max_bucket_scan_count_(10),
-    success_rate_threshold_(0.999),
-    voxelmaps_folder_name_("voxelmaps_coords") {
-    create_voxelmaps(points);
+  std::tuple<double, Vector3, Vector3> pose_to_matrix_tool(const int level) const {
+    const auto& ang_info = ang_info_vec[level];
+    return std::make_tuple(info_vec[level].res, ang_info.rpy_res, ang_info.min_rpy);
   }
 
-  // constructor 3: If cannot load voxelmap coords, create voxelmaps from points and save them
-  VoxelMaps(const std::string& path, T min_res, size_t max_level, bool overwrite = false)
-  : min_res_(min_res),
-    max_level_(max_level),
-    v_rate_(2),
-    max_bucket_scan_count_(10),
-    success_rate_threshold_(0.999),
-    voxelmaps_folder_name_("voxelmaps_coords") {
-    if (!set_voxelmaps_coords(path) || overwrite) {
-      std::vector<Vector3> tar_points;
-      pciof::load_tar_points<T>(path, 0.0, tar_points);
-      create_voxelmaps(tar_points);
-
-      if (!save_voxelmaps(path)) exit(1);
-    }
+  void print() const {
+    std::cout << "----------------------- VoxelMaps  parameters -----------------------" << std::endl;
+    std::cout << "min_res: " << min_res_ << std::endl;
+    std::cout << "max_res: " << max_res_ << std::endl;
+    std::cout << "max_level: " << max_level_ << std::endl;
+    std::cout << "v_rate: " << v_rate_ << std::endl;
+    std::cout << "max_bucket_scan_count: " << max_bucket_scan_count_ << std::endl;
+    std::cout << "voxelmaps_folder_name: " << voxelmaps_folder_name_ << std::endl;
   }
 
+  VoxelMaps() {}
   ~VoxelMaps() {}
 
   // voxelmap coords IO
-  bool set_voxelmaps_coords(const std::string& folder_path) {
+  bool set_voxelmaps(const std::string& folder_path) {
     const std::string voxelmaps_folder_path = folder_path + "/" + voxelmaps_folder_name_;
     if (!boost::filesystem::exists(voxelmaps_folder_path)) {
       return false;
     }
-
     if (!load_voxel_params(voxelmaps_folder_path)) return false;
     if (!set_multi_buckets(voxelmaps_folder_path)) return false;
     return true;
@@ -104,18 +102,15 @@ public:
     return true;
   }
 
-private:
-  T min_res_;
-  size_t max_level_;
-  size_t v_rate_;
-  size_t max_bucket_scan_count_;
-  std::string voxelmaps_folder_name_;
-  double success_rate_threshold_;
+  void create_voxelmaps(const std::vector<Vector3>& points, const T min_res, const int max_level) {
+    min_res_ = min_res;
+    max_level_ = max_level;
 
-  void create_voxelmaps(const std::vector<Vector3>& points) {
     const int buckets_vec_size = max_level_ + 1;
-    buckets_vec_.resize(buckets_vec_size);
-    info_vec_.resize(buckets_vec_size);
+    buckets_vec.clear();
+    info_vec.clear();
+    buckets_vec.resize(buckets_vec_size);
+    info_vec.resize(buckets_vec_size);
 
     for (int i = 0; i < buckets_vec_size; i++) {
       UnorderedVoxelMap unordered_voxelmap;
@@ -156,10 +151,62 @@ private:
       info.res = res;
       info.inv_res = 1.0 / res;
 
-      buckets_vec_[i] = buckets;
-      info_vec_[i] = info;
+      buckets_vec[i] = buckets;
+      info_vec[i] = info;
+    }
+
+    calc_top_trans_range();
+    max_res_ = info_vec[max_level_].res;
+  }
+
+  void calc_angular_info(T max_norm, const Vector3& min_rpy, const Vector3& max_rpy) {
+    ang_info_vec.clear();
+    ang_info_vec.resize(max_level_ + 1);
+
+    for (int i = max_level_; i >= 0; i--) {
+      const T cosine = 1 - (std::pow(info_vec[i].res, 2) / std::pow(max_norm, 2)) * 0.5;
+      T ori_res = std::acos(std::max(cosine, static_cast<T>(-1.0)));
+      ori_res = std::floor(ori_res * 10000) / 10000;
+      Vector3 rpy_res_temp;
+      rpy_res_temp.x() = ori_res <= (max_rpy.x() - min_rpy.x()) ? ori_res : 0.0;
+      rpy_res_temp.y() = ori_res <= (max_rpy.y() - min_rpy.y()) ? ori_res : 0.0;
+      rpy_res_temp.z() = ori_res <= (max_rpy.z() - min_rpy.z()) ? ori_res : 0.0;
+
+      Vector3 max_rpypiece;
+      if (i == max_level_) {
+        max_rpypiece = max_rpy - min_rpy;
+      } else {
+        max_rpypiece.x() = ang_info_vec[i + 1].rpy_res.x() != 0.0 ? ang_info_vec[i + 1].rpy_res.x() : max_rpy.x() - min_rpy.x();
+        max_rpypiece.y() = ang_info_vec[i + 1].rpy_res.y() != 0.0 ? ang_info_vec[i + 1].rpy_res.y() : max_rpy.y() - min_rpy.y();
+        max_rpypiece.z() = ang_info_vec[i + 1].rpy_res.z() != 0.0 ? ang_info_vec[i + 1].rpy_res.z() : max_rpy.z() - min_rpy.z();
+      }
+
+      // Angle division number
+      Eigen::Vector3i num_division;
+      num_division.x() = rpy_res_temp.x() != 0.0 ? std::ceil(max_rpypiece.x() / rpy_res_temp.x()) : 1;
+      num_division.y() = rpy_res_temp.y() != 0.0 ? std::ceil(max_rpypiece.y() / rpy_res_temp.y()) : 1;
+      num_division.z() = rpy_res_temp.z() != 0.0 ? std::ceil(max_rpypiece.z() / rpy_res_temp.z()) : 1;
+      ang_info_vec[i].num_division = num_division;
+
+      // Bisect an angle
+      ang_info_vec[i].rpy_res.x() = num_division.x() != 1 ? max_rpypiece.x() / num_division.x() : 0.0;
+      ang_info_vec[i].rpy_res.y() = num_division.y() != 1 ? max_rpypiece.y() / num_division.y() : 0.0;
+      ang_info_vec[i].rpy_res.z() = num_division.z() != 1 ? max_rpypiece.z() / num_division.z() : 0.0;
+
+      ang_info_vec[i].min_rpy.x() = ang_info_vec[i].rpy_res.x() != 0.0 && ang_info_vec[i + 1].rpy_res.x() == 0.0 ? min_rpy.x() : 0.0;
+      ang_info_vec[i].min_rpy.y() = ang_info_vec[i].rpy_res.y() != 0.0 && ang_info_vec[i + 1].rpy_res.y() == 0.0 ? min_rpy.y() : 0.0;
+      ang_info_vec[i].min_rpy.z() = ang_info_vec[i].rpy_res.z() != 0.0 && ang_info_vec[i + 1].rpy_res.z() == 0.0 ? min_rpy.z() : 0.0;
     }
   }
+
+private:
+  T min_res_, max_res_;
+  size_t max_level_;
+  size_t v_rate_ = 2;
+  size_t max_bucket_scan_count_ = 10;
+  std::string voxelmaps_folder_name_ = "voxelmaps_coords";
+  double success_rate_threshold_ = 0.999;
+  std::pair<int, int> top_tx_range_, top_ty_range_, top_tz_range_;
 
   std::vector<Eigen::Vector3i> create_neighbor_coords(const Eigen::Vector3i& vec) {
     std::vector<Eigen::Vector3i> neighbor_coord;
@@ -208,6 +255,20 @@ private:
     return buckets;
   }
 
+  void calc_top_trans_range() {
+    // The minimum and maximum x, y, z values are selected from the 3D coordinate vector.
+    Eigen::Vector4i min_xyz = Eigen::Vector4i::Constant(std::numeric_limits<int>::max());
+    Eigen::Vector4i max_xyz = Eigen::Vector4i::Constant(std::numeric_limits<int>::lowest());
+    const auto& top_buckets = buckets_vec[max_level_];
+    for (const auto& bucket : top_buckets) {
+      min_xyz = min_xyz.cwiseMin(bucket);
+      max_xyz = max_xyz.cwiseMax(bucket);
+    }
+    top_tx_range_ = std::make_pair(min_xyz.x(), max_xyz.x());
+    top_ty_range_ = std::make_pair(min_xyz.y(), max_xyz.y());
+    top_tz_range_ = std::make_pair(min_xyz.z(), max_xyz.z());
+  }
+
   bool load_voxel_params(const std::string& voxelmaps_folder_path) {
     std::ifstream ifs(voxelmaps_folder_path + "/voxel_params.txt");
     if (!ifs) return false;
@@ -226,8 +287,8 @@ private:
 
   bool set_multi_buckets(const std::string& voxelmaps_folder_path) {
     const auto pcd_files = pciof::load_pcd_file_paths(voxelmaps_folder_path);
-    buckets_vec_.resize(pcd_files.size());
-    info_vec_.resize(pcd_files.size());
+    buckets_vec.resize(pcd_files.size());
+    info_vec.resize(pcd_files.size());
 
     for (int i = 0; i < pcd_files.size(); i++) {
       const auto& file = pcd_files[i];
@@ -246,10 +307,12 @@ private:
       info.res = min_res_ * std::pow(v_rate_, i);
       info.inv_res = 1.0 / info.res;
 
-      buckets_vec_[i] = buckets;
-      info_vec_[i] = info;
+      buckets_vec[i] = buckets;
+      info_vec[i] = info;
     }
 
+    calc_top_trans_range();
+    max_res_ = info_vec[max_level_].res;
     return true;
   }
 
@@ -292,7 +355,7 @@ private:
 
     for (int i = 0; i < max_level_ + 1; ++i) {
       const std::string file_path = voxelmaps_folder_path + "/" + std::to_string(i) + ".pcd";
-      const auto& coords = buckets_vec_[i];
+      const auto& coords = buckets_vec[i];
       if (coords.empty()) {
         std::cerr << "[ERROR] Can not get coords" << std::endl;
         return false;

@@ -5,6 +5,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/cmake")
 option(BUILD_CUDA "Build GPU ver" ON)
 
 find_package(bbs3d REQUIRED)
+find_package(small_gicp REQUIRED)
 find_package(OpenMP)
 
 if (OpenMP_FOUND)
@@ -30,6 +31,7 @@ include_directories(
 set(COMMON_LIBRARIES
   ${PCL_LIBRARIES}
   ${bbs3d_LIBRARIES}
+  small_gicp::small_gicp
   yaml-cpp
 )
 
@@ -40,16 +42,17 @@ add_executable(cpu_test
 
 target_link_libraries(cpu_test
   ${COMMON_LIBRARIES}
+  ${cpu_bbs3d_LIBRARY}
 )
 
-# voxelmaps saver
-add_executable(saver
-  src/voxelmaps_saver.cpp
-)
+# # voxelmaps saver
+# add_executable(saver
+#   src/voxelmaps_saver.cpp
+# )
 
-target_link_libraries(saver
-  ${Boost_LIBRARIES}
-)
+# target_link_libraries(saver
+#   ${Boost_LIBRARIES}
+# )
 
 # CUDA
 if(BUILD_CUDA)
@@ -60,5 +63,7 @@ if(BUILD_CUDA)
 
   target_link_libraries(gpu_test
     ${COMMON_LIBRARIES}
+    ${cpu_bbs3d_LIBRARY}
+    ${gpu_bbs3d_LIBRARY}
   )
 endif()

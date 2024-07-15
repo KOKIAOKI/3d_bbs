@@ -3,6 +3,14 @@
 ## ✅ Dependencies
 - (All bbs3d dependencies)
 - PCL
+- small_gicp
+```
+git clone https://github.com/koide3/small_gicp.git
+cd small_gicp
+mkdir build && cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release && make -j
+sudo make install
+```
 
 ## 📋 Test
 ### 1. Build

@@ -12,107 +12,54 @@
 
 namespace cpu {
 
-struct AngularInfo {
-  Eigen::Vector3i num_division;
-  Eigen::Vector3d rpy_res;
-  Eigen::Vector3d min_rpy;
+struct BBSResult {
+  bool localized = false;
+  bool timed_out = false;
+  Eigen::Matrix4d global_pose = Eigen::Matrix4d::Identity();
+  int best_score = 0;
+  double elapsed_time_msec = 0.0;
 };
 
 class BBS3D {
 public:
-  BBS3D();
-  BBS3D(const VoxelMaps<double>::Ptr voxelmaps);
-  ~BBS3D();
+  BBS3D() {}
+  ~BBS3D() {}
 
-  void set_tar_points(const std::vector<Eigen::Vector3d>& points, double min_level_res, int max_level);
+  // parameters
+  double score_threshold_percentage = 0.0;
+  int num_threads = 4;
+  bool use_timeout = false;
+  int timeout_duration_msec = 10000;  // [msec]
+  bool search_entire_map = true;
+  bool calc_ang_info = true;
+  Eigen::Vector3d min_xyz, max_xyz, min_rpy, max_rpy;
 
-  void set_src_points(const std::vector<Eigen::Vector3d>& points);
-
-  void set_trans_search_range(const std::vector<Eigen::Vector3d>& points);
-
-  void set_trans_search_range(const Eigen::Vector3d& min_xyz, const Eigen::Vector3d& max_xyz);
-
-  void set_angular_search_range(const Eigen::Vector3d& min_rpy, const Eigen::Vector3d& max_rpy) {
-    min_rpy_ = min_rpy;
-    max_rpy_ = max_rpy;
+  void print() {
+    std::cout << "----------------------- BBS3D  parameters -----------------------" << std::endl;
+    std::cout << "score_threshold_percentage: " << (score_threshold_percentage ? "true" : "false") << std::endl;
+    std::cout << "num_threads: " << num_threads << std::endl;
+    std::cout << "use_timeout: " << (use_timeout ? "true" : "false") << std::endl;
+    if (use_timeout) {
+      std::cout << "timeout_duration_msec: " << timeout_duration_msec << std::endl;
+    }
+    std::cout << "search_entire_map: " << (search_entire_map ? "true" : "false") << std::endl;
+    if (search_entire_map) {
+      std::cout << "min_xyz: " << min_xyz.x() << " " << min_xyz.y() << " " << min_xyz.z() << std::endl;
+      std::cout << "max_xyz: " << max_xyz.x() << " " << max_xyz.y() << " " << max_xyz.z() << std::endl;
+    }
+    std::cout << "min_rpy: " << min_rpy.x() << " " << min_rpy.y() << " " << min_rpy.z() << std::endl;
+    std::cout << "max_rpy: " << max_rpy.x() << " " << max_rpy.y() << " " << max_rpy.z() << std::endl;
   }
 
-  void set_num_threads(const int num_threads) { num_threads_ = num_threads; }
+  // localize
+  BBSResult localize(VoxelMaps<double>& voxelmaps, const std::vector<Eigen::Vector3d>& src_points);
 
-  void set_score_threshold_percentage(double percentage) { score_threshold_percentage_ = percentage; }
-
-  void enable_timeout() { use_timeout_ = true; }
-
-  void disable_timeout() { use_timeout_ = false; }
-
-  void set_timeout_duration_in_msec(const int msec);
-
-  std::vector<Eigen::Vector3d> get_src_points() const { return src_points_; }
-
-  bool set_voxelmaps_coords(const std::string& path);
-
-  std::pair<Eigen::Vector3d, Eigen::Vector3d> get_trans_search_range() const {
-    return std::pair<Eigen::Vector3d, Eigen::Vector3d>{min_xyz_, max_xyz_};
-  }
-
-  std::vector<Eigen::Vector3d> get_angular_search_range() const { return std::vector<Eigen::Vector3d>{min_rpy_, max_rpy_}; }
-
-  Eigen::Matrix4d get_global_pose() const { return global_pose_; }
-
-  int get_best_score() const { return best_score_; }
-
-  double get_elapsed_time() const { return elapsed_time_; }
-
-  double get_best_score_percentage() {
-    if (src_points_.size() == 0)
-      return 0.0;
-    else
-      return static_cast<double>(best_score_ / src_points_.size());
-  };
-
-  bool has_timed_out() { return has_timed_out_; }
-
-  bool has_localized() { return has_localized_; }
-
-  void localize();
+  double calc_max_norm(const std::vector<Eigen::Vector3d>& src_points);
 
 private:
-  void set_trans_search_range_with_voxelmaps();
+  std::vector<DiscreteTransformation<double>> create_init_transset(const VoxelMaps<double>& voxelmaps);
 
-  void calc_angular_info(std::vector<AngularInfo>& ang_info_vec);
-
-  std::vector<DiscreteTransformation<double>> create_init_transset(const AngularInfo& init_ang_info);
-
-  void calc_score(
-    DiscreteTransformation<double>& trans,
-    const double trans_res,
-    const Eigen::Vector3d& rpy_res,
-    const Eigen::Vector3d& min_rpy,
-    const std::vector<Eigen::Vector4i>& buckets,
-    const std::vector<Eigen::Vector3d>& points);
-
-private:
-  Eigen::Matrix4d global_pose_;
-  bool has_timed_out_, has_localized_;
-  double elapsed_time_;
-
-  std::vector<Eigen::Vector3d> src_points_;
-
-  VoxelMaps<double>::Ptr voxelmaps_;
-
-  int num_threads_;
-
-  int best_score_;
-  double score_threshold_percentage_;
-  bool use_timeout_;
-  std::chrono::milliseconds timeout_duration_;
-  Eigen::Vector3d min_xyz_;
-  Eigen::Vector3d max_xyz_;
-  Eigen::Vector3d min_rpy_;
-  Eigen::Vector3d max_rpy_;
-  std::pair<int, int> init_tx_range_;
-  std::pair<int, int> init_ty_range_;
-  std::pair<int, int> init_tz_range_;
+  void calc_score(DiscreteTransformation<double>& trans, const VoxelMaps<double>& voxelmaps, const std::vector<Eigen::Vector3d>& points);
 };
 
 }  // namespace cpu
