@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.5)
 project(bbs3d)
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -lstdc++fs")
+
 ## find thirdparty/Eigen or Eigen3 package
 option(USE_THIRDPARTY_EIGEN "Include thirdparty eigen" OFF)
 file(GLOB entries "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/Eigen/*")
@@ -25,6 +29,7 @@ if (BUILD_CUDA)
   find_package(CUDA REQUIRED)
   include_directories(${CUDA_INCLUDE_DIRS})
   link_directories(${CUDA_LIBRARY_DIRS})
+  set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} --std=c++17 -Xcompiler -std=c++17)
 endif()
 
 # Common include directories

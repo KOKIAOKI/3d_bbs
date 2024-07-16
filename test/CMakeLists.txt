@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.5)
 project(test)
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -lstdc++fs")
+
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/cmake")
 option(BUILD_CUDA "Build GPU ver" ON)
 
@@ -17,6 +21,7 @@ if (BUILD_CUDA)
   find_package(CUDA REQUIRED)
   include_directories(${CUDA_INCLUDE_DIRS})
   link_directories(${CUDA_LIBRARY_DIRS})
+  set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} --std=c++17 -Xcompiler -std=c++17)
 endif()
 
 # Common include directories
@@ -45,14 +50,14 @@ target_link_libraries(cpu_test
   ${cpu_bbs3d_LIBRARY}
 )
 
-# # voxelmaps saver
-# add_executable(saver
-#   src/voxelmaps_saver.cpp
-# )
+# voxelmaps saver
+add_executable(saver
+  src/voxelmaps_saver.cpp
+)
 
-# target_link_libraries(saver
-#   ${Boost_LIBRARIES}
-# )
+target_link_libraries(saver
+  ${COMMON_LIBRARIES}
+  ${cpu_bbs3d_LIBRARY})
 
 # CUDA
 if(BUILD_CUDA)

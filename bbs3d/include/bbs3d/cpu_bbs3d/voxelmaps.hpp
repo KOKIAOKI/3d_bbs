@@ -7,7 +7,6 @@
 #include <unordered_map>
 #include <Eigen/Dense>
 #include <boost/functional/hash/hash.hpp>
-#include <boost/filesystem.hpp>
 
 namespace cpu {
 template <typename T>
@@ -89,7 +88,7 @@ public:
   // voxelmap coords IO
   bool set_voxelmaps(const std::string& folder_path) {
     const std::string voxelmaps_folder_path = folder_path + "/" + voxelmaps_folder_name_;
-    if (!boost::filesystem::exists(voxelmaps_folder_path)) {
+    if (!std::filesystem::exists(voxelmaps_folder_path)) {
       return false;
     }
     if (!load_voxel_params(voxelmaps_folder_path)) return false;
@@ -325,17 +324,17 @@ private:
   }
 
   bool save_voxel_params(const std::string& folder_path) {
-    boost::filesystem::path dir(folder_path);
-    if (!boost::filesystem::exists(dir)) {
+    std::filesystem::path dir(folder_path);
+    if (!std::filesystem::exists(dir)) {
       std::cout << "[ERROR] Can not open folder" << std::endl;
       return false;
     }
 
     // create voxelmaps coords folder
     const std::string voxelmaps_folder_path = folder_path + "/" + voxelmaps_folder_name_;
-    boost::filesystem::path voxelmaps_coords_dir(voxelmaps_folder_path);
-    if (!boost::filesystem::exists(voxelmaps_coords_dir)) {
-      boost::filesystem::create_directory(voxelmaps_coords_dir);
+    std::filesystem::path voxelmaps_coords_dir(voxelmaps_folder_path);
+    if (!std::filesystem::exists(voxelmaps_coords_dir)) {
+      std::filesystem::create_directory(voxelmaps_coords_dir);
     }
 
     std::ofstream ofs(voxelmaps_folder_path + "/voxel_params.txt");
@@ -348,17 +347,17 @@ private:
   }
 
   bool save_voxelmaps_pcd(const std::string& folder_path) {
-    boost::filesystem::path dir(folder_path);
-    if (!boost::filesystem::exists(dir)) {
+    std::filesystem::path dir(folder_path);
+    if (!std::filesystem::exists(dir)) {
       std::cerr << "[ERROR] Can not open folder" << std::endl;
       return false;
     }
 
     // create voxelmaps coords folder
     const std::string voxelmaps_folder_path = folder_path + "/" + voxelmaps_folder_name_;
-    boost::filesystem::path voxelmaps_coords_dir(voxelmaps_folder_path);
-    if (!boost::filesystem::exists(voxelmaps_coords_dir)) {
-      boost::filesystem::create_directory(voxelmaps_coords_dir);
+    std::filesystem::path voxelmaps_coords_dir(voxelmaps_folder_path);
+    if (!std::filesystem::exists(voxelmaps_coords_dir)) {
+      std::filesystem::create_directory(voxelmaps_coords_dir);
     }
 
     for (int i = 0; i < max_level_ + 1; ++i) {
