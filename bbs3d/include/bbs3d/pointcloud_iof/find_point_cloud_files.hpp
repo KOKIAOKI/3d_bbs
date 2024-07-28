@@ -17,6 +17,19 @@ inline bool can_convert_to_int(const std::vector<std::string>& name_vec) {
   return true;
 }
 
+inline bool can_convert_to_double(const std::vector<std::string>& name_vec) {
+  for (const auto& name : name_vec) {
+    try {
+      std::stod(std::filesystem::path(name).stem().string());
+    } catch (const std::invalid_argument& e) {
+      return false;
+    } catch (const std::out_of_range& e) {
+      return false;
+    }
+  }
+  return true;
+}
+
 inline std::vector<std::string> find_point_cloud_files(const std::string& path) {
   std::filesystem::path dir(path);
   std::vector<std::string> files;

@@ -18,6 +18,13 @@ struct BBSResult {
   Eigen::Matrix4d global_pose = Eigen::Matrix4d::Identity();
   int best_score = 0;
   double elapsed_time_msec = 0.0;
+
+  void print() const {
+    std::cout << "[Result] " << (localized ? "Successed" : "Failed") << (timed_out ? " (Timed out)" : "") << std::endl;
+    std::cout << "Score: " << best_score << std::endl;
+    std::cout << "Execution time: " << elapsed_time_msec << "[msec] " << std::endl;
+    std::cout << "Global pose: " << std::endl << global_pose << std::endl;
+  }
 };
 
 class BBS3D {
@@ -35,7 +42,7 @@ public:
   Eigen::Vector3d min_xyz, max_xyz, min_rpy, max_rpy;
 
   void print() {
-    std::cout << "----------------------- BBS3D  parameters -----------------------" << std::endl;
+    std::cout << "----------------------- BBS3D parameters -----------------------" << std::endl;
     std::cout << "score_threshold_percentage: " << (score_threshold_percentage ? "true" : "false") << std::endl;
     std::cout << "num_threads: " << num_threads << std::endl;
     std::cout << "use_timeout: " << (use_timeout ? "true" : "false") << std::endl;

@@ -31,6 +31,9 @@ public:
   // score threshold percentage
   double score_threshold_percentage;
 
+  // gt pose csv path
+  std::string gt_pose_csv_path;
+
   // translation search range
   bool search_entire_map;
   Eigen::Vector3d min_xyz, max_xyz;
@@ -89,6 +92,9 @@ private:
 
     std::cout << "[YAML] Loading score threshold percentage..." << std::endl;
     score_threshold_percentage = conf["score_threshold_percentage"].as<double>();
+
+    std::cout << "[YAML] Loading gt pose csv file..." << std::endl;
+    gt_pose_csv_path = conf["gt_pose_csv_file"].as<std::string>();
 
     std::cout << "[YAML] Loading translation search range..." << std::endl;
     search_entire_map = conf["search_entire_map"].as<bool>();
