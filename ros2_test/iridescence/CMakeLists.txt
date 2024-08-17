@@ -27,14 +27,13 @@ if(BUILD_CUDA)
   target_include_directories(gpu_ros2_test_iridescence 
     PUBLIC ${PROJECT_SOURCE_DIR}/include
     ${EIGEN3_INCLUDE_DIR}
-    ${Iridescence_INCLUDE_DIRS}
   )
 
   target_link_libraries(gpu_ros2_test_iridescence
     ${PCL_LIBRARIES}
     yaml-cpp
     ${gpu_bbs3d_LIBRARY}
-    ${Iridescence_LIBRARIES}
+    Iridescence::Iridescence
   )
 
   if(BUILD_TESTING)
