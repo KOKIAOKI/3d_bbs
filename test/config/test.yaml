@@ -17,8 +17,8 @@ max_rpy: [0.02, 0.02, 6.28] # [roll, pitch, yaw]
 src_leaf_size: 2.0 # off: 0.0
 
 ## Crop source clouds [m]
-min_scan_range: 0.0 # [m]
-max_scan_range: 100.0 # [m]
+min_scan_range: 0.0
+max_scan_range: 100.0
 # off: set 0.0 to both min_scan_range and max_scan_range
 
 ## Score threshold
@@ -39,5 +39,5 @@ max_xyz: [5.0, 5.0, 5.0] # [x, y, z]
 # Enter the number as int
 timeout_duration_msec: 0 # off: 0
  
-## Final align (evaluate the error)
+## Fine registration
 use_gicp: true 

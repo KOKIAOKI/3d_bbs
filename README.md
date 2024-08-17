@@ -69,6 +69,7 @@ The hardware configuration (Intel Core i7-10700K 3.8GHz, 32GB RAM, and NVIDIA Ge
 - test
   - (All bbs3d dependencies)
   - PCL
+  - small_gicp
 - ros2_test
   - (All bbs3d dependencies)
   - ros2 humble
@@ -125,6 +126,7 @@ target_include_directories(yours ${EIGEN3_INCLUDE_DIR} ${gpu_bbs3d_LIBRARY})
 
 ## 🌈 Acknowledgement
 I sincerely appreciate the authors for generously sharing their public code.  
-[hdl_global_localization](https://github.com/koide3/hdl_global_localization)  
+[hdl_global_localization](https://github.com/koide3/hdl_global_localization) 
+[small_gicp](https://github.com/koide3/small_gicp.git) 
 [cartographer](https://github.com/cartographer-project/cartographer)  
 [TEASER-plusplus](https://github.com/MIT-SPARK/TEASER-plusplus)   
