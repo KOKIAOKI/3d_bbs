@@ -6,7 +6,6 @@ DeviceVoxelMaps::DeviceVoxelMaps(const cpu::VoxelMaps<float>& voxelmaps, cudaStr
 : min_res_(voxelmaps.min_res()),
   max_res_(voxelmaps.max_res()),
   max_level_(voxelmaps.max_level()),
-  v_rate_(voxelmaps.v_rate()),
   top_tx_range_(voxelmaps.top_tx_range()),
   top_ty_range_(voxelmaps.top_ty_range()),
   top_tz_range_(voxelmaps.top_tz_range()) {

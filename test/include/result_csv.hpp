@@ -16,7 +16,7 @@ public:
     std::string file_path = folder_name + "/result.csv";
     csv_file.open(file_path);
     if (csv_file.is_open()) {
-      csv_file << "file_name,bbs3d_x,bbs3d_y,bbs3d_z,bbs3d_q_x,bbs3d_q_y,bbs3d_q_z,bbs3d_q_w,"
+      csv_file << "file_name,exe_time,bbs3d_x,bbs3d_y,bbs3d_z,bbs3d_q_x,bbs3d_q_y,bbs3d_q_z,bbs3d_q_w,"
                   "gicp_x,gicp_y,gicp_z,gicp_q_x,gicp_q_y,gicp_q_z,gicp_q_w";
     }
 
@@ -61,7 +61,7 @@ public:
     }
   }
 
-  void write(const std::string& file_name, const Eigen::Matrix4d& bbs3d_result, const Eigen::Matrix4d& gicp_result) {
+  void write(const std::string& file_name, const double exe_time, const Eigen::Matrix4d& bbs3d_result, const Eigen::Matrix4d& gicp_result) {
     if (!csv_file.is_open()) return;
 
     // Extract translations and quaternions
@@ -72,9 +72,9 @@ public:
 
     auto [bbs3d_x, bbs3d_y, bbs3d_z, bbs3d_q_x, bbs3d_q_y, bbs3d_q_z, bbs3d_q_w] = extract_trans_quat(bbs3d_result);
     auto [gicp_x, gicp_y, gicp_z, gicp_q_x, gicp_q_y, gicp_q_z, gicp_q_w] = extract_trans_quat(gicp_result);
-    csv_file << file_name << "," << bbs3d_x << "," << bbs3d_y << "," << bbs3d_z << "," << bbs3d_q_x << "," << bbs3d_q_y << "," << bbs3d_q_z << ","
-             << bbs3d_q_w << "," << gicp_x << "," << gicp_y << "," << gicp_z << "," << gicp_q_x << "," << gicp_q_y << "," << gicp_q_z << ","
-             << gicp_q_w;
+    csv_file << file_name << "," << exe_time << "," << bbs3d_x << "," << bbs3d_y << "," << bbs3d_z << "," << bbs3d_q_x << "," << bbs3d_q_y << ","
+             << bbs3d_q_z << "," << bbs3d_q_w << "," << gicp_x << "," << gicp_y << "," << gicp_z << "," << gicp_q_x << "," << gicp_q_y << ","
+             << gicp_q_z << "," << gicp_q_w;
 
     if (evaluate_error) {
       // get nearest time ground truth. file name expressed as timestamp

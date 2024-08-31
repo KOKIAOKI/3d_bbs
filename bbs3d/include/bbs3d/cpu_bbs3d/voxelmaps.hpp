@@ -60,7 +60,6 @@ public:
   T min_res() const { return min_res_; }
   T max_res() const { return max_res_; }
   size_t max_level() const { return max_level_; }
-  size_t v_rate() const { return v_rate_; }
   size_t max_bucket_scan_count() const { return max_bucket_scan_count_; }
   std::string voxelmaps_folder_name() const { return voxelmaps_folder_name_; }
   std::pair<int, int> top_tx_range() const { return top_tx_range_; }
@@ -77,7 +76,6 @@ public:
     std::cout << "min_res: " << min_res_ << std::endl;
     std::cout << "max_res: " << max_res_ << std::endl;
     std::cout << "max_level: " << max_level_ << std::endl;
-    std::cout << "v_rate: " << v_rate_ << std::endl;
     std::cout << "max_bucket_scan_count: " << max_bucket_scan_count_ << std::endl;
     std::cout << "voxelmaps_folder_name: " << voxelmaps_folder_name_ << std::endl;
   }
@@ -114,7 +112,7 @@ public:
 
     for (int i = 0; i < buckets_vec_size; i++) {
       UnorderedVoxelMap unordered_voxelmap;
-      T res = min_res_ * std::pow(v_rate_, i);
+      T res = min_res_ * std::pow(2, i);
 
       std::vector<Eigen::Vector3i> coords(points.size());
       std::transform(points.begin(), points.end(), coords.begin(), [&](const Vector3& point) {
@@ -202,7 +200,6 @@ public:
 private:
   T min_res_, max_res_;
   size_t max_level_;
-  size_t v_rate_ = 2;
   size_t max_bucket_scan_count_ = 10;
   std::string voxelmaps_folder_name_ = "voxelmaps_coords";
   double success_rate_threshold_ = 0.999;
@@ -279,9 +276,6 @@ private:
     std::getline(ifs, str);
     max_level_ = std::stoi(str.substr(str.find(" ") + 1));
 
-    std::getline(ifs, str);
-    v_rate_ = (std::stod(str.substr(str.find(" ") + 1)));
-
     return true;
   }
 
@@ -311,7 +305,7 @@ private:
       VoxelMapInfo<T> info;
       info.num_buckets = buckets.size();
       info.max_bucket_scan_count = max_bucket_scan_count_;
-      info.res = min_res_ * std::pow(v_rate_, i);
+      info.res = min_res_ * std::pow(2, i);
       info.inv_res = 1.0 / info.res;
 
       buckets_vec[i] = buckets;
@@ -340,7 +334,6 @@ private:
     std::ofstream ofs(voxelmaps_folder_path + "/voxel_params.txt");
     ofs << "min_res " << min_res_ << std::endl;
     ofs << "max_level " << max_level_ << std::endl;
-    ofs << "v_rate " << v_rate_ << std::endl;
     ofs.close();
 
     return true;

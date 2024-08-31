@@ -79,7 +79,7 @@ BBSResult BBS3D::localize(const std::vector<Eigen::Vector3f>& src_points) {
       result.best_score = trans.score;
     } else {
       const int child_level = trans.level - 1;
-      trans.branch(branch_stock, child_level, d_voxelmaps_->v_rate(), d_voxelmaps_->h_ang_info_vec[child_level].num_division);
+      trans.branch(branch_stock, child_level, d_voxelmaps_->h_ang_info_vec[child_level].num_division);
     }
 
     if (branch_stock.size() >= branch_copy_size) {

@@ -135,7 +135,11 @@ int main(int argc, char** argv) {
     }
 
     pcl::io::savePCDFileBinary(pcd_save_folder_path + "/" + file_name + ".pcd", *pcl_output_cloud);
-    result_csv.write(std::filesystem::path(src_cloud_file).stem().string(), bbs3d_result.global_pose.cast<double>(), gicp_result_matrix);
+    result_csv.write(
+      std::filesystem::path(src_cloud_file).stem().string(),
+      bbs3d_result.elapsed_time_msec,
+      bbs3d_result.global_pose.cast<double>(),
+      gicp_result_matrix);
   }
 
   if (num_localized != 0) std::cout << "[Localize] Average time: " << sum_time / num_localized << "[msec] per frame" << std::endl;

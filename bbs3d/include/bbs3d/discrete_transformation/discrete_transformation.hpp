@@ -44,19 +44,19 @@ public:
     return (translation * yawAngle * pitchAngle * rollAngle).matrix();
   }
 
-  void branch(std::vector<DiscreteTransformation>& b, const int child_level, const size_t v_rate, const Eigen::Vector3i& num_division) {
-    for (int i = 0; i < v_rate; i++) {
-      for (int j = 0; j < v_rate; j++) {
-        for (int k = 0; k < v_rate; k++) {
+  void branch(std::vector<DiscreteTransformation>& b, const int child_level, const Eigen::Vector3i& num_division) {
+    for (int i = 0; i < 2; i++) {
+      for (int j = 0; j < 2; j++) {
+        for (int k = 0; k < 2; k++) {
           for (int l = 0; l < num_division.x(); l++) {
             for (int m = 0; m < num_division.y(); m++) {
               for (int n = 0; n < num_division.z(); n++) {
                 b.emplace_back(DiscreteTransformation(
                   0,
                   child_level,
-                  x * v_rate + i,
-                  y * v_rate + j,
-                  z * v_rate + k,
+                  x * 2 + i,
+                  y * 2 + j,
+                  z * 2 + k,
                   roll * num_division.x() + l,
                   pitch * num_division.y() + m,
                   yaw * num_division.z() + n));
@@ -68,21 +68,21 @@ public:
     }
   }
 
-  std::vector<DiscreteTransformation> branch(const int child_level, const size_t v_rate, const Eigen::Vector3i& num_division) {
+  std::vector<DiscreteTransformation> branch(const int child_level, const Eigen::Vector3i& num_division) {
     std::vector<DiscreteTransformation> b;
-    b.reserve(v_rate * v_rate * v_rate * num_division.x() * num_division.y() * num_division.z());
-    for (int i = 0; i < v_rate; i++) {
-      for (int j = 0; j < v_rate; j++) {
-        for (int k = 0; k < v_rate; k++) {
+    b.reserve(8 * num_division.x() * num_division.y() * num_division.z());
+    for (int i = 0; i < 2; i++) {
+      for (int j = 0; j < 2; j++) {
+        for (int k = 0; k < 2; k++) {
           for (int l = 0; l < num_division.x(); l++) {
             for (int m = 0; m < num_division.y(); m++) {
               for (int n = 0; n < num_division.z(); n++) {
                 b.emplace_back(DiscreteTransformation(
                   0,
                   child_level,
-                  x * v_rate + i,
-                  y * v_rate + j,
-                  z * v_rate + k,
+                  x * 2 + i,
+                  y * 2 + j,
+                  z * 2 + k,
                   roll * num_division.x() + l,
                   pitch * num_division.y() + m,
                   yaw * num_division.z() + n));

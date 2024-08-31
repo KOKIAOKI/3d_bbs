@@ -40,9 +40,7 @@ BBSResult BBS3D::localize(cpu::VoxelMaps<double>& voxelmaps, const std::vector<E
     trans_queue.pop();
 
     // pruning
-    if (trans.score < result.best_score) {
-      continue;
-    }
+    if (trans.score < result.best_score) continue;
 
     if (trans.is_leaf()) {
       best_trans = trans;
@@ -50,7 +48,7 @@ BBSResult BBS3D::localize(cpu::VoxelMaps<double>& voxelmaps, const std::vector<E
     } else {
       // branch
       const int child_level = trans.level - 1;
-      auto children = trans.branch(child_level, voxelmaps.v_rate(), voxelmaps.ang_info_vec[child_level].num_division);
+      auto children = trans.branch(child_level, voxelmaps.ang_info_vec[child_level].num_division);
 
       // calc score
 #pragma omp parallel for num_threads(num_threads)

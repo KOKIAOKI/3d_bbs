@@ -37,7 +37,6 @@ public:
   float min_res() const { return min_res_; }
   float max_res() const { return max_res_; }
   size_t max_level() const { return max_level_; }
-  size_t v_rate() const { return v_rate_; }
   std::pair<int, int> top_tx_range() const { return top_tx_range_; }
   std::pair<int, int> top_ty_range() const { return top_ty_range_; }
   std::pair<int, int> top_tz_range() const { return top_tz_range_; }
@@ -60,7 +59,6 @@ public:
 private:
   float min_res_, max_res_;
   size_t max_level_;
-  size_t v_rate_;
   std::pair<int, int> top_tx_range_, top_ty_range_, top_tz_range_;
 };
 }  // namespace gpu
