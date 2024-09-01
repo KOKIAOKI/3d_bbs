@@ -12,12 +12,6 @@ struct VoxelMapInfo {
   float inv_res;  // inverse of voxel resolution
 };
 
-struct AngularInfo {
-  Eigen::Vector3i num_division;
-  Eigen::Vector3f rpy_res;
-  Eigen::Vector3f min_rpy;
-};
-
 class DeviceVoxelMaps {
   using Buckets = std::vector<Eigen::Vector4i>;
   using DeviceBuckets = thrust::device_vector<Eigen::Vector4i>;
@@ -29,10 +23,8 @@ public:
   std::vector<DeviceBuckets> d_buckets_vec;
   thrust::device_vector<Eigen::Vector4i*> d_buckets_ptrs;
   thrust::device_vector<VoxelMapInfo> d_info_vec;
-  thrust::device_vector<AngularInfo> d_ang_info_vec;
 
-  std::vector<cpu::VoxelMapInfo<float>> h_info_vec;
-  std::vector<AngularInfo> h_ang_info_vec;
+  std::vector<VoxelMapInfo> info_vec;
 
   float min_res() const { return min_res_; }
   float max_res() const { return max_res_; }
@@ -41,20 +33,11 @@ public:
   std::pair<int, int> top_ty_range() const { return top_ty_range_; }
   std::pair<int, int> top_tz_range() const { return top_tz_range_; }
 
-  std::tuple<float, Eigen::Vector3f, Eigen::Vector3f> pose_to_matrix_tool(const int level) const {
-    const auto& ang_info = h_ang_info_vec[level];
-    return std::make_tuple(h_info_vec[level].res, ang_info.rpy_res, ang_info.min_rpy);
-  }
-
   DeviceVoxelMaps(const cpu::VoxelMaps<float>& voxelmaps, cudaStream_t stream);
 
   void copy_buckets_to_device(const std::vector<Buckets>& buckets_vec, cudaStream_t stream);
 
   void copy_voxel_info_to_device(const std::vector<cpu::VoxelMapInfo<float>>& info_vec, cudaStream_t stream);
-
-  void copy_ang_info_to_device(const std::vector<AngularInfo>& ang_info_vec, cudaStream_t stream);
-
-  void calc_angular_info(const float max_norm, const Eigen::Vector3f& min_rpy, const Eigen::Vector3f& max_rpy, cudaStream_t stream);
 
 private:
   float min_res_, max_res_;

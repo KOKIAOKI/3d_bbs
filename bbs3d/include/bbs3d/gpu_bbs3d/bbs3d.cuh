@@ -30,6 +30,12 @@ struct BBSResult {
   }
 };
 
+struct AngularInfo {
+  Eigen::Vector3i num_division;
+  Eigen::Vector3f rpy_res;
+  Eigen::Vector3f min_rpy;
+};
+
 class BBS3D {
 public:
   BBS3D();
@@ -44,36 +50,22 @@ public:
   Eigen::Vector3f min_xyz, max_xyz, min_rpy, max_rpy;
   int branch_copy_size = 10000;
 
-  void print() {
-    std::cout << "----------------------- BBS3D parameters -----------------------" << std::endl;
-    std::cout << "score_threshold_percentage: " << (score_threshold_percentage ? "true" : "false") << std::endl;
-    std::cout << "use_timeout: " << (use_timeout ? "true" : "false") << std::endl;
-    if (use_timeout) {
-      std::cout << "timeout_duration_msec: " << timeout_duration_msec << std::endl;
-    }
-    std::cout << "search_entire_map: " << (search_entire_map ? "true" : "false") << std::endl;
-    if (search_entire_map) {
-      std::cout << "min_xyz: " << min_xyz.x() << " " << min_xyz.y() << " " << min_xyz.z() << std::endl;
-      std::cout << "max_xyz: " << max_xyz.x() << " " << max_xyz.y() << " " << max_xyz.z() << std::endl;
-    }
-    std::cout << "min_rpy: " << min_rpy.x() << " " << min_rpy.y() << " " << min_rpy.z() << std::endl;
-    std::cout << "max_rpy: " << max_rpy.x() << " " << max_rpy.y() << " " << max_rpy.z() << std::endl;
-  }
-
   void copy_voxelmaps_to_device(const cpu::VoxelMaps<float>& voxelmaps);
 
   BBSResult localize(const std::vector<Eigen::Vector3f>& src_points);
 
-  float calc_max_norm(const std::vector<Eigen::Vector3f>& src_points);
+  void calc_angular_info(const float max_norm);
 
 private:
   DeviceVoxelMaps::Ptr d_voxelmaps_;
+  thrust::device_vector<AngularInfo> d_ang_info_vec_;
+  std::vector<AngularInfo> ang_info_vec_;
   cudaStream_t stream;
 
-  std::vector<DiscreteTransformation<float>> create_init_transset();
+  std::vector<DiscreteTransformation> create_init_transset();
 
-  std::vector<DiscreteTransformation<float>> calc_scores(
-    const std::vector<DiscreteTransformation<float>>& h_transset,
+  std::vector<DiscreteTransformation> calc_scores(
+    const std::vector<DiscreteTransformation>& h_transset,
     const thrust::device_vector<Eigen::Vector3f>& d_src_points,
     const size_t src_points_size);
 };

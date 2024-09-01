@@ -17,15 +17,6 @@ struct VoxelMapInfo {
   T inv_res;  // inverse of voxel resolution
 };
 
-template <typename T>
-struct AngularInfo {
-  using Vector3 = Eigen::Matrix<T, 3, 1>;
-
-  Eigen::Vector3i num_division;
-  Vector3 rpy_res;
-  Vector3 min_rpy;
-};
-
 // hash map
 struct VectorHash {
   size_t operator()(const Eigen::Vector3i& x) const {
@@ -54,7 +45,6 @@ public:
   // public member variables
   std::vector<Buckets> buckets_vec;
   std::vector<VoxelMapInfo<T>> info_vec;
-  std::vector<AngularInfo<T>> ang_info_vec;
 
   // get member variables
   T min_res() const { return min_res_; }
@@ -65,20 +55,6 @@ public:
   std::pair<int, int> top_tx_range() const { return top_tx_range_; }
   std::pair<int, int> top_ty_range() const { return top_ty_range_; }
   std::pair<int, int> top_tz_range() const { return top_tz_range_; }
-
-  std::tuple<T, Vector3, Vector3> pose_to_matrix_tool(const int level) const {
-    const auto& ang_info = ang_info_vec[level];
-    return std::make_tuple(info_vec[level].res, ang_info.rpy_res, ang_info.min_rpy);
-  }
-
-  void print() const {
-    std::cout << "----------------------- VoxelMaps  parameters -----------------------" << std::endl;
-    std::cout << "min_res: " << min_res_ << std::endl;
-    std::cout << "max_res: " << max_res_ << std::endl;
-    std::cout << "max_level: " << max_level_ << std::endl;
-    std::cout << "max_bucket_scan_count: " << max_bucket_scan_count_ << std::endl;
-    std::cout << "voxelmaps_folder_name: " << voxelmaps_folder_name_ << std::endl;
-  }
 
   VoxelMaps() {}
   ~VoxelMaps() {}
@@ -155,46 +131,6 @@ public:
 
     calc_top_trans_range();
     max_res_ = info_vec[max_level_].res;
-  }
-
-  void calc_angular_info(T max_norm, const Vector3& min_rpy, const Vector3& max_rpy) {
-    ang_info_vec.clear();
-    ang_info_vec.resize(max_level_ + 1);
-
-    for (int i = max_level_; i >= 0; i--) {
-      const T cosine = 1 - (std::pow(info_vec[i].res, 2) / std::pow(max_norm, 2)) * 0.5;
-      T ori_res = std::acos(std::max(cosine, static_cast<T>(-1.0)));
-      ori_res = std::floor(ori_res * 10000) / 10000;
-      Vector3 rpy_res_temp;
-      rpy_res_temp.x() = ori_res <= (max_rpy.x() - min_rpy.x()) ? ori_res : 0.0;
-      rpy_res_temp.y() = ori_res <= (max_rpy.y() - min_rpy.y()) ? ori_res : 0.0;
-      rpy_res_temp.z() = ori_res <= (max_rpy.z() - min_rpy.z()) ? ori_res : 0.0;
-
-      Vector3 max_rpypiece;
-      if (i == max_level_) {
-        max_rpypiece = max_rpy - min_rpy;
-      } else {
-        max_rpypiece.x() = ang_info_vec[i + 1].rpy_res.x() != 0.0 ? ang_info_vec[i + 1].rpy_res.x() : max_rpy.x() - min_rpy.x();
-        max_rpypiece.y() = ang_info_vec[i + 1].rpy_res.y() != 0.0 ? ang_info_vec[i + 1].rpy_res.y() : max_rpy.y() - min_rpy.y();
-        max_rpypiece.z() = ang_info_vec[i + 1].rpy_res.z() != 0.0 ? ang_info_vec[i + 1].rpy_res.z() : max_rpy.z() - min_rpy.z();
-      }
-
-      // Angle division number
-      Eigen::Vector3i num_division;
-      num_division.x() = rpy_res_temp.x() != 0.0 ? std::ceil(max_rpypiece.x() / rpy_res_temp.x()) : 1;
-      num_division.y() = rpy_res_temp.y() != 0.0 ? std::ceil(max_rpypiece.y() / rpy_res_temp.y()) : 1;
-      num_division.z() = rpy_res_temp.z() != 0.0 ? std::ceil(max_rpypiece.z() / rpy_res_temp.z()) : 1;
-      ang_info_vec[i].num_division = num_division;
-
-      // Bisect an angle
-      ang_info_vec[i].rpy_res.x() = num_division.x() != 1 ? max_rpypiece.x() / num_division.x() : 0.0;
-      ang_info_vec[i].rpy_res.y() = num_division.y() != 1 ? max_rpypiece.y() / num_division.y() : 0.0;
-      ang_info_vec[i].rpy_res.z() = num_division.z() != 1 ? max_rpypiece.z() / num_division.z() : 0.0;
-
-      ang_info_vec[i].min_rpy.x() = ang_info_vec[i].rpy_res.x() != 0.0 && ang_info_vec[i + 1].rpy_res.x() == 0.0 ? min_rpy.x() : 0.0;
-      ang_info_vec[i].min_rpy.y() = ang_info_vec[i].rpy_res.y() != 0.0 && ang_info_vec[i + 1].rpy_res.y() == 0.0 ? min_rpy.y() : 0.0;
-      ang_info_vec[i].min_rpy.z() = ang_info_vec[i].rpy_res.z() != 0.0 && ang_info_vec[i + 1].rpy_res.z() == 0.0 ? min_rpy.z() : 0.0;
-    }
   }
 
 private:

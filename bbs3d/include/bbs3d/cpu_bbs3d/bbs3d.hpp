@@ -27,6 +27,12 @@ struct BBSResult {
   }
 };
 
+struct AngularInfo {
+  Eigen::Vector3i num_division;
+  Eigen::Vector3d rpy_res;
+  Eigen::Vector3d min_rpy;
+};
+
 class BBS3D {
 public:
   BBS3D() {}
@@ -41,32 +47,17 @@ public:
   bool calc_ang_info = true;
   Eigen::Vector3d min_xyz, max_xyz, min_rpy, max_rpy;
 
-  void print() {
-    std::cout << "----------------------- BBS3D parameters -----------------------" << std::endl;
-    std::cout << "score_threshold_percentage: " << (score_threshold_percentage ? "true" : "false") << std::endl;
-    std::cout << "num_threads: " << num_threads << std::endl;
-    std::cout << "use_timeout: " << (use_timeout ? "true" : "false") << std::endl;
-    if (use_timeout) {
-      std::cout << "timeout_duration_msec: " << timeout_duration_msec << std::endl;
-    }
-    std::cout << "search_entire_map: " << (search_entire_map ? "true" : "false") << std::endl;
-    if (search_entire_map) {
-      std::cout << "min_xyz: " << min_xyz.x() << " " << min_xyz.y() << " " << min_xyz.z() << std::endl;
-      std::cout << "max_xyz: " << max_xyz.x() << " " << max_xyz.y() << " " << max_xyz.z() << std::endl;
-    }
-    std::cout << "min_rpy: " << min_rpy.x() << " " << min_rpy.y() << " " << min_rpy.z() << std::endl;
-    std::cout << "max_rpy: " << max_rpy.x() << " " << max_rpy.y() << " " << max_rpy.z() << std::endl;
-  }
-
   // localize
-  BBSResult localize(VoxelMaps<double>& voxelmaps, const std::vector<Eigen::Vector3d>& src_points);
+  BBSResult localize(const VoxelMaps<double>& voxelmaps, const std::vector<Eigen::Vector3d>& src_points);
 
-  double calc_max_norm(const std::vector<Eigen::Vector3d>& src_points);
+  void calc_angular_info(const VoxelMaps<double>& voxelmaps, const double max_norm);
 
 private:
-  std::vector<DiscreteTransformation<double>> create_init_transset(const VoxelMaps<double>& voxelmaps);
+  std::vector<AngularInfo> ang_info_vec_;
 
-  void calc_score(DiscreteTransformation<double>& trans, const VoxelMaps<double>& voxelmaps, const std::vector<Eigen::Vector3d>& points);
+  std::vector<DiscreteTransformation> create_init_transset(const VoxelMaps<double>& voxelmaps);
+
+  void calc_score(DiscreteTransformation& trans, const VoxelMaps<double>& voxelmaps, const std::vector<Eigen::Vector3d>& points);
 };
 
 }  // namespace cpu

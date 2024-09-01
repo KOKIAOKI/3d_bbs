@@ -2,7 +2,7 @@
 #include "bbs3d/hash/hash.hpp"
 
 namespace cpu {
-BBSResult BBS3D::localize(cpu::VoxelMaps<double>& voxelmaps, const std::vector<Eigen::Vector3d>& src_points) {
+BBSResult BBS3D::localize(const VoxelMaps<double>& voxelmaps, const std::vector<Eigen::Vector3d>& src_points) {
   BBSResult result;
 
   // Calc BBS time limit
@@ -11,12 +11,13 @@ BBSResult BBS3D::localize(cpu::VoxelMaps<double>& voxelmaps, const std::vector<E
 
   // Score threshold
   const int score_threshold = std::floor(src_points.size() * score_threshold_percentage);
-  DiscreteTransformation<double> best_trans(score_threshold);
+  DiscreteTransformation best_trans(score_threshold);
 
   // Calc angular info
   if (calc_ang_info) {
-    const auto max_norm = calc_max_norm(src_points);
-    voxelmaps.calc_angular_info(max_norm, min_rpy, max_rpy);
+    auto max_norm_iter =
+      std::max_element(src_points.begin(), src_points.end(), [](const Eigen::Vector3d& a, const Eigen::Vector3d& b) { return a.norm() < b.norm(); });
+    calc_angular_info(voxelmaps, max_norm_iter->norm());
   }
 
   // Preapre initial transset
@@ -29,7 +30,7 @@ BBSResult BBS3D::localize(cpu::VoxelMaps<double>& voxelmaps, const std::vector<E
   }
 
   // Main loop
-  std::priority_queue<DiscreteTransformation<double>> trans_queue(init_transset.begin(), init_transset.end());
+  std::priority_queue<DiscreteTransformation> trans_queue(init_transset.begin(), init_transset.end());
   while (!trans_queue.empty()) {
     if (use_timeout && std::chrono::system_clock::now() > time_limit) {
       result.timed_out = true;
@@ -48,7 +49,7 @@ BBSResult BBS3D::localize(cpu::VoxelMaps<double>& voxelmaps, const std::vector<E
     } else {
       // branch
       const int child_level = trans.level - 1;
-      auto children = trans.branch(child_level, voxelmaps.ang_info_vec[child_level].num_division);
+      auto children = trans.branch(child_level, ang_info_vec_[child_level].num_division);
 
       // calc score
 #pragma omp parallel for num_threads(num_threads)
@@ -75,25 +76,55 @@ BBSResult BBS3D::localize(cpu::VoxelMaps<double>& voxelmaps, const std::vector<E
     return result;
   }
 
-  result.global_pose = best_trans.create_matrix(voxelmaps.pose_to_matrix_tool(0));
+  result.global_pose = best_trans.create_matrix(voxelmaps.info_vec[0].res, ang_info_vec_[0].rpy_res, ang_info_vec_[0].min_rpy);
   result.localized = true;
   result.timed_out = false;
 
   return result;
 }
 
-double BBS3D::calc_max_norm(const std::vector<Eigen::Vector3d>& src_points) {
-  double max_norm = src_points[0].norm();
-  for (const auto& point : src_points) {
-    float norm = point.norm();
-    if (norm > max_norm) {
-      max_norm = norm;
+void BBS3D::calc_angular_info(const VoxelMaps<double>& voxelmaps, const double max_norm) {
+  const size_t max_level = voxelmaps.max_level();
+  ang_info_vec_.clear();
+  ang_info_vec_.resize(max_level + 1);
+
+  for (int i = max_level; i >= 0; i--) {
+    const double cosine = 1 - (std::pow(voxelmaps.info_vec[i].res, 2) / std::pow(max_norm, 2)) * 0.5;
+    double ori_res = std::acos(std::max(cosine, static_cast<double>(-1.0)));
+    ori_res = std::floor(ori_res * 10000) / 10000;
+    Eigen::Vector3d rpy_res_temp;
+    rpy_res_temp.x() = ori_res <= (max_rpy.x() - min_rpy.x()) ? ori_res : 0.0;
+    rpy_res_temp.y() = ori_res <= (max_rpy.y() - min_rpy.y()) ? ori_res : 0.0;
+    rpy_res_temp.z() = ori_res <= (max_rpy.z() - min_rpy.z()) ? ori_res : 0.0;
+
+    Eigen::Vector3d max_rpypiece;
+    if (i == max_level) {
+      max_rpypiece = max_rpy - min_rpy;
+    } else {
+      max_rpypiece.x() = ang_info_vec_[i + 1].rpy_res.x() != 0.0 ? ang_info_vec_[i + 1].rpy_res.x() : max_rpy.x() - min_rpy.x();
+      max_rpypiece.y() = ang_info_vec_[i + 1].rpy_res.y() != 0.0 ? ang_info_vec_[i + 1].rpy_res.y() : max_rpy.y() - min_rpy.y();
+      max_rpypiece.z() = ang_info_vec_[i + 1].rpy_res.z() != 0.0 ? ang_info_vec_[i + 1].rpy_res.z() : max_rpy.z() - min_rpy.z();
     }
+
+    // Angle division number
+    Eigen::Vector3i num_division;
+    num_division.x() = rpy_res_temp.x() != 0.0 ? std::ceil(max_rpypiece.x() / rpy_res_temp.x()) : 1;
+    num_division.y() = rpy_res_temp.y() != 0.0 ? std::ceil(max_rpypiece.y() / rpy_res_temp.y()) : 1;
+    num_division.z() = rpy_res_temp.z() != 0.0 ? std::ceil(max_rpypiece.z() / rpy_res_temp.z()) : 1;
+    ang_info_vec_[i].num_division = num_division;
+
+    // Bisect an angle
+    ang_info_vec_[i].rpy_res.x() = num_division.x() != 1 ? max_rpypiece.x() / num_division.x() : 0.0;
+    ang_info_vec_[i].rpy_res.y() = num_division.y() != 1 ? max_rpypiece.y() / num_division.y() : 0.0;
+    ang_info_vec_[i].rpy_res.z() = num_division.z() != 1 ? max_rpypiece.z() / num_division.z() : 0.0;
+
+    ang_info_vec_[i].min_rpy.x() = ang_info_vec_[i].rpy_res.x() != 0.0 && ang_info_vec_[i + 1].rpy_res.x() == 0.0 ? min_rpy.x() : 0.0;
+    ang_info_vec_[i].min_rpy.y() = ang_info_vec_[i].rpy_res.y() != 0.0 && ang_info_vec_[i + 1].rpy_res.y() == 0.0 ? min_rpy.y() : 0.0;
+    ang_info_vec_[i].min_rpy.z() = ang_info_vec_[i].rpy_res.z() != 0.0 && ang_info_vec_[i + 1].rpy_res.z() == 0.0 ? min_rpy.z() : 0.0;
   }
-  return max_norm;
 }
 
-std::vector<DiscreteTransformation<double>> BBS3D::create_init_transset(const cpu::VoxelMaps<double>& voxelmaps) {
+std::vector<DiscreteTransformation> BBS3D::create_init_transset(const VoxelMaps<double>& voxelmaps) {
   std::pair<int, int> init_tx_range, init_ty_range, init_tz_range;
   if (search_entire_map) {
     init_tx_range = voxelmaps.top_tx_range();
@@ -107,13 +138,13 @@ std::vector<DiscreteTransformation<double>> BBS3D::create_init_transset(const cp
   }
 
   const int max_level = voxelmaps.max_level();
-  const auto& ang_num_division = voxelmaps.ang_info_vec[max_level].num_division;
+  const auto& ang_num_division = ang_info_vec_[max_level].num_division;
 
   const int init_transset_size = (init_tx_range.second - init_tx_range.first + 1) * (init_ty_range.second - init_ty_range.first + 1) *
                                  (init_tz_range.second - init_tz_range.first + 1) * (ang_num_division.x()) * (ang_num_division.y()) *
                                  (ang_num_division.z());
 
-  std::vector<DiscreteTransformation<double>> transset;
+  std::vector<DiscreteTransformation> transset;
   transset.reserve(init_transset_size);
   for (int tx = init_tx_range.first; tx <= init_tx_range.second; tx++) {
     for (int ty = init_ty_range.first; ty <= init_ty_range.second; ty++) {
@@ -121,7 +152,7 @@ std::vector<DiscreteTransformation<double>> BBS3D::create_init_transset(const cp
         for (int roll = 0; roll < ang_num_division.x(); roll++) {
           for (int pitch = 0; pitch < ang_num_division.y(); pitch++) {
             for (int yaw = 0; yaw < ang_num_division.z(); yaw++) {
-              transset.emplace_back(DiscreteTransformation<double>(0, max_level, tx, ty, tz, roll, pitch, yaw));
+              transset.emplace_back(DiscreteTransformation(0, max_level, tx, ty, tz, roll, pitch, yaw));
             }
           }
         }
@@ -131,12 +162,13 @@ std::vector<DiscreteTransformation<double>> BBS3D::create_init_transset(const cp
   return transset;
 }
 
-void BBS3D::calc_score(DiscreteTransformation<double>& trans, const cpu::VoxelMaps<double>& voxelmaps, const std::vector<Eigen::Vector3d>& points) {
+void BBS3D::calc_score(DiscreteTransformation& trans, const VoxelMaps<double>& voxelmaps, const std::vector<Eigen::Vector3d>& points) {
   const auto& buckets = voxelmaps.buckets_vec[trans.level];
   const auto& voxel_info = voxelmaps.info_vec[trans.level];
+  const auto& ang_info = ang_info_vec_[trans.level];
 
-  Eigen::Transform<double, 3, Eigen::Affine> transform;
-  transform = trans.create_matrix(voxelmaps.pose_to_matrix_tool(trans.level));
+  Eigen::Isometry3d transform;
+  transform.matrix() = trans.create_matrix(voxel_info.res, ang_info.rpy_res, ang_info.min_rpy);
 
   for (int i = 0; i < points.size(); i++) {
     const Eigen::Vector3d transed_point = transform * points[i];
@@ -152,11 +184,10 @@ void BBS3D::calc_score(DiscreteTransformation<double>& trans, const cpu::VoxelMa
       }
 
       if (bucket.w() == 1) {
-        trans.score++;  // TODO reduction
+        trans.score++;
         break;
       }
     }
   }
 }
-
 }  // namespace cpu

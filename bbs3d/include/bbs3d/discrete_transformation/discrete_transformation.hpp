@@ -1,11 +1,7 @@
 #pragma once
 #include <Eigen/Core>
 
-template <typename T>
 class DiscreteTransformation {
-  using Vector3 = Eigen::Matrix<T, 3, 1>;
-  using Matrix4 = Eigen::Matrix<T, 4, 4>;
-
 public:
   DiscreteTransformation() : score(0), level(0), x(0), y(0), z(0), roll(0), pitch(0), yaw(0) {}
 
@@ -32,16 +28,13 @@ public:
               << "pitch; " << pitch << "yaw: " << yaw << std::endl;
   }
 
-  Matrix4 create_matrix(std::tuple<T, Vector3, Vector3> pose_to_matrix_tool) {
-    const auto& trans_res = std::get<0>(pose_to_matrix_tool);
-    const auto& rpy_res = std::get<1>(pose_to_matrix_tool);
-    const auto& min_rpy = std::get<2>(pose_to_matrix_tool);
-
+  template <typename T>
+  Eigen::Matrix<T, 4, 4> create_matrix(const T trans_res, const Eigen::Matrix<T, 3, 1>& rpy_res, const Eigen::Matrix<T, 3, 1>& min_rpy) {
     Eigen::Translation<T, 3> translation(x * trans_res, y * trans_res, z * trans_res);
-    Eigen::AngleAxis<T> rollAngle(roll * rpy_res.x() + min_rpy.x(), Vector3::UnitX());
-    Eigen::AngleAxis<T> pitchAngle(pitch * rpy_res.y() + min_rpy.y(), Vector3::UnitY());
-    Eigen::AngleAxis<T> yawAngle(yaw * rpy_res.z() + min_rpy.z(), Vector3::UnitZ());
-    return (translation * yawAngle * pitchAngle * rollAngle).matrix();
+    Eigen::AngleAxis<T> x_axis(roll * rpy_res.x() + min_rpy.x(), Eigen::Matrix<T, 3, 1>::UnitX());
+    Eigen::AngleAxis<T> y_axis(pitch * rpy_res.y() + min_rpy.y(), Eigen::Matrix<T, 3, 1>::UnitY());
+    Eigen::AngleAxis<T> z_axis(yaw * rpy_res.z() + min_rpy.z(), Eigen::Matrix<T, 3, 1>::UnitZ());
+    return (translation * z_axis * y_axis * x_axis).matrix();
   }
 
   void branch(std::vector<DiscreteTransformation>& b, const int child_level, const Eigen::Vector3i& num_division) {
