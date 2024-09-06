@@ -24,9 +24,13 @@ BBSResult BBS3D::localize(const VoxelMaps<double>& voxelmaps, const std::vector<
   auto init_transset = create_init_transset(voxelmaps);
 
   // Calc initial transset scores
+  size_t max_level = voxelmaps.max_level();
+  const auto& top_buckets = voxelmaps.buckets_vec[max_level];
+  const auto& top_voxel_info = voxelmaps.info_vec[max_level];
+  const auto& top_ang_info = ang_info_vec_[max_level];
 #pragma omp parallel for num_threads(num_threads)
   for (int i = 0; i < init_transset.size(); i++) {
-    calc_score(init_transset[i], voxelmaps, src_points);
+    calc_score(init_transset[i], top_buckets, top_voxel_info, top_ang_info, src_points);
   }
 
   // Main loop
@@ -52,9 +56,12 @@ BBSResult BBS3D::localize(const VoxelMaps<double>& voxelmaps, const std::vector<
       auto children = trans.branch(child_level, ang_info_vec_[child_level].num_division);
 
       // calc score
+      const auto& buckets = voxelmaps.buckets_vec[child_level];
+      const auto& voxel_info = voxelmaps.info_vec[child_level];
+      const auto& ang_info = ang_info_vec_[child_level];
 #pragma omp parallel for num_threads(num_threads)
       for (int i = 0; i < children.size(); i++) {
-        calc_score(children[i], voxelmaps, src_points);
+        calc_score(children[i], buckets, voxel_info, ang_info, src_points);
       }
 
       // pruning or push child to queue
@@ -162,11 +169,12 @@ std::vector<DiscreteTransformation> BBS3D::create_init_transset(const VoxelMaps<
   return transset;
 }
 
-void BBS3D::calc_score(DiscreteTransformation& trans, const VoxelMaps<double>& voxelmaps, const std::vector<Eigen::Vector3d>& points) {
-  const auto& buckets = voxelmaps.buckets_vec[trans.level];
-  const auto& voxel_info = voxelmaps.info_vec[trans.level];
-  const auto& ang_info = ang_info_vec_[trans.level];
-
+void BBS3D::calc_score(
+  DiscreteTransformation& trans,
+  const std::vector<Eigen::Vector4i>& buckets,
+  const VoxelMapInfo<double>& voxel_info,
+  const AngularInfo& ang_info,
+  const std::vector<Eigen::Vector3d>& points) {
   Eigen::Isometry3d transform;
   transform.matrix() = trans.create_matrix(voxel_info.res, ang_info.rpy_res, ang_info.min_rpy);
 

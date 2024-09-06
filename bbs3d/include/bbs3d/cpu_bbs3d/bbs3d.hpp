@@ -57,7 +57,12 @@ private:
 
   std::vector<DiscreteTransformation> create_init_transset(const VoxelMaps<double>& voxelmaps);
 
-  void calc_score(DiscreteTransformation& trans, const VoxelMaps<double>& voxelmaps, const std::vector<Eigen::Vector3d>& points);
+  void calc_score(
+    DiscreteTransformation& trans,
+    const std::vector<Eigen::Vector4i>& buckets,
+    const VoxelMapInfo<double>& voxel_info,
+    const AngularInfo& ang_info,
+    const std::vector<Eigen::Vector3d>& points);
 };
 
 }  // namespace cpu
