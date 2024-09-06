@@ -56,7 +56,7 @@ Performance on our test data:
   - **Load saved voxelmaps directly**: 130 ms on average (See [step 5 on this page](./test/test_code.md) to save voxelmaps)
 - Global localization
   - Paper: 878 ms on average
-  - **Latest**: **189 ms** on average  
+  - **Latest**: **240 ms** on average  
 
 The hardware configuration (Intel Core i7-10700K 3.8GHz, 32GB RAM, and NVIDIA GeForce RTX2060) is the same as in the paper.
 
@@ -115,18 +115,43 @@ See [ros2_test_code.md](./ros2_test/ros2_test_code.md)
 <details><summary> Click here! </summary><div>
 
 1. Copy `test/cmake` to your project directory
-1. Copy description above `# Common include directories` in `test/CMakeLists.txt` to `your CMakeLists.txt`
-1. Add either of the following depending on your implementation  
-If you use the CPU version, replace `gpu` with `cpu`.
+1. Copy the following \# items in `test/CMakeLists.txt` and essential description to your CMakeLists.txt.
+ - \# set C++17
+ - \# set module path
+ - \# find bbs3d
+ - \# find cuda (for gpu ver.)
+ - \# find openMP (for cpu ver.)
 ```
-find_package(Eigen3 REQUIRED)
-target_include_directories(yours ${EIGEN3_INCLUDE_DIR} ${gpu_bbs3d_LIBRARY})
+## Essential Description ##
+
+include_directories(${bbs3d_INCLUDE_DIRS})
+
+# cpu_test
+add_executable(cpu_test src/cpu_test.cpp)
+
+target_link_libraries(cpu_test ${bbs3d_LIBRARIES})
+
+# gpu_test
+if(BUILD_CUDA)
+  add_executable(gpu_test src/gpu_test.cpp)
+
+  target_link_libraries(gpu_test 
+    ${bbs3d_LIBRARIES}
+    ${gpu_bbs3d_LIBRARY}
+  )
+endif()
 ```
 </div></details>
 
 ## 🌈 Acknowledgement
 I sincerely appreciate the authors for generously sharing their public code.  
-[hdl_global_localization](https://github.com/koide3/hdl_global_localization) 
-[small_gicp](https://github.com/koide3/small_gicp.git) 
+[hdl_global_localization](https://github.com/koide3/hdl_global_localization)  
+[small_gicp](https://github.com/koide3/small_gicp.git)  
+[iridescence](https://github.com/koide3/iridescence.git)
 [cartographer](https://github.com/cartographer-project/cartographer)  
 [TEASER-plusplus](https://github.com/MIT-SPARK/TEASER-plusplus)   
+
+## TODO
+- target points downsampling
+- ros2 test
+- simplify cmakelists

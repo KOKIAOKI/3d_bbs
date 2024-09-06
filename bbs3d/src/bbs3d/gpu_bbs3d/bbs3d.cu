@@ -33,7 +33,7 @@ BBSResult BBS3D::localize(const std::vector<Eigen::Vector3f>& src_points) {
     calc_angular_info(max_norm_iter->norm());
   }
 
-  // copy host src_points to device
+  // Copy host src_points to device
   thrust::device_vector<Eigen::Vector3f> d_src_points;
   d_src_points.resize(src_points_size);
   check_error << cudaMemcpyAsync(
@@ -149,6 +149,8 @@ void BBS3D::calc_angular_info(const float max_norm) {
     ang_info_vec_[i].min_rpy.z() = ang_info_vec_[i].rpy_res.z() != 0.0 && ang_info_vec_[i + 1].rpy_res.z() == 0.0 ? min_rpy.z() : 0.0;
   }
 
+  d_ang_info_vec_.clear();
+  d_ang_info_vec_.shrink_to_fit();
   d_ang_info_vec_.resize(max_level + 1);
   check_error << cudaMemcpyAsync(
     thrust::raw_pointer_cast(d_ang_info_vec_.data()),

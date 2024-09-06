@@ -1,22 +1,19 @@
 cmake_minimum_required(VERSION 3.5)
 project(test)
 
+# set C++17
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -lstdc++fs")
 
+# set module path
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/cmake")
-option(BUILD_CUDA "Build GPU ver" ON)
 
+# find bbs3d
 find_package(bbs3d REQUIRED)
-find_package(small_gicp REQUIRED)
-find_package(OpenMP)
 
-if (OpenMP_FOUND)
-  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-endif()
-
+# find cuda (for gpu ver.)
+option(BUILD_CUDA "Build GPU ver" ON)
 if (BUILD_CUDA)
   find_package(CUDA REQUIRED)
   include_directories(${CUDA_INCLUDE_DIRS})
@@ -24,8 +21,16 @@ if (BUILD_CUDA)
   set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} --std=c++17 -Xcompiler -std=c++17)
 endif()
 
+# find openMP (for cpu ver.)
+find_package(OpenMP)
+if (OpenMP_FOUND)
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+endif()
+
 # Common include directories
 find_package(PCL REQUIRED)
+find_package(small_gicp REQUIRED)
 include_directories(
   ${PROJECT_SOURCE_DIR}/include
   ${PCL_INCLUDE_DIRS}
@@ -47,7 +52,6 @@ add_executable(cpu_test
 
 target_link_libraries(cpu_test
   ${COMMON_LIBRARIES}
-  ${cpu_bbs3d_LIBRARY}
 )
 
 # voxelmaps saver
@@ -57,18 +61,17 @@ add_executable(saver
 
 target_link_libraries(saver
   ${COMMON_LIBRARIES}
-  ${cpu_bbs3d_LIBRARY})
+  )
 
 # CUDA
 if(BUILD_CUDA)
   # gpu_test
   add_executable(gpu_test
-      src/gpu_test.cpp
+    src/gpu_test.cpp
   )
 
   target_link_libraries(gpu_test
     ${COMMON_LIBRARIES}
-    ${cpu_bbs3d_LIBRARY}
     ${gpu_bbs3d_LIBRARY}
   )
 endif()
