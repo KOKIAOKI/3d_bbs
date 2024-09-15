@@ -36,7 +36,7 @@ int main(int argc, char** argv) {
   auto src_cloud_files = pciof::find_point_cloud_files(params.src_path);
 
   // sort src files
-  if (pciof::can_convert_to_int(src_cloud_files)) {
+  if (pciof::can_convert_to_double(src_cloud_files)) {
     std::sort(src_cloud_files.begin(), src_cloud_files.end(), [](const std::string& a, const std::string& b) {
       return std::stod(std::filesystem::path(a).stem().string()) < std::stod(std::filesystem::path(b).stem().string());
     });

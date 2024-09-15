@@ -147,7 +147,7 @@ endif()
 I sincerely appreciate the authors for generously sharing their public code.  
 [hdl_global_localization](https://github.com/koide3/hdl_global_localization)  
 [small_gicp](https://github.com/koide3/small_gicp.git)  
-[iridescence](https://github.com/koide3/iridescence.git)
+[iridescence](https://github.com/koide3/iridescence.git)  
 [cartographer](https://github.com/cartographer-project/cartographer)  
 [TEASER-plusplus](https://github.com/MIT-SPARK/TEASER-plusplus)   
 
