@@ -26,7 +26,7 @@ max_scan_range: 100.0
 score_threshold_percentage: 0.9
 
 ################[Optional]################
-## GT pose file [sec, nsec, x, y, z, q_x, q_y, q_z, q_w]
+## GT pose file [sec, nsec, x, y, z, q_x, q_y, q_z, q_w] (the first index line is skipped)
 gt_pose_csv_file: "" # off: ""
 
 ## If you want to specify a search range for translations, search_entire_map to false.

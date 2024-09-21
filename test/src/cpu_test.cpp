@@ -49,12 +49,13 @@ int main(int argc, char** argv) {
   small_gicp::PointCloud::Ptr small_gicp_tar;
   small_gicp::KdTree<small_gicp::PointCloud>::Ptr tar_tree;
   small_gicp::Registration<small_gicp::GICPFactor, small_gicp::ParallelReductionOMP> gicp;
+  int vgicp_num_threads = 8;
   if (params.use_gicp) {
     small_gicp_tar = pcl_to_small_gicp(pcl_tar_cloud);
-    small_gicp_tar = small_gicp::voxelgrid_sampling_omp(*small_gicp_tar, 0.2, 8);
-    tar_tree = std::make_shared<small_gicp::KdTree<small_gicp::PointCloud>>(small_gicp_tar, small_gicp::KdTreeBuilderOMP(8));
-    small_gicp::estimate_covariances_omp(*small_gicp_tar, *tar_tree, 10, 8);
-    gicp.reduction.num_threads = 8;
+    small_gicp_tar = small_gicp::voxelgrid_sampling_omp(*small_gicp_tar, 0.0, vgicp_num_threads);
+    tar_tree = std::make_shared<small_gicp::KdTree<small_gicp::PointCloud>>(small_gicp_tar, small_gicp::KdTreeBuilderOMP(vgicp_num_threads));
+    small_gicp::estimate_covariances_omp(*small_gicp_tar, *tar_tree, 10, vgicp_num_threads);
+    gicp.reduction.num_threads = vgicp_num_threads;
     gicp.rejector.max_dist_sq = 1.0;
   }
 
@@ -83,7 +84,7 @@ int main(int argc, char** argv) {
     // TODO downsample in voxelmaps
     const auto tar_points = pciof::pcl_to_eigen<double>(pcl_tar_cloud);
     voxelmaps.create_voxelmaps(tar_points, params.min_level_res, params.max_level);
-    voxelmaps.save_voxelmaps(params.tar_path);
+    voxelmaps.save_voxelmaps(params.tar_path);  // automatically save
   }
 
   // Localization
@@ -115,9 +116,9 @@ int main(int argc, char** argv) {
     Eigen::Matrix4d gicp_result_matrix = Eigen::Matrix4d::Identity();
     if (params.use_gicp) {
       auto small_gicp_src = pcl_to_small_gicp(pcl_src_cloud);
-      small_gicp_src = small_gicp::voxelgrid_sampling_omp(*small_gicp_src, 0.2, 8);
-      auto src_tree = std::make_shared<small_gicp::KdTree<small_gicp::PointCloud>>(small_gicp_src, small_gicp::KdTreeBuilderOMP(8));
-      small_gicp::estimate_covariances_omp(*small_gicp_src, *src_tree, 10, 8);
+      small_gicp_src = small_gicp::voxelgrid_sampling_omp(*small_gicp_src, 0.2, vgicp_num_threads);
+      auto src_tree = std::make_shared<small_gicp::KdTree<small_gicp::PointCloud>>(small_gicp_src, small_gicp::KdTreeBuilderOMP(vgicp_num_threads));
+      small_gicp::estimate_covariances_omp(*small_gicp_src, *src_tree, 10, vgicp_num_threads);
 
       Eigen::Isometry3d bbs_T_target_source = Eigen::Isometry3d::Identity();
       bbs_T_target_source.matrix() = bbs3d_result.global_pose;

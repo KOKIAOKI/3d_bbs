@@ -31,6 +31,8 @@ public:
       if (!csv_file.is_open()) return;
 
       std::string line;
+      // skip first line
+      std::getline(csv_file, line);
       while (std::getline(csv_file, line)) {
         std::istringstream iss(line);
         std::string token;
@@ -99,5 +101,6 @@ public:
     } else {
       csv_file << "\n";
     }
+    csv_file.flush();
   }
 };

@@ -23,7 +23,7 @@ struct BBSResult {
   float elapsed_time_msec = 0.0;
 
   void print() const {
-    std::cout << "[Result] " << (localized ? "Successed" : "Failed") << (timed_out ? " (Timed out)" : "") << std::endl;
+    std::cout << "[Result] " << (localized ? "Localized" : "Failed") << (timed_out ? " (Timed out)" : "") << std::endl;
     std::cout << "Score: " << best_score << std::endl;
     std::cout << "Execution time: " << elapsed_time_msec << "[msec] " << std::endl;
     std::cout << "Global pose: " << std::endl << global_pose << std::endl;
