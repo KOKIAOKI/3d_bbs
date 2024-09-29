@@ -21,6 +21,7 @@ BBSResult BBS3D::localize(const VoxelMaps<double>& voxelmaps, const std::vector<
   const auto time_limit = start_time + std::chrono::milliseconds(timeout_duration_msec);
 
   // Preapre initial transset
+  const auto s3 = std::chrono::system_clock::now();
   auto init_transset = create_init_transset(voxelmaps);
 
   // Calc initial transset scores
@@ -32,6 +33,12 @@ BBSResult BBS3D::localize(const VoxelMaps<double>& voxelmaps, const std::vector<
   for (int i = 0; i < init_transset.size(); i++) {
     calc_score(init_transset[i], top_buckets, top_voxel_info, top_ang_info, src_points);
   }
+  const auto e3 = std::chrono::system_clock::now();
+  result.t3 = std::chrono::duration_cast<std::chrono::nanoseconds>(e3 - s3).count() / 1e6;
+
+  const auto s4 = std::chrono::system_clock::now();
+  auto e4 = std::chrono::system_clock::now();
+  auto s5 = std::chrono::system_clock::now();
 
   // Main loop
   std::priority_queue<DiscreteTransformation> trans_queue(init_transset.begin(), init_transset.end());
@@ -50,6 +57,8 @@ BBSResult BBS3D::localize(const VoxelMaps<double>& voxelmaps, const std::vector<
     if (trans.is_leaf()) {
       best_trans = trans;
       result.best_score = trans.score;
+      e4 = std::chrono::system_clock::now();
+      s5 = std::chrono::system_clock::now();
     } else {
       // branch
       const int child_level = trans.level - 1;
@@ -72,6 +81,10 @@ BBSResult BBS3D::localize(const VoxelMaps<double>& voxelmaps, const std::vector<
       }
     }
   }
+
+  auto e5 = std::chrono::system_clock::now();
+  result.t4 = std::chrono::duration_cast<std::chrono::nanoseconds>(e4 - s4).count() / 1e6;
+  result.t5 = std::chrono::duration_cast<std::chrono::nanoseconds>(e5 - s5).count() / 1e6;
 
   // Calc localization elapsed time
   const auto end_time = std::chrono::system_clock::now();

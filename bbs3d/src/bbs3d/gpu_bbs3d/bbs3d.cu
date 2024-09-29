@@ -30,6 +30,8 @@ BBSResult BBS3D::localize(const std::vector<Eigen::Vector3f>& src_points) {
   }
 
   // Copy host src_points to device
+  const auto s2 = std::chrono::system_clock::now();
+
   thrust::device_vector<Eigen::Vector3f> d_src_points;
   d_src_points.resize(src_points_size);
   check_error << cudaMemcpyAsync(
@@ -40,14 +42,24 @@ BBSResult BBS3D::localize(const std::vector<Eigen::Vector3f>& src_points) {
     stream);
   check_error << cudaStreamSynchronize(stream);
 
+  const auto e2 = std::chrono::system_clock::now();
+  result.t2 = std::chrono::duration_cast<std::chrono::nanoseconds>(e2 - s2).count() / 1e6;
+
   // Calc BBS time limit
   const auto start_time = std::chrono::system_clock::now();
   const auto time_limit = start_time + std::chrono::milliseconds(timeout_duration_msec);
 
   // Preapre initial transset
+  const auto s3 = std::chrono::system_clock::now();
   auto init_transset = create_init_transset();
   const auto init_transset_output = calc_scores(init_transset, d_src_points, src_points_size);
   std::priority_queue<DiscreteTransformation> trans_queue(init_transset_output.begin(), init_transset_output.end());
+  const auto e3 = std::chrono::system_clock::now();
+  result.t3 = std::chrono::duration_cast<std::chrono::nanoseconds>(e3 - s3).count() / 1e6;
+
+  const auto s4 = std::chrono::system_clock::now();
+  auto e4 = std::chrono::system_clock::now();
+  auto s5 = std::chrono::system_clock::now();
 
   std::vector<DiscreteTransformation> branch_stock;
   branch_stock.reserve(branch_copy_size);
@@ -78,6 +90,8 @@ BBSResult BBS3D::localize(const std::vector<Eigen::Vector3f>& src_points) {
     if (trans.is_leaf()) {
       best_trans = trans;
       result.best_score = trans.score;
+      e4 = std::chrono::system_clock::now();
+      s5 = std::chrono::system_clock::now();
     } else {
       const int child_level = trans.level - 1;
       trans.branch(branch_stock, child_level, ang_info_vec_[child_level].num_division);
@@ -92,6 +106,10 @@ BBSResult BBS3D::localize(const std::vector<Eigen::Vector3f>& src_points) {
       branch_stock.clear();
     }
   }
+
+  auto e5 = std::chrono::system_clock::now();
+  result.t4 = std::chrono::duration_cast<std::chrono::nanoseconds>(e4 - s4).count() / 1e6;
+  result.t5 = std::chrono::duration_cast<std::chrono::nanoseconds>(e5 - s5).count() / 1e6;
 
   // Calc localization elapsed time
   const auto end_time = std::chrono::system_clock::now();
