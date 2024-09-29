@@ -19,10 +19,6 @@ BBSResult BBS3D::localize(const std::vector<Eigen::Vector3f>& src_points) {
   BBSResult result;
   size_t src_points_size = src_points.size();
 
-  // Calc BBS time limit
-  const auto start_time = std::chrono::system_clock::now();
-  const auto time_limit = start_time + std::chrono::milliseconds(timeout_duration_msec);
-
   // Score threshold
   const int score_threshold = std::floor(src_points_size * score_threshold_percentage);
   DiscreteTransformation best_trans(score_threshold);
@@ -43,6 +39,10 @@ BBSResult BBS3D::localize(const std::vector<Eigen::Vector3f>& src_points) {
     cudaMemcpyHostToDevice,
     stream);
   check_error << cudaStreamSynchronize(stream);
+
+  // Calc BBS time limit
+  const auto start_time = std::chrono::system_clock::now();
+  const auto time_limit = start_time + std::chrono::milliseconds(timeout_duration_msec);
 
   // Preapre initial transset
   auto init_transset = create_init_transset();

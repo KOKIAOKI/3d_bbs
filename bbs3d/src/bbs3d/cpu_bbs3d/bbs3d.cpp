@@ -5,10 +5,6 @@ namespace cpu {
 BBSResult BBS3D::localize(const VoxelMaps<double>& voxelmaps, const std::vector<Eigen::Vector3d>& src_points) {
   BBSResult result;
 
-  // Calc BBS time limit
-  const auto start_time = std::chrono::system_clock::now();
-  const auto time_limit = start_time + std::chrono::milliseconds(timeout_duration_msec);
-
   // Score threshold
   const int score_threshold = std::floor(src_points.size() * score_threshold_percentage);
   DiscreteTransformation best_trans(score_threshold);
@@ -19,6 +15,10 @@ BBSResult BBS3D::localize(const VoxelMaps<double>& voxelmaps, const std::vector<
       std::max_element(src_points.begin(), src_points.end(), [](const Eigen::Vector3d& a, const Eigen::Vector3d& b) { return a.norm() < b.norm(); });
     calc_angular_info(voxelmaps, max_norm_iter->norm());
   }
+
+  // Calc BBS time limit
+  const auto start_time = std::chrono::system_clock::now();
+  const auto time_limit = start_time + std::chrono::milliseconds(timeout_duration_msec);
 
   // Preapre initial transset
   auto init_transset = create_init_transset(voxelmaps);

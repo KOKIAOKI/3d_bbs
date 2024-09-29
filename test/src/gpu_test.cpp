@@ -135,7 +135,7 @@ int main(int argc, char** argv) {
       pcl::transformPointCloud(*pcl_src_cloud, *pcl_output_cloud, bbs3d_result.global_pose);
     }
 
-    pcl::io::savePCDFileBinary(pcd_save_folder_path + "/" + file_name + ".pcd", *pcl_output_cloud);
+    pcl::io::savePCDFileBinary(pcd_save_folder_path + "/" + file_name, *pcl_output_cloud);
     result_csv.write(
       std::filesystem::path(src_cloud_file).stem().string(),
       bbs3d_result.elapsed_time_msec,
