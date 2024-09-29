@@ -54,19 +54,16 @@ public:
 
   BBSResult localize(const std::vector<Eigen::Vector3f>& src_points);
 
-  void calc_angular_info(const float max_norm);
-
 private:
   DeviceVoxelMaps::Ptr d_voxelmaps_;
-  thrust::device_vector<AngularInfo> d_ang_info_vec_;
-  std::vector<AngularInfo> ang_info_vec_;
   cudaStream_t stream;
 
-  std::vector<DiscreteTransformation> create_init_transset();
+  std::vector<DiscreteTransformation> create_init_transset(const float ang_res);
 
   std::vector<DiscreteTransformation> calc_scores(
     const std::vector<DiscreteTransformation>& h_transset,
     const thrust::device_vector<Eigen::Vector3f>& d_src_points,
+    const float ang_res,
     const size_t src_points_size);
 };
 }  // namespace gpu

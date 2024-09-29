@@ -50,18 +50,14 @@ public:
   // localize
   BBSResult localize(const VoxelMaps<double>& voxelmaps, const std::vector<Eigen::Vector3d>& src_points);
 
-  void calc_angular_info(const VoxelMaps<double>& voxelmaps, const double max_norm);
-
 private:
-  std::vector<AngularInfo> ang_info_vec_;
-
-  std::vector<DiscreteTransformation> create_init_transset(const VoxelMaps<double>& voxelmaps);
+  std::vector<DiscreteTransformation> create_init_transset(const VoxelMaps<double>& voxelmaps, const double ang_res);
 
   void calc_score(
     DiscreteTransformation& trans,
     const std::vector<Eigen::Vector4i>& buckets,
     const VoxelMapInfo<double>& voxel_info,
-    const AngularInfo& ang_info,
+    const double ang_res,
     const std::vector<Eigen::Vector3d>& points);
 };
 

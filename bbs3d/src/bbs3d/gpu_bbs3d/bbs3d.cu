@@ -26,11 +26,16 @@ BBSResult BBS3D::localize(const std::vector<Eigen::Vector3f>& src_points) {
   // Score threshold
   const int score_threshold = std::floor(src_points_size * score_threshold_percentage);
   DiscreteTransformation best_trans(score_threshold);
+
   // Calc angular info
+  float ang_res = 0.0f;
   if (calc_ang_info) {
     auto max_norm_iter =
       std::max_element(src_points.begin(), src_points.end(), [](const Eigen::Vector3f& a, const Eigen::Vector3f& b) { return a.norm() < b.norm(); });
-    calc_angular_info(max_norm_iter->norm());
+
+    const float cosine = 1 - (std::pow(d_voxelmaps_->min_res(), 2) / std::pow(max_norm_iter->norm(), 2)) * 0.5;
+    ang_res = std::acos(std::max(cosine, static_cast<float>(-1.0)));
+    ang_res = std::floor(ang_res * 10000) / 10000;
   }
 
   // Copy host src_points to device
@@ -45,8 +50,8 @@ BBSResult BBS3D::localize(const std::vector<Eigen::Vector3f>& src_points) {
   check_error << cudaStreamSynchronize(stream);
 
   // Preapre initial transset
-  auto init_transset = create_init_transset();
-  const auto init_transset_output = calc_scores(init_transset, d_src_points, src_points_size);
+  auto init_transset = create_init_transset(ang_res);
+  const auto init_transset_output = calc_scores(init_transset, d_src_points, ang_res, src_points_size);
   std::priority_queue<DiscreteTransformation> trans_queue(init_transset_output.begin(), init_transset_output.end());
 
   std::vector<DiscreteTransformation> branch_stock;
@@ -62,7 +67,7 @@ BBSResult BBS3D::localize(const std::vector<Eigen::Vector3f>& src_points) {
 
     // Calculate remaining branch_stock when queue is empty
     if (trans_queue.empty() && !branch_stock.empty()) {
-      const auto transset_output = calc_scores(branch_stock, d_src_points, src_points_size);
+      const auto transset_output = calc_scores(branch_stock, d_src_points, ang_res, src_points_size);
       for (const auto& output : transset_output) {
         if (output.score < result.best_score) continue;  // pruning
         trans_queue.push(output);
@@ -80,11 +85,11 @@ BBSResult BBS3D::localize(const std::vector<Eigen::Vector3f>& src_points) {
       result.best_score = trans.score;
     } else {
       const int child_level = trans.level - 1;
-      trans.branch(branch_stock, child_level, ang_info_vec_[child_level].num_division);
+      trans.branch(branch_stock, child_level);
     }
 
     if (branch_stock.size() >= branch_copy_size) {
-      const auto transset_output = calc_scores(branch_stock, d_src_points, src_points_size);
+      const auto transset_output = calc_scores(branch_stock, d_src_points, ang_res, src_points_size);
       for (const auto& output : transset_output) {
         if (output.score < result.best_score) continue;  // pruning
         trans_queue.push(output);
@@ -103,65 +108,15 @@ BBSResult BBS3D::localize(const std::vector<Eigen::Vector3f>& src_points) {
     return result;
   }
 
-  result.global_pose = best_trans.create_matrix(d_voxelmaps_->info_vec[0].res, ang_info_vec_[0].rpy_res, ang_info_vec_[0].min_rpy);
+  result.global_pose = best_trans.create_matrix(d_voxelmaps_->info_vec[0].res, ang_res);
   result.localized = true;
   result.timed_out = false;
 
   return result;
 }
 
-void BBS3D::calc_angular_info(const float max_norm) {
-  const size_t max_level = d_voxelmaps_->max_level();
-  ang_info_vec_.clear();
-  ang_info_vec_.resize(max_level + 1);
-  for (int i = max_level; i >= 0; i--) {
-    const float cosine = 1 - (std::pow(d_voxelmaps_->info_vec[i].res, 2) / std::pow(max_norm, 2)) * 0.5;
-    float ori_res = std::acos(std::max(cosine, static_cast<float>(-1.0)));
-    ori_res = std::floor(ori_res * 10000) / 10000;
-    Eigen::Vector3f rpy_res_temp;
-    rpy_res_temp.x() = ori_res <= (max_rpy.x() - min_rpy.x()) ? ori_res : 0.0;
-    rpy_res_temp.y() = ori_res <= (max_rpy.y() - min_rpy.y()) ? ori_res : 0.0;
-    rpy_res_temp.z() = ori_res <= (max_rpy.z() - min_rpy.z()) ? ori_res : 0.0;
-
-    Eigen::Vector3f max_rpypiece;
-    if (i == max_level) {
-      max_rpypiece = max_rpy - min_rpy;
-    } else {
-      max_rpypiece.x() = ang_info_vec_[i + 1].rpy_res.x() != 0.0 ? ang_info_vec_[i + 1].rpy_res.x() : max_rpy.x() - min_rpy.x();
-      max_rpypiece.y() = ang_info_vec_[i + 1].rpy_res.y() != 0.0 ? ang_info_vec_[i + 1].rpy_res.y() : max_rpy.y() - min_rpy.y();
-      max_rpypiece.z() = ang_info_vec_[i + 1].rpy_res.z() != 0.0 ? ang_info_vec_[i + 1].rpy_res.z() : max_rpy.z() - min_rpy.z();
-    }
-
-    // Angle division number
-    Eigen::Vector3i num_division;
-    num_division.x() = rpy_res_temp.x() != 0.0 ? std::ceil(max_rpypiece.x() / rpy_res_temp.x()) : 1;
-    num_division.y() = rpy_res_temp.y() != 0.0 ? std::ceil(max_rpypiece.y() / rpy_res_temp.y()) : 1;
-    num_division.z() = rpy_res_temp.z() != 0.0 ? std::ceil(max_rpypiece.z() / rpy_res_temp.z()) : 1;
-    ang_info_vec_[i].num_division = num_division;
-
-    // Bisect an angle
-    ang_info_vec_[i].rpy_res.x() = num_division.x() != 1 ? max_rpypiece.x() / num_division.x() : 0.0;
-    ang_info_vec_[i].rpy_res.y() = num_division.y() != 1 ? max_rpypiece.y() / num_division.y() : 0.0;
-    ang_info_vec_[i].rpy_res.z() = num_division.z() != 1 ? max_rpypiece.z() / num_division.z() : 0.0;
-
-    ang_info_vec_[i].min_rpy.x() = ang_info_vec_[i].rpy_res.x() != 0.0 && ang_info_vec_[i + 1].rpy_res.x() == 0.0 ? min_rpy.x() : 0.0;
-    ang_info_vec_[i].min_rpy.y() = ang_info_vec_[i].rpy_res.y() != 0.0 && ang_info_vec_[i + 1].rpy_res.y() == 0.0 ? min_rpy.y() : 0.0;
-    ang_info_vec_[i].min_rpy.z() = ang_info_vec_[i].rpy_res.z() != 0.0 && ang_info_vec_[i + 1].rpy_res.z() == 0.0 ? min_rpy.z() : 0.0;
-  }
-
-  d_ang_info_vec_.clear();
-  d_ang_info_vec_.shrink_to_fit();
-  d_ang_info_vec_.resize(max_level + 1);
-  check_error << cudaMemcpyAsync(
-    thrust::raw_pointer_cast(d_ang_info_vec_.data()),
-    ang_info_vec_.data(),
-    sizeof(AngularInfo) * ang_info_vec_.size(),
-    cudaMemcpyHostToDevice,
-    stream);
-}
-
-std::vector<DiscreteTransformation> BBS3D::create_init_transset() {
-  std::pair<int, int> init_tx_range, init_ty_range, init_tz_range;
+std::vector<DiscreteTransformation> BBS3D::create_init_transset(const float ang_res) {
+  std::pair<int, int> init_tx_range, init_ty_range, init_tz_range, init_roll_range, init_pitch_range, init_yaw_range;
   if (search_entire_map) {
     init_tx_range = d_voxelmaps_->top_tx_range();
     init_ty_range = d_voxelmaps_->top_ty_range();
@@ -173,21 +128,23 @@ std::vector<DiscreteTransformation> BBS3D::create_init_transset() {
     init_tz_range = std::make_pair<int, int>(std::floor(min_xyz.z() / top_res), std::ceil(max_xyz.z() / top_res));
   }
 
-  const int max_level = d_voxelmaps_->max_level();
-  const auto& ang_num_division = ang_info_vec_[max_level].num_division;
+  init_roll_range = std::make_pair<int, int>(std::floor(min_rpy.x() / ang_res), std::ceil(min_rpy.x() / ang_res));
+  init_pitch_range = std::make_pair<int, int>(std::floor(min_rpy.y() / ang_res), std::ceil(min_rpy.y() / ang_res));
+  init_yaw_range = std::make_pair<int, int>(std::floor(min_rpy.z() / ang_res), std::ceil(min_rpy.z() / ang_res));
 
   const int init_transset_size = (init_tx_range.second - init_tx_range.first + 1) * (init_ty_range.second - init_ty_range.first + 1) *
-                                 (init_tz_range.second - init_tz_range.first + 1) * (ang_num_division.x()) * (ang_num_division.y()) *
-                                 (ang_num_division.z());
+                                 (init_tz_range.second - init_tz_range.first + 1) * (init_roll_range.second - init_roll_range.first + 1) *
+                                 (init_pitch_range.second - init_pitch_range.first + 1) * (init_yaw_range.second - init_yaw_range.first + 1);
 
+  int max_level = d_voxelmaps_->max_level();
   std::vector<DiscreteTransformation> transset;
   transset.reserve(init_transset_size);
   for (int tx = init_tx_range.first; tx <= init_tx_range.second; tx++) {
     for (int ty = init_ty_range.first; ty <= init_ty_range.second; ty++) {
       for (int tz = init_tz_range.first; tz <= init_tz_range.second; tz++) {
-        for (int roll = 0; roll < ang_num_division.x(); roll++) {
-          for (int pitch = 0; pitch < ang_num_division.y(); pitch++) {
-            for (int yaw = 0; yaw < ang_num_division.z(); yaw++) {
+        for (int roll = init_roll_range.first; roll <= init_roll_range.second; roll++) {
+          for (int pitch = init_pitch_range.first; pitch <= init_pitch_range.second; pitch++) {
+            for (int yaw = init_yaw_range.first; yaw <= init_yaw_range.second; yaw++) {
               transset.emplace_back(DiscreteTransformation(0, max_level, tx, ty, tz, roll, pitch, yaw));
             }
           }
@@ -201,7 +158,7 @@ std::vector<DiscreteTransformation> BBS3D::create_init_transset() {
 __global__ void calc_scores_kernel(
   const thrust::device_ptr<Eigen::Vector4i*> multi_buckets_ptrs,
   const thrust::device_ptr<VoxelMapInfo> voxelmap_info_ptr,
-  const thrust::device_ptr<AngularInfo> d_ang_info_vec_ptr,
+  const float ang_res,
   thrust::device_ptr<DiscreteTransformation> trans_ptr,
   size_t index_size,
   const thrust::device_ptr<const Eigen::Vector3f> points_ptr,
@@ -213,7 +170,6 @@ __global__ void calc_scores_kernel(
 
   DiscreteTransformation& trans = *thrust::raw_pointer_cast(trans_ptr + pose_index);
   const VoxelMapInfo& voxelmap_info = *thrust::raw_pointer_cast(voxelmap_info_ptr + trans.level);
-  const AngularInfo& ang_info = *thrust::raw_pointer_cast(d_ang_info_vec_ptr + trans.level);
   const Eigen::Vector4i* buckets = thrust::raw_pointer_cast(multi_buckets_ptrs)[trans.level];
 
   int score = 0;
@@ -222,9 +178,8 @@ __global__ void calc_scores_kernel(
 
     const Eigen::Vector3f translation(trans.x * voxelmap_info.res, trans.y * voxelmap_info.res, trans.z * voxelmap_info.res);
     Eigen::Matrix3f rotation;
-    rotation = Eigen::AngleAxisf(trans.yaw * ang_info.rpy_res.z() + ang_info.min_rpy.z(), Eigen::Vector3f::UnitZ()) *
-               Eigen::AngleAxisf(trans.pitch * ang_info.rpy_res.y() + ang_info.min_rpy.y(), Eigen::Vector3f::UnitY()) *
-               Eigen::AngleAxisf(trans.roll * ang_info.rpy_res.x() + ang_info.min_rpy.x(), Eigen::Vector3f::UnitX());
+    rotation = Eigen::AngleAxisf(trans.yaw * ang_res, Eigen::Vector3f::UnitZ()) * Eigen::AngleAxisf(trans.pitch * ang_res, Eigen::Vector3f::UnitY()) *
+               Eigen::AngleAxisf(trans.roll * ang_res, Eigen::Vector3f::UnitX());
     const Eigen::Vector3f transed_point = rotation * point + translation;
 
     // coord to hash
@@ -252,6 +207,7 @@ __global__ void calc_scores_kernel(
 std::vector<DiscreteTransformation> BBS3D::calc_scores(
   const std::vector<DiscreteTransformation>& h_transset,
   const thrust::device_vector<Eigen::Vector3f>& d_src_points,
+  const float ang_res,
   const size_t src_points_size) {
   size_t transset_size = h_transset.size();
 
@@ -269,7 +225,7 @@ std::vector<DiscreteTransformation> BBS3D::calc_scores(
   calc_scores_kernel<<<num_blocks, block_size, 0, stream>>>(
     d_voxelmaps_->d_buckets_ptrs.data(),
     d_voxelmaps_->d_info_vec.data(),
-    d_ang_info_vec_.data(),
+    ang_res,
     d_transset.data(),
     transset_size - 1,
     d_src_points.data(),
