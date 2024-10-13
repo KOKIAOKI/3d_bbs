@@ -40,4 +40,4 @@ max_xyz: [5.0, 5.0, 5.0] # [x, y, z]
 timeout_duration_msec: 0 # off: 0
  
 ## Fine registration
-use_gicp: true 
+use_gicp: false 

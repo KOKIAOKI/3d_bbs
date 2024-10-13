@@ -80,11 +80,11 @@ BBSResult BBS3D::localize(const VoxelMaps<double>& voxelmaps, const std::vector<
         failed_upperbound_estimate++;
         percentage = (double)failed_upperbound_estimate / (double)count;
 
-        std::cout << trans.level << "  children score: " << children_max_score << " trans score: " << trans.score << std::endl;
+        // std::cout << trans.level << "  children score: " << children_max_score << " trans score: " << trans.score << std::endl;
         int error = children_max_score - trans.score;
         double error_percentage = (double)error / (double)children_max_score;
         error_percentage_sum += error_percentage;
-        error_percentage_ave = error_percentage_sum / (double)count;
+        error_percentage_ave = error_percentage_sum / (double)failed_upperbound_estimate;
       }
 
       // pruning or push child to queue
@@ -92,7 +92,7 @@ BBSResult BBS3D::localize(const VoxelMaps<double>& voxelmaps, const std::vector<
         trans_queue.push(child);
       }
 
-      // std::cout << "failed: " << percentage * 100.0 << "%" << " error_ave: " << error_percentage_ave * 100.0 << "%" << std::endl;
+      std::cout << "failed: " << percentage * 100.0 << "%" << " error_ave: " << error_percentage_ave * 100.0 << "%" << std::endl;
     }
   }
 
