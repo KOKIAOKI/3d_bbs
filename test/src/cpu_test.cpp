@@ -68,7 +68,7 @@ int main(int argc, char** argv) {
   // ========================== 3D-BBS ==========================
   cpu::BBS3D bbs3d;
   bbs3d.score_threshold_percentage = params.score_threshold_percentage;
-  bbs3d.num_threads = 4;
+  bbs3d.num_threads = 20;
   bbs3d.use_timeout = params.timeout_duration_msec > 0;
   bbs3d.timeout_duration_msec = params.timeout_duration_msec;
   bbs3d.search_entire_map = params.search_entire_map;

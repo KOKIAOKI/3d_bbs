@@ -19,7 +19,7 @@ public:
 
   ~DiscreteTransformation() {}
 
-  bool operator<(const DiscreteTransformation& rhs) const { return score < rhs.score; }
+  bool operator<(const DiscreteTransformation& rhs) const { return level < rhs.level; }
 
   bool is_leaf() const { return level == 0; }
 
