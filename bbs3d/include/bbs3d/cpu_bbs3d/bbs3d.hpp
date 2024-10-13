@@ -18,7 +18,10 @@ struct BBSResult {
   Eigen::Matrix4d global_pose = Eigen::Matrix4d::Identity();
   int best_score = 0;
   double elapsed_time_msec = 0.0;
-
+  double t2 = 0.0;
+  double t3 = 0.0;
+  double t4 = 0.0;
+  double t5 = 0.0;
   void print() const {
     std::cout << "[Result] " << (localized ? "Localized" : "Failed") << (timed_out ? " (Timed out)" : "") << std::endl;
     std::cout << "Score: " << best_score << std::endl;

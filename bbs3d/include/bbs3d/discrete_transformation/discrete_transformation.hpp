@@ -25,7 +25,7 @@ public:
   // DFS
   // bool operator<(const DiscreteTransformation& rhs) const {
   //   if (level == rhs.level) {
-  //     return score < rhs.score
+  //     return score < rhs.score;
   //   }
   //   return level > rhs.level;
   // }
