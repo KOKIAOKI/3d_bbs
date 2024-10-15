@@ -12,6 +12,63 @@
 
 namespace cpu {
 
+struct UpperBoundInfo {
+  int failed_upperbound_estimate = 0;
+  int count = 0;
+  double failed_estimate_percentage = 0.0;
+  double error_percentage_sum = 0.0;
+  double error_percentage_ave = 0.0;
+};
+
+struct UpperBoundRecorder {
+  std::vector<UpperBoundInfo> upper_bound_info_vec;
+  UpperBoundInfo total_info;
+  int source_points_size_ = 0;
+
+  UpperBoundRecorder(int max_level, int source_points_size) : source_points_size_(source_points_size) { upper_bound_info_vec.resize(max_level + 1); }
+
+  void addEstimate(int level, const std::vector<DiscreteTransformation>& children, int parent_score) {
+    int children_max_score = std::max_element(children.begin(), children.end(), [](const DiscreteTransformation& a, const DiscreteTransformation& b) {
+                               return a.score < b.score;
+                             })->score;
+
+    auto& info = upper_bound_info_vec[level];
+    info.count++;
+    total_info.count++;
+
+    if (parent_score < children_max_score) {
+      info.failed_upperbound_estimate++;
+      total_info.failed_upperbound_estimate++;
+
+      info.failed_estimate_percentage = (double)info.failed_upperbound_estimate / (double)info.count;
+      total_info.failed_estimate_percentage = (double)total_info.failed_upperbound_estimate / (double)total_info.count;
+
+      double error_percentage = (double)(children_max_score - parent_score) / (double)source_points_size_;
+
+      info.error_percentage_sum += error_percentage;
+      info.error_percentage_ave = info.error_percentage_sum / (double)info.failed_upperbound_estimate;
+
+      total_info.error_percentage_sum += error_percentage;
+      total_info.error_percentage_ave = total_info.error_percentage_sum / (double)total_info.failed_upperbound_estimate;
+    } else {
+    }
+  }
+
+  void print() {
+    std::cout << "====================================" << std::endl;
+    int level = 0;
+    for (const auto& info : upper_bound_info_vec) {
+      std::cout << "////// " << level << " //////" << std::endl;
+      std::cout << "failed_estimate_percentage: " << info.failed_estimate_percentage * 100
+                << " error_percentage_ave: " << info.error_percentage_ave * 100 << std::endl;
+      level++;
+    }
+    std::cout << "////// total //////" << std::endl;
+    std::cout << "failed_estimate_percentage: " << total_info.failed_estimate_percentage * 100
+              << " error_percentage_ave: " << total_info.error_percentage_ave * 100 << std::endl;
+  }
+};
+
 struct BBSResult {
   bool localized = false;
   bool timed_out = false;

@@ -34,11 +34,8 @@ BBSResult BBS3D::localize(const VoxelMaps<double>& voxelmaps, const std::vector<
   }
 
   // Main loop
-  int failed_upperbound_estimate = 0;
   int count = 0;
-  double percentage = 0.0;
-  double error_percentage_sum = 0.0;
-  double error_percentage_ave = 0.0;
+  UpperBoundRecorder upperbound_recorder(max_level, src_points.size());
   std::priority_queue<DiscreteTransformation> trans_queue(init_transset.begin(), init_transset.end());
   while (!trans_queue.empty()) {
     if (use_timeout && std::chrono::system_clock::now() > time_limit) {
@@ -71,30 +68,20 @@ BBSResult BBS3D::localize(const VoxelMaps<double>& voxelmaps, const std::vector<
         calc_score(children[i], buckets, voxel_info, ang_info, src_points);
       }
 
-      int children_max_score =
-        std::max_element(children.begin(), children.end(), [](const DiscreteTransformation& a, const DiscreteTransformation& b) {
-          return a.score < b.score;
-        })->score;
-
-      if (trans.score < children_max_score) {
-        failed_upperbound_estimate++;
-        percentage = (double)failed_upperbound_estimate / (double)count;
-
-        // std::cout << trans.level << "  children score: " << children_max_score << " trans score: " << trans.score << std::endl;
-        int error = children_max_score - trans.score;
-        double error_percentage = (double)error / (double)children_max_score;
-        error_percentage_sum += error_percentage;
-        error_percentage_ave = error_percentage_sum / (double)failed_upperbound_estimate;
-      }
+      upperbound_recorder.addEstimate(trans.level, children, trans.score);
 
       // pruning or push child to queue
       for (const auto& child : children) {
         trans_queue.push(child);
       }
 
-      std::cout << "failed: " << percentage * 100.0 << "%" << " error_ave: " << error_percentage_ave * 100.0 << "%" << std::endl;
+      if (count % 1000 == 0) {
+        upperbound_recorder.print();
+      }
     }
   }
+
+  upperbound_recorder.print();
 
   // Calc localization elapsed time
   const auto end_time = std::chrono::system_clock::now();
