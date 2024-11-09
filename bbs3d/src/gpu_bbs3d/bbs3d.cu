@@ -91,9 +91,9 @@ void BBS3D::calc_angular_info(std::vector<AngularInfo>& ang_info_vec) {
     float ori_res = std::acos(max(cosine, -1.0f));
     ori_res = std::floor(ori_res * 10000) / 10000;
     Eigen::Vector3f rpy_res_temp;
-    rpy_res_temp.x() = ori_res <= (max_rpy_.x() - min_rpy_.x()) ? ori_res : 0.0f;
-    rpy_res_temp.y() = ori_res <= (max_rpy_.y() - min_rpy_.y()) ? ori_res : 0.0f;
-    rpy_res_temp.z() = ori_res <= (max_rpy_.z() - min_rpy_.z()) ? ori_res : 0.0f;
+    rpy_res_temp.x() = ori_res <= std::abs(max_rpy_.x() - min_rpy_.x()) ? ori_res : 0.0f;
+    rpy_res_temp.y() = ori_res <= std::abs(max_rpy_.y() - min_rpy_.y()) ? ori_res : 0.0f;
+    rpy_res_temp.z() = ori_res <= std::abs(max_rpy_.z() - min_rpy_.z()) ? ori_res : 0.0f;
 
     Eigen::Vector3f max_rpy_piece;
     if (i == max_level) {
