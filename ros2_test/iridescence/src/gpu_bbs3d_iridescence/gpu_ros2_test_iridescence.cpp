@@ -166,7 +166,7 @@ int ROS2Test::get_nearest_imu_index(const std::vector<sensor_msgs::msg::Imu>& im
   double min_diff = 1000;
   for (int i = 0; i < imu_buffer.size(); ++i) {
     double diff = std::abs(
-      imu_buffer[i].header.stamp.sec + imu_buffer[i].header.stamp.nanosec * 1e-9 - source_cloud_msg_->header.stamp.sec -
+      imu_buffer[i].header.stamp.sec + imu_buffer[i].header.stamp.nanosec * 1e-9 - source_cloud_msg_->header.stamp.sec +
       source_cloud_msg_->header.stamp.nanosec * 1e-9);
     if (diff < min_diff) {
       imu_index = i;
