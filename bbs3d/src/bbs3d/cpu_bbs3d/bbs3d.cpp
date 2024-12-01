@@ -100,9 +100,9 @@ void BBS3D::calc_angular_info(const VoxelMaps<double>& voxelmaps, const double m
     double ori_res = std::acos(std::max(cosine, static_cast<double>(-1.0)));
     ori_res = std::floor(ori_res * 10000) / 10000;
     Eigen::Vector3d rpy_res_temp;
-    rpy_res_temp.x() = ori_res <= (max_rpy.x() - min_rpy.x()) ? ori_res : 0.0;
-    rpy_res_temp.y() = ori_res <= (max_rpy.y() - min_rpy.y()) ? ori_res : 0.0;
-    rpy_res_temp.z() = ori_res <= (max_rpy.z() - min_rpy.z()) ? ori_res : 0.0;
+    rpy_res_temp.x() = ori_res <= std::abs(max_rpy.x() - min_rpy.x()) ? ori_res : 0.0;
+    rpy_res_temp.y() = ori_res <= std::abs(max_rpy.y() - min_rpy.y()) ? ori_res : 0.0;
+    rpy_res_temp.z() = ori_res <= std::abs(max_rpy.z() - min_rpy.z()) ? ori_res : 0.0;
 
     Eigen::Vector3d max_rpypiece;
     if (i == max_level) {
@@ -115,19 +115,19 @@ void BBS3D::calc_angular_info(const VoxelMaps<double>& voxelmaps, const double m
 
     // Angle division number
     Eigen::Vector3i num_division;
-    num_division.x() = rpy_res_temp.x() != 0.0 ? std::ceil(max_rpypiece.x() / rpy_res_temp.x()) : 1;
-    num_division.y() = rpy_res_temp.y() != 0.0 ? std::ceil(max_rpypiece.y() / rpy_res_temp.y()) : 1;
-    num_division.z() = rpy_res_temp.z() != 0.0 ? std::ceil(max_rpypiece.z() / rpy_res_temp.z()) : 1;
+    num_division.x() = rpy_res_temp.x() == 0.0 ? 1 : std::ceil(max_rpypiece.x() / rpy_res_temp.x());
+    num_division.y() = rpy_res_temp.y() == 0.0 ? 1 : std::ceil(max_rpypiece.y() / rpy_res_temp.y());
+    num_division.z() = rpy_res_temp.z() == 0.0 ? 1 : std::ceil(max_rpypiece.z() / rpy_res_temp.z());
     ang_info_vec_[i].num_division = num_division;
 
     // Bisect an angle
-    ang_info_vec_[i].rpy_res.x() = num_division.x() != 1 ? max_rpypiece.x() / num_division.x() : 0.0;
-    ang_info_vec_[i].rpy_res.y() = num_division.y() != 1 ? max_rpypiece.y() / num_division.y() : 0.0;
-    ang_info_vec_[i].rpy_res.z() = num_division.z() != 1 ? max_rpypiece.z() / num_division.z() : 0.0;
+    ang_info_vec_[i].rpy_res.x() = num_division.x() == 1 ? 0.0 : max_rpypiece.x() / num_division.x();
+    ang_info_vec_[i].rpy_res.y() = num_division.y() == 1 ? 0.0 : max_rpypiece.y() / num_division.y();
+    ang_info_vec_[i].rpy_res.z() = num_division.z() == 1 ? 0.0 : max_rpypiece.z() / num_division.z();
 
-    ang_info_vec_[i].min_rpy.x() = ang_info_vec_[i].rpy_res.x() != 0.0 && ang_info_vec_[i + 1].rpy_res.x() == 0.0 ? min_rpy.x() : 0.0;
-    ang_info_vec_[i].min_rpy.y() = ang_info_vec_[i].rpy_res.y() != 0.0 && ang_info_vec_[i + 1].rpy_res.y() == 0.0 ? min_rpy.y() : 0.0;
-    ang_info_vec_[i].min_rpy.z() = ang_info_vec_[i].rpy_res.z() != 0.0 && ang_info_vec_[i + 1].rpy_res.z() == 0.0 ? min_rpy.z() : 0.0;
+    ang_info_vec_[i].min_rpy.x() = ang_info_vec_[i].rpy_res.x() == 0.0 ? 0.0 : min_rpy.x();
+    ang_info_vec_[i].min_rpy.y() = ang_info_vec_[i].rpy_res.y() == 0.0 ? 0.0 : min_rpy.y();
+    ang_info_vec_[i].min_rpy.z() = ang_info_vec_[i].rpy_res.z() == 0.0 ? 0.0 : min_rpy.z();
   }
 }
 
