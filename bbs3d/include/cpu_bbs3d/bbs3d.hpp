@@ -71,7 +71,7 @@ public:
     if (src_points_.size() == 0)
       return 0.0;
     else
-      return static_cast<double>(best_score_ / src_points_.size());
+      return static_cast<double>(best_score_) / src_points_.size();
   };
 
   bool has_timed_out() { return has_timed_out_; }
