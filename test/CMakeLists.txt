@@ -6,6 +6,7 @@ option(BUILD_CUDA "Build GPU ver" ON)
 
 find_package(cpu_bbs3d REQUIRED)
 find_package(OpenMP)
+find_package(Boost REQUIRED COMPONENTS filesystem system)
 
 if (OpenMP_FOUND)
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
