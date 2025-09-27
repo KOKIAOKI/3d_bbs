@@ -153,14 +153,16 @@ void BBS3D::calc_score(
       const std::uint32_t bucket_index = (hash + j) % num_buckets;
       const Eigen::Vector4i& bucket = buckets[bucket_index];
 
+      if (bucket.w() == 0) {
+        break;
+      }
+      
       if (bucket.x() != coord.x() || bucket.y() != coord.y() || bucket.z() != coord.z()) {
         continue;
       }
 
-      if (bucket.w() == 1) {
-        trans.score++;
-        break;
-      }
+      trans.score++;
+      break;
     }
   }
 }
