@@ -6,7 +6,7 @@
 
 namespace pciof {
 template <typename T>
-void pcl_to_eigen(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud_ptr, std::vector<T>& points) {
+inline void pcl_to_eigen(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud_ptr, std::vector<T>& points) {
   // nullptr check
   if (!cloud_ptr) {
     return;
@@ -16,7 +16,7 @@ void pcl_to_eigen(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud_ptr, std::vec
   std::transform(cloud_ptr->begin(), cloud_ptr->end(), points.begin(), [](const pcl::PointXYZ& p) { return T(p.x, p.y, p.z); });
 }
 
-void eigen_to_pcl(const std::vector<Eigen::Vector3d>& points, pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud_ptr) {
+inline void eigen_to_pcl(const std::vector<Eigen::Vector3d>& points, pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud_ptr) {
   cloud_ptr->points.resize(points.size());
   cloud_ptr->width = points.size();
   cloud_ptr->height = 1;
@@ -32,7 +32,7 @@ void eigen_to_pcl(const std::vector<Eigen::Vector3d>& points, pcl::PointCloud<pc
   });
 }
 
-void eigen_to_pcl(const std::vector<Eigen::Vector3f>& points, pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud_ptr) {
+inline void eigen_to_pcl(const std::vector<Eigen::Vector3f>& points, pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud_ptr) {
   cloud_ptr->points.resize(points.size());
   cloud_ptr->width = points.size();
   cloud_ptr->height = 1;
